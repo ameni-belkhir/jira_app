@@ -1,0 +1,33 @@
+<div class="flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
+  @for (column of columns; track column.id) {
+    <div class="flex-shrink-0 w-72">
+      <div class="flex items-center justify-between mb-3 px-1">
+        <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">{{ column.title }}</h3>
+        <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+          {{ column.data().length }}
+        </span>
+      </div>
+
+      <div
+        cdkDropList
+        [id]="column.id"
+        [cdkDropListData]="column.data()"
+        (cdkDropListDropped)="drop($event)"
+        class="min-h-[200px] space-y-3 p-2 rounded-xl bg-gray-50 dark:bg-gray-900/50 border-2 border-dashed border-gray-200 dark:border-gray-800 transition-colors"
+        cdkDropListOrientation="vertical"
+      >
+        @for (ticket of column.data(); track ticket.id) {
+          <div cdkDrag>
+            <app-ticket-card [ticket]="ticket" />
+          </div>
+        }
+
+        @if (column.data().length === 0) {
+          <div class="flex items-center justify-center h-24 text-xs text-gray-400 dark:text-gray-500">
+            Drop tickets here
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>

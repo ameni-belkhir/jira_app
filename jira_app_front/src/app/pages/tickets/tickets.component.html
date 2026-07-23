@@ -1,0 +1,580 @@
+<div class="p-6 bg-gray-50 dark:bg-gray-950 min-h-screen">
+
+  <!-- Header -->
+  <div class="mb-6 flex items-center justify-between">
+    <div>
+      <p class="mb-1 text-xs font-medium text-gray-400">Health Mobile App</p>
+      <h1 class="text-2xl font-bold text-gray-800 dark:text-white/90">Mobile App Projects</h1>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="flex items-center -space-x-2">
+        <img class="h-8 w-8 rounded-full ring-2 ring-white dark:ring-gray-950" src="https://randomuser.me/api/portraits/women/44.jpg" alt="Team member" />
+        <img class="h-8 w-8 rounded-full ring-2 ring-white dark:ring-gray-950" src="https://randomuser.me/api/portraits/men/32.jpg" alt="Team member" />
+        <img class="h-8 w-8 rounded-full ring-2 ring-white dark:ring-gray-950" src="https://randomuser.me/api/portraits/women/68.jpg" alt="Team member" />
+        <span class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-xs font-medium text-gray-600 ring-2 ring-white dark:bg-gray-800 dark:text-gray-300 dark:ring-gray-950">
+          +7
+        </span>
+      </div>
+      <button
+        type="button"
+        title="Invite a team member"
+        aria-label="Invite a team member"
+        class="inline-flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-600"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
+        </svg>
+        Invite
+      </button>
+    </div>
+  </div>
+
+  <!-- Board -->
+  <div class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
+
+    <!-- ===================== TODO ===================== -->
+    <div>
+      <div class="mb-4 flex items-center gap-2">
+        <span class="h-2 w-2 rounded-full bg-gray-400"></span>
+        <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">TODO</h3>
+        <span class="text-xs text-gray-400">3</span>
+      </div>
+
+      <div class="space-y-4">
+
+        <!-- Card -->
+        <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
+          <div class="mb-3 flex items-center justify-between">
+            <span class="inline-flex items-center rounded-md bg-purple-50 px-2.5 py-1 text-[11px] font-medium text-purple-700 dark:bg-purple-500/10 dark:text-purple-400">
+              Design
+            </span>
+            <button
+              type="button"
+              title="Card options"
+              aria-label="Card options"
+              class="text-gray-400 hover:text-gray-600"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path d="M10 6a2 2 0 100-4 2 2 0 000 4zM10 12a2 2 0 100-4 2 2 0 000 4zM10 18a2 2 0 100-4 2 2 0 000 4z" />
+              </svg>
+            </button>
+          </div>
+          <h4 class="mb-1 text-sm font-semibold text-gray-800 dark:text-white/90">
+            High priority mobile app design health
+          </h4>
+          <p class="mb-4 text-xs text-gray-500 dark:text-gray-400">
+            High priority work will be done at soonest
+          </p>
+          <div class="mb-4">
+            <div class="mb-1 flex items-center justify-between">
+              <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Progress</span>
+              <span class="text-xs font-medium text-gray-700 dark:text-gray-300">4/10</span>
+            </div>
+            <div class="h-1.5 w-full rounded-full bg-gray-100 dark:bg-gray-800">
+              <div class="h-1.5 rounded-full bg-brand-500" style="width: 40%"></div>
+            </div>
+          </div>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3 text-xs text-gray-400">
+              <span class="flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5h8v9H6V7z" clip-rule="evenodd" /></svg>
+                24
+              </span>
+              <span class="inline-flex items-center gap-1 rounded-md bg-error-50 px-2 py-0.5 text-[10px] font-medium text-error-600 dark:bg-error-500/10 dark:text-error-400">
+                High
+              </span>
+            </div>
+            <div class="flex items-center -space-x-2">
+              <img class="h-6 w-6 rounded-full ring-2 ring-white dark:ring-gray-900" src="https://randomuser.me/api/portraits/women/44.jpg" alt="Assigned member" />
+              <img class="h-6 w-6 rounded-full ring-2 ring-white dark:ring-gray-900" src="https://randomuser.me/api/portraits/men/32.jpg" alt="Assigned member" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Card -->
+        <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
+          <div class="mb-3 flex items-center justify-between">
+            <span class="inline-flex items-center rounded-md bg-blue-50 px-2.5 py-1 text-[11px] font-medium text-blue-700 dark:bg-blue-500/10 dark:text-blue-400">
+              Research
+            </span>
+            <button
+              type="button"
+              title="Card options"
+              aria-label="Card options"
+              class="text-gray-400 hover:text-gray-600"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path d="M10 6a2 2 0 100-4 2 2 0 000 4zM10 12a2 2 0 100-4 2 2 0 000 4zM10 18a2 2 0 100-4 2 2 0 000 4z" />
+              </svg>
+            </button>
+          </div>
+          <h4 class="mb-1 text-sm font-semibold text-gray-800 dark:text-white/90">
+            Research mobile app
+          </h4>
+          <p class="mb-4 text-xs text-gray-500 dark:text-gray-400">
+            Need to make a brand attention junkie fan priority
+          </p>
+          <div class="mb-4">
+            <div class="mb-1 flex items-center justify-between">
+              <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Progress</span>
+              <span class="text-xs font-medium text-gray-700 dark:text-gray-300">5/20</span>
+            </div>
+            <div class="h-1.5 w-full rounded-full bg-gray-100 dark:bg-gray-800">
+              <div class="h-1.5 rounded-full bg-brand-500" style="width: 25%"></div>
+            </div>
+          </div>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3 text-xs text-gray-400">
+              <span class="flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5h8v9H6V7z" clip-rule="evenodd" /></svg>
+                20
+              </span>
+              <span class="inline-flex items-center gap-1 rounded-md bg-warning-50 px-2 py-0.5 text-[10px] font-medium text-warning-600 dark:bg-warning-500/10 dark:text-warning-400">
+                Medium
+              </span>
+            </div>
+            <div class="flex items-center -space-x-2">
+              <img class="h-6 w-6 rounded-full ring-2 ring-white dark:ring-gray-900" src="https://randomuser.me/api/portraits/men/12.jpg" alt="Assigned member" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Card -->
+        <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
+          <div class="mb-3 flex items-center justify-between">
+            <span class="inline-flex items-center rounded-md bg-orange-50 px-2.5 py-1 text-[11px] font-medium text-orange-700 dark:bg-orange-500/10 dark:text-orange-400">
+              Content
+            </span>
+            <button
+              type="button"
+              title="Card options"
+              aria-label="Card options"
+              class="text-gray-400 hover:text-gray-600"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path d="M10 6a2 2 0 100-4 2 2 0 000 4zM10 12a2 2 0 100-4 2 2 0 000 4zM10 18a2 2 0 100-4 2 2 0 000 4z" />
+              </svg>
+            </button>
+          </div>
+          <h4 class="mb-1 text-sm font-semibold text-gray-800 dark:text-white/90">
+            Content mobile app
+          </h4>
+          <p class="mb-4 text-xs text-gray-500 dark:text-gray-400">
+            Need content plan
+          </p>
+          <div class="mb-4">
+            <div class="mb-1 flex items-center justify-between">
+              <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Progress</span>
+              <span class="text-xs font-medium text-gray-700 dark:text-gray-300">2/10</span>
+            </div>
+            <div class="h-1.5 w-full rounded-full bg-gray-100 dark:bg-gray-800">
+              <div class="h-1.5 rounded-full bg-brand-500" style="width: 20%"></div>
+            </div>
+          </div>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3 text-xs text-gray-400">
+              <span class="flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5h8v9H6V7z" clip-rule="evenodd" /></svg>
+                10
+              </span>
+              <span class="inline-flex items-center gap-1 rounded-md bg-success-50 px-2 py-0.5 text-[10px] font-medium text-success-600 dark:bg-success-500/10 dark:text-success-400">
+                Low
+              </span>
+            </div>
+            <div class="flex items-center -space-x-2">
+              <img class="h-6 w-6 rounded-full ring-2 ring-white dark:ring-gray-900" src="https://randomuser.me/api/portraits/women/68.jpg" alt="Assigned member" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Add card button -->
+        <button
+          type="button"
+          title="Add a new card"
+          aria-label="Add a new card"
+          class="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 py-3 text-sm font-medium text-gray-500 hover:border-brand-400 hover:text-brand-500 dark:border-gray-700 dark:text-gray-400"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
+          </svg>
+          Add Card
+        </button>
+      </div>
+    </div>
+
+    <!-- ===================== IN WORK ===================== -->
+    <div>
+      <div class="mb-4 flex items-center gap-2">
+        <span class="h-2 w-2 rounded-full bg-orange-400"></span>
+        <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">IN WORK</h3>
+        <span class="text-xs text-gray-400">2</span>
+      </div>
+
+      <div class="space-y-4">
+        <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
+          <div class="mb-3 flex items-center justify-between">
+            <span class="inline-flex items-center rounded-md bg-orange-50 px-2.5 py-1 text-[11px] font-medium text-orange-700 dark:bg-orange-500/10 dark:text-orange-400">
+              Design
+            </span>
+            <button
+              type="button"
+              title="Card options"
+              aria-label="Card options"
+              class="text-gray-400 hover:text-gray-600"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path d="M10 6a2 2 0 100-4 2 2 0 000 4zM10 12a2 2 0 100-4 2 2 0 000 4zM10 18a2 2 0 100-4 2 2 0 000 4z" />
+              </svg>
+            </button>
+          </div>
+          <h4 class="mb-1 text-sm font-semibold text-gray-800 dark:text-white/90">
+            Implement a low priority software very simple
+          </h4>
+          <p class="mb-4 text-xs text-gray-500 dark:text-gray-400">
+            Simplify the flow quickly
+          </p>
+          <div class="mb-4">
+            <div class="mb-1 flex items-center justify-between">
+              <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Progress</span>
+              <span class="text-xs font-medium text-gray-700 dark:text-gray-300">4/10</span>
+            </div>
+            <div class="h-1.5 w-full rounded-full bg-gray-100 dark:bg-gray-800">
+              <div class="h-1.5 rounded-full bg-brand-500" style="width: 40%"></div>
+            </div>
+          </div>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3 text-xs text-gray-400">
+              <span class="flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5h8v9H6V7z" clip-rule="evenodd" /></svg>
+                12
+              </span>
+              <span class="inline-flex items-center gap-1 rounded-md bg-warning-50 px-2 py-0.5 text-[10px] font-medium text-warning-600 dark:bg-warning-500/10 dark:text-warning-400">
+                Medium
+              </span>
+            </div>
+            <div class="flex items-center -space-x-2">
+              <img class="h-6 w-6 rounded-full ring-2 ring-white dark:ring-gray-900" src="https://randomuser.me/api/portraits/men/45.jpg" alt="Assigned member" />
+              <img class="h-6 w-6 rounded-full ring-2 ring-white dark:ring-gray-900" src="https://randomuser.me/api/portraits/women/12.jpg" alt="Assigned member" />
+            </div>
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
+          <div class="mb-3 flex items-center justify-between">
+            <span class="inline-flex items-center rounded-md bg-purple-50 px-2.5 py-1 text-[11px] font-medium text-purple-700 dark:bg-purple-500/10 dark:text-purple-400">
+              Design
+            </span>
+            <button
+              type="button"
+              title="Card options"
+              aria-label="Card options"
+              class="text-gray-400 hover:text-gray-600"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path d="M10 6a2 2 0 100-4 2 2 0 000 4zM10 12a2 2 0 100-4 2 2 0 000 4zM10 18a2 2 0 100-4 2 2 0 000 4z" />
+              </svg>
+            </button>
+          </div>
+          <h4 class="mb-1 text-sm font-semibold text-gray-800 dark:text-white/90">
+            A good landing page design will be made
+          </h4>
+          <p class="mb-4 text-xs text-gray-500 dark:text-gray-400">
+            A good customer needs a nice design
+          </p>
+          <div class="mb-4">
+            <div class="mb-1 flex items-center justify-between">
+              <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Progress</span>
+              <span class="text-xs font-medium text-gray-700 dark:text-gray-300">6/10</span>
+            </div>
+            <div class="h-1.5 w-full rounded-full bg-gray-100 dark:bg-gray-800">
+              <div class="h-1.5 rounded-full bg-brand-500" style="width: 60%"></div>
+            </div>
+          </div>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3 text-xs text-gray-400">
+              <span class="flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5h8v9H6V7z" clip-rule="evenodd" /></svg>
+                8
+              </span>
+              <span class="inline-flex items-center gap-1 rounded-md bg-error-50 px-2 py-0.5 text-[10px] font-medium text-error-600 dark:bg-error-500/10 dark:text-error-400">
+                High
+              </span>
+            </div>
+            <div class="flex items-center -space-x-2">
+              <img class="h-6 w-6 rounded-full ring-2 ring-white dark:ring-gray-900" src="https://randomuser.me/api/portraits/women/22.jpg" alt="Assigned member" />
+            </div>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          title="Add a new card"
+          aria-label="Add a new card"
+          class="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 py-3 text-sm font-medium text-gray-500 hover:border-brand-400 hover:text-brand-500 dark:border-gray-700 dark:text-gray-400"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
+          </svg>
+          Add Card
+        </button>
+      </div>
+    </div>
+
+    <!-- ===================== IN PROGRESS ===================== -->
+    <div>
+      <div class="mb-4 flex items-center gap-2">
+        <span class="h-2 w-2 rounded-full bg-blue-400"></span>
+        <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">IN PROGRESS</h3>
+        <span class="text-xs text-gray-400">2</span>
+      </div>
+
+      <div class="space-y-4">
+        <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
+          <div class="mb-3 flex items-center justify-between">
+            <span class="inline-flex items-center rounded-md bg-blue-50 px-2.5 py-1 text-[11px] font-medium text-blue-700 dark:bg-blue-500/10 dark:text-blue-400">
+              Planning
+            </span>
+            <button
+              type="button"
+              title="Card options"
+              aria-label="Card options"
+              class="text-gray-400 hover:text-gray-600"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path d="M10 6a2 2 0 100-4 2 2 0 000 4zM10 12a2 2 0 100-4 2 2 0 000 4zM10 18a2 2 0 100-4 2 2 0 000 4z" />
+              </svg>
+            </button>
+          </div>
+          <h4 class="mb-1 text-sm font-semibold text-gray-800 dark:text-white/90">
+            Hospital application
+          </h4>
+          <p class="mb-4 text-xs text-gray-500 dark:text-gray-400">
+            Need a quick application
+          </p>
+          <div class="mb-4">
+            <div class="mb-1 flex items-center justify-between">
+              <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Progress</span>
+              <span class="text-xs font-medium text-gray-700 dark:text-gray-300">2/10</span>
+            </div>
+            <div class="h-1.5 w-full rounded-full bg-gray-100 dark:bg-gray-800">
+              <div class="h-1.5 rounded-full bg-brand-500" style="width: 20%"></div>
+            </div>
+          </div>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3 text-xs text-gray-400">
+              <span class="flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5h8v9H6V7z" clip-rule="evenodd" /></svg>
+                6
+              </span>
+            </div>
+            <div class="flex items-center -space-x-2">
+              <img class="h-6 w-6 rounded-full ring-2 ring-white dark:ring-gray-900" src="https://randomuser.me/api/portraits/men/8.jpg" alt="Assigned member" />
+            </div>
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
+          <div class="mb-3 flex items-center justify-between">
+            <span class="inline-flex items-center rounded-md bg-orange-50 px-2.5 py-1 text-[11px] font-medium text-orange-700 dark:bg-orange-500/10 dark:text-orange-400">
+              Content
+            </span>
+            <button
+              type="button"
+              title="Card options"
+              aria-label="Card options"
+              class="text-gray-400 hover:text-gray-600"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path d="M10 6a2 2 0 100-4 2 2 0 000 4zM10 12a2 2 0 100-4 2 2 0 000 4zM10 18a2 2 0 100-4 2 2 0 000 4z" />
+              </svg>
+            </button>
+          </div>
+          <h4 class="mb-1 text-sm font-semibold text-gray-800 dark:text-white/90">
+            A content will be produced for health
+          </h4>
+          <p class="mb-4 text-xs text-gray-500 dark:text-gray-400">
+            Make sure to have real and quality content
+          </p>
+          <div class="mb-4">
+            <div class="mb-1 flex items-center justify-between">
+              <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Progress</span>
+              <span class="text-xs font-medium text-gray-700 dark:text-gray-300">6/10</span>
+            </div>
+            <div class="h-1.5 w-full rounded-full bg-gray-100 dark:bg-gray-800">
+              <div class="h-1.5 rounded-full bg-brand-500" style="width: 60%"></div>
+            </div>
+          </div>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3 text-xs text-gray-400">
+              <span class="flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5h8v9H6V7z" clip-rule="evenodd" /></svg>
+                9
+              </span>
+            </div>
+            <div class="flex items-center -space-x-2">
+              <img class="h-6 w-6 rounded-full ring-2 ring-white dark:ring-gray-900" src="https://randomuser.me/api/portraits/women/56.jpg" alt="Assigned member" />
+              <img class="h-6 w-6 rounded-full ring-2 ring-white dark:ring-gray-900" src="https://randomuser.me/api/portraits/men/29.jpg" alt="Assigned member" />
+            </div>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          title="Add a new card"
+          aria-label="Add a new card"
+          class="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 py-3 text-sm font-medium text-gray-500 hover:border-brand-400 hover:text-brand-500 dark:border-gray-700 dark:text-gray-400"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
+          </svg>
+          Add Card
+        </button>
+      </div>
+    </div>
+
+    <!-- ===================== COMPLETED ===================== -->
+    <div>
+      <div class="mb-4 flex items-center gap-2">
+        <span class="h-2 w-2 rounded-full bg-success-500"></span>
+        <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">COMPLETED</h3>
+        <span class="text-xs text-gray-400">4</span>
+      </div>
+
+      <div class="space-y-4">
+        <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
+          <div class="mb-3 flex items-center justify-between">
+            <span class="inline-flex items-center rounded-md bg-blue-50 px-2.5 py-1 text-[11px] font-medium text-blue-700 dark:bg-blue-500/10 dark:text-blue-400">
+              Research
+            </span>
+            <button
+              type="button"
+              title="Card options"
+              aria-label="Card options"
+              class="text-gray-400 hover:text-gray-600"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path d="M10 6a2 2 0 100-4 2 2 0 000 4zM10 12a2 2 0 100-4 2 2 0 000 4zM10 18a2 2 0 100-4 2 2 0 000 4z" />
+              </svg>
+            </button>
+          </div>
+          <h4 class="mb-1 text-sm font-semibold text-gray-800 dark:text-white/90">
+            for a private health research
+          </h4>
+          <p class="mb-4 text-xs text-gray-500 dark:text-gray-400">
+            It needs to be fast worked
+          </p>
+          <div class="mb-4">
+            <div class="mb-1 flex items-center justify-between">
+              <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Progress</span>
+              <span class="text-xs font-medium text-gray-700 dark:text-gray-300">10/10</span>
+            </div>
+            <div class="h-1.5 w-full rounded-full bg-gray-100 dark:bg-gray-800">
+              <div class="h-1.5 rounded-full bg-success-500" style="width: 100%"></div>
+            </div>
+          </div>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3 text-xs text-gray-400">
+              <span class="flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5h8v9H6V7z" clip-rule="evenodd" /></svg>
+                5
+              </span>
+            </div>
+            <div class="flex items-center -space-x-2">
+              <img class="h-6 w-6 rounded-full ring-2 ring-white dark:ring-gray-900" src="https://randomuser.me/api/portraits/women/33.jpg" alt="Assigned member" />
+            </div>
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
+          <div class="mb-3 flex items-center justify-between">
+            <span class="inline-flex items-center rounded-md bg-purple-50 px-2.5 py-1 text-[11px] font-medium text-purple-700 dark:bg-purple-500/10 dark:text-purple-400">
+              Design
+            </span>
+            <button
+              type="button"
+              title="Card options"
+              aria-label="Card options"
+              class="text-gray-400 hover:text-gray-600"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path d="M10 6a2 2 0 100-4 2 2 0 000 4zM10 12a2 2 0 100-4 2 2 0 000 4zM10 18a2 2 0 100-4 2 2 0 000 4z" />
+              </svg>
+            </button>
+          </div>
+          <h4 class="mb-1 text-sm font-semibold text-gray-800 dark:text-white/90">
+            make a nice dashboard work
+          </h4>
+          <p class="mb-4 text-xs text-gray-500 dark:text-gray-400">
+            Dashboard will be done for interior work
+          </p>
+          <div class="mb-4">
+            <div class="mb-1 flex items-center justify-between">
+              <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Progress</span>
+              <span class="text-xs font-medium text-gray-700 dark:text-gray-300">10/10</span>
+            </div>
+            <div class="h-1.5 w-full rounded-full bg-gray-100 dark:bg-gray-800">
+              <div class="h-1.5 rounded-full bg-success-500" style="width: 100%"></div>
+            </div>
+          </div>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3 text-xs text-gray-400">
+              <span class="flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5h8v9H6V7z" clip-rule="evenodd" /></svg>
+                7
+              </span>
+            </div>
+            <div class="flex items-center -space-x-2">
+              <img class="h-6 w-6 rounded-full ring-2 ring-white dark:ring-gray-900" src="https://randomuser.me/api/portraits/men/50.jpg" alt="Assigned member" />
+              <img class="h-6 w-6 rounded-full ring-2 ring-white dark:ring-gray-900" src="https://randomuser.me/api/portraits/women/19.jpg" alt="Assigned member" />
+            </div>
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
+          <div class="mb-3 flex items-center justify-between">
+            <span class="inline-flex items-center rounded-md bg-orange-50 px-2.5 py-1 text-[11px] font-medium text-orange-700 dark:bg-orange-500/10 dark:text-orange-400">
+              Design
+            </span>
+            <button
+              type="button"
+              title="Card options"
+              aria-label="Card options"
+              class="text-gray-400 hover:text-gray-600"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path d="M10 6a2 2 0 100-4 2 2 0 000 4zM10 12a2 2 0 100-4 2 2 0 000 4zM10 18a2 2 0 100-4 2 2 0 000 4z" />
+              </svg>
+            </button>
+          </div>
+          <h4 class="mb-1 text-sm font-semibold text-gray-800 dark:text-white/90">
+            A good landing page design will be made
+          </h4>
+          <p class="mb-4 text-xs text-gray-500 dark:text-gray-400">
+            A good customer needs a nice design
+          </p>
+          <div class="mb-4">
+            <div class="mb-1 flex items-center justify-between">
+              <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Progress</span>
+              <span class="text-xs font-medium text-gray-700 dark:text-gray-300">10/10</span>
+            </div>
+            <div class="h-1.5 w-full rounded-full bg-gray-100 dark:bg-gray-800">
+              <div class="h-1.5 rounded-full bg-success-500" style="width: 100%"></div>
+            </div>
+          </div>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3 text-xs text-gray-400">
+              <span class="flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5h8v9H6V7z" clip-rule="evenodd" /></svg>
+                4
+              </span>
+            </div>
+            <div class="flex items-center -space-x-2">
+              <img class="h-6 w-6 rounded-full ring-2 ring-white dark:ring-gray-900" src="https://randomuser.me/api/portraits/women/71.jpg" alt="Assigned member" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

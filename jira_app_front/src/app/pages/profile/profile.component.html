@@ -1,0 +1,173 @@
+@if (loading()) {
+  <div class="flex items-center justify-center py-20">
+    <div class="flex flex-col items-center gap-3">
+      <svg class="w-8 h-8 text-brand-500 animate-spin" viewBox="0 0 24 24" fill="none">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+      </svg>
+      <span class="text-sm text-gray-500 dark:text-gray-400">Loading profile...</span>
+    </div>
+  </div>
+} @else {
+  <div class="max-w-2xl mx-auto space-y-6">
+    <!-- Page Header -->
+    <div>
+      <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Edit Profile</h1>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage your personal information</p>
+    </div>
+
+    <!-- Error Alert -->
+    @if (error()) {
+      <div class="p-4 rounded-lg bg-error-50 border border-error-200 text-sm text-error-700 dark:bg-error-500/10 dark:border-error-500/20 dark:text-error-400">
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+          </svg>
+          {{ error() }}
+        </div>
+      </div>
+    }
+
+    <!-- Success Alert -->
+    @if (success()) {
+      <div class="p-4 rounded-lg bg-success-50 border border-success-200 text-sm text-success-700 dark:bg-success-500/10 dark:border-success-500/20 dark:text-success-400">
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+          </svg>
+          {{ success() }}
+        </div>
+      </div>
+    }
+
+    <!-- Profile Card -->
+    <div class="rounded-2xl border border-gray-200 bg-white shadow-theme-sm dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
+      <!-- Avatar Section -->
+      <div class="px-6 py-6 border-b border-gray-100 dark:border-gray-800">
+        <div class="flex flex-col sm:flex-row items-center gap-5">
+          <!-- Avatar Preview -->
+        <div class="relative group">
+            <div class="w-24 h-24 rounded-full overflow-hidden border-4 border-gray-100 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
+              @if (imagePreview) {
+                <img [src]="imagePreview" alt="Profile preview" class="w-full h-full object-cover" />
+              } @else {
+                <div class="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500">
+                  <svg class="w-10 h-10" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                  </svg>
+                </div>
+              }
+            </div>
+            <label
+              for="profile-image-input"
+              class="absolute inset-0 flex items-center justify-center rounded-full bg-black/0 hover:bg-black/40 transition-all cursor-pointer"
+              title="Change profile picture"
+            >
+              <svg class="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+              </svg>
+            </label>
+            <input
+              id="profile-image-input"
+              type="file"
+              accept=".jpg,.jpeg,.png,.webp"
+              title="Choose a profile picture"
+              (change)="onImageSelected($event)"
+              class="hidden"
+            />
+          </div>
+
+          <div class="flex-1 text-center sm:text-left">
+            <h2 class="text-lg font-semibold text-gray-800 dark:text-white">
+              {{ prenom || 'Your' }} {{ nom || 'Name' }}
+            </h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400">{{ user()?.email || '' }}</p>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">
+              Accepted: JPG, JPEG, PNG, WEBP. Max 5 MB.
+            </p>
+          </div>
+
+          @if (imagePreview) {
+            <button
+              (click)="removeImage()"
+              class="inline-flex items-center gap-1.5 text-xs font-medium text-error-500 hover:text-error-600 dark:text-error-400 transition-colors"
+              title="Remove image"
+            >
+              <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+              Remove
+            </button>
+          }
+        </div>
+
+        @if (imageError) {
+          <p class="mt-2 text-xs text-error-500 text-center sm:text-left">{{ imageError }}</p>
+        }
+      </div>
+
+      <!-- Form Body -->
+      <div class="px-6 py-5 space-y-5">
+        <!-- First Name (Prenom) -->
+        <div>
+          <label class="block mb-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+            First Name <span class="text-error-500">*</span>
+          </label>
+          <input
+            type="text"
+            [(ngModel)]="prenom"
+            placeholder="Enter your first name"
+            class="block w-full rounded-lg border border-gray-200 bg-transparent px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:text-white/90 dark:placeholder:text-white/30"
+            [class.border-error-500]="submitted && !prenom.trim()"
+          />
+          @if (submitted && !prenom.trim()) {
+            <p class="mt-1 text-xs text-error-500">First name is required.</p>
+          }
+        </div>
+
+        <!-- Last Name (Nom) -->
+        <div>
+          <label class="block mb-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+            Last Name <span class="text-error-500">*</span>
+          </label>
+          <input
+            type="text"
+            [(ngModel)]="nom"
+            placeholder="Enter your last name"
+            class="block w-full rounded-lg border border-gray-200 bg-transparent px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:text-white/90 dark:placeholder:text-white/30"
+            [class.border-error-500]="submitted && !nom.trim()"
+          />
+          @if (submitted && !nom.trim()) {
+            <p class="mt-1 text-xs text-error-500">Last name is required.</p>
+          }
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 flex items-center justify-end gap-3">
+        <button
+          (click)="loadProfile()"
+          class="inline-flex items-center justify-center rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors"
+        >
+          Reset
+        </button>
+        <button
+          (click)="onSave()"
+          [disabled]="saving()"
+          class="inline-flex items-center justify-center rounded-lg bg-brand-500 px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-600 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          @if (saving()) {
+            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" viewBox="0 0 24 24" fill="none">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            </svg>
+            Saving...
+          } @else {
+            Save Changes
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+

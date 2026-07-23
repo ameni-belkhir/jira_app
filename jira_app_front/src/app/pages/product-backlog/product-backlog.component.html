@@ -1,0 +1,168 @@
+<div class="space-y-6">
+  <!-- Header -->
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <a routerLink="/dashboard" class="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors">
+          <svg class="w-4 h-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+          </svg>
+          Projects
+        </a>
+        <span class="text-gray-300 dark:text-gray-600">/</span>
+        <span class="text-sm font-medium text-gray-800 dark:text-white">{{ projectName }}</span>
+      </div>
+      <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Product Backlog</h1>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center gap-3">
+      <!-- Search -->
+      <div class="relative">
+        <span class="absolute -translate-y-1/2 pointer-events-none left-3 top-1/2">
+          <svg class="w-4 h-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+          </svg>
+        </span>
+        <input
+          type="text"
+          [ngModel]="searchQuery"
+          (ngModelChange)="onSearchChange($event)"
+          placeholder="Search tickets..."
+          class="h-10 w-48 lg:w-64 rounded-lg border border-gray-200 bg-transparent pl-9 pr-3 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:text-white/90 dark:placeholder:text-white/30"
+        />
+      </div>
+
+      <!-- Refresh -->
+      <button
+        (click)="refresh()"
+        [disabled]="refreshing()"
+        title="Refresh backlog"
+        class="inline-flex items-center justify-center h-10 w-10 rounded-lg border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors"
+      >
+        <svg
+          class="w-4 h-4"
+          [class.animate-spin]="refreshing()"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+        >
+          <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+        </svg>
+      </button>
+
+      <!-- Create Sprint -->
+      <button
+        (click)="openCreateSprintModal()"
+        class="inline-flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-600 transition-colors"
+      >
+        <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+        </svg>
+        Create Sprint
+      </button>
+    </div>
+  </div>
+
+  <!-- Error -->
+  @if (error()) {
+    <div class="p-4 rounded-lg bg-error-50 border border-error-200 text-sm text-error-700 dark:bg-error-500/10 dark:border-error-500/20 dark:text-error-400">
+      {{ error() }}
+    </div>
+  }
+
+  <!-- Loading -->
+  @if (loading() && !refreshing()) {
+    <div class="flex items-center justify-center py-12">
+      <div class="flex flex-col items-center gap-3">
+        <svg class="w-8 h-8 text-brand-500 animate-spin" viewBox="0 0 24 24" fill="none">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+        </svg>
+        <span class="text-sm text-gray-500 dark:text-gray-400">Loading backlog...</span>
+      </div>
+    </div>
+  }
+
+  <!-- Backlog Content -->
+  @if (backlogData(); as data) {
+
+    <!-- ===== Unassigned Tickets (Product Backlog) ===== -->
+    <div class="rounded-2xl border border-gray-200 bg-white shadow-theme-sm dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
+      <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+        <div class="flex items-center gap-3">
+          <h2 class="text-lg font-semibold text-gray-800 dark:text-white">Product Backlog</h2>
+          <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+            {{ filteredUnassignedTickets().length }} tickets
+          </span>
+        </div>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Unassigned tickets ready to be moved to a sprint</p>
+      </div>
+
+      <div
+        cdkDropList
+        id="backlog-drop-list"
+        [cdkDropListData]="filteredUnassignedTickets()"
+        (cdkDropListDropped)="onBacklogDrop($event)"
+        [cdkDropListConnectedTo]="getConnectedDropListIds()"
+        class="min-h-[120px] p-3 space-y-2"
+        cdkDropListOrientation="vertical"
+      >
+        @for (ticket of filteredUnassignedTickets(); track trackByTicketId($index, ticket)) {
+          <div cdkDrag>
+            <app-ticket-card [ticket]="mapToTicket(ticket)" />
+          </div>
+        } @empty {
+          @if (!loading()) {
+            <div class="flex items-center justify-center h-24 text-xs text-gray-400 dark:text-gray-500 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl">
+              @if (searchQuery) {
+                No tickets match your search.
+              } @else {
+                No unassigned tickets. All tickets are assigned to sprints.
+              }
+            </div>
+          }
+        }
+      </div>
+    </div>
+
+    <!-- ===== Sprints ===== -->
+    @if (data.sprints.length > 0) {
+      <div>
+        <h2 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Sprints</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          @for (sprint of data.sprints; track sprint.id) {
+            <app-sprint-card
+              [sprint]="sprint"
+              [connectedDropLists]="getConnectedDropListIds()"
+              (ticketDropped)="onTicketDroppedInSprint($event)"
+              (goalUpdated)="onGoalUpdated($event)"
+            />
+          }
+        </div>
+      </div>
+    } @else {
+      @if (!loading()) {
+        <div class="flex flex-col items-center justify-center py-12 text-center">
+          <svg class="w-12 h-12 text-gray-300 dark:text-gray-600 mb-3" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM14 11a1 1 0 011 1v1h1a1 1 0 110 2h-1v1a1 1 0 11-2 0v-1h-1a1 1 0 110-2h1v-1a1 1 0 011-1z" />
+          </svg>
+          <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">No sprints yet</h3>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">Create your first sprint to start organizing tickets.</p>
+          <button
+            (click)="openCreateSprintModal()"
+            class="inline-flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 transition-colors"
+          >
+            <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+            </svg>
+            Create First Sprint
+          </button>
+        </div>
+      }
+    }
+  }
+
+  <!-- Create Sprint Modal -->
+  <app-create-sprint-modal [projectId]="projectId" (close)="loadBacklog()" (create)="onCreateSprint($event)" />
+</div>
+

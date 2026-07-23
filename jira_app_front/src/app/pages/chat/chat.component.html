@@ -1,0 +1,363 @@
+<div class="flex h-screen bg-gray-50 dark:bg-gray-950">
+
+  <!-- Sidebar icons -->
+  <aside class="flex w-16 flex-col items-center gap-6 bg-brand-600 py-6">
+    <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-white/20 text-white font-bold">W</div>
+    <nav class="flex flex-col items-center gap-5">
+      <button type="button" title="Dashboard" aria-label="Dashboard" class="text-white/70 hover:text-white">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 3h6v6H3V3zm8 0h6v6h-6V3zm0 8h6v6h-6v-6zM3 11h6v6H3v-6z"/></svg>
+      </button>
+      <button type="button" title="Messages" aria-label="Messages" class="rounded-lg bg-white/20 p-2 text-white">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.84 8.84 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7z" clip-rule="evenodd"/></svg>
+      </button>
+      <button type="button" title="Contacts" aria-label="Contacts" class="text-white/70 hover:text-white">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/></svg>
+      </button>
+      <button type="button" title="Groups" aria-label="Groups" class="text-white/70 hover:text-white">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/></svg>
+      </button>
+      <button type="button" title="Settings" aria-label="Settings" class="text-white/70 hover:text-white">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.53 1.53 0 01-2.29.94c-1.37-.83-2.94.74-2.11 2.11.53.88.18 2.02-.94 2.29-1.56.38-1.56 2.6 0 2.98a1.53 1.53 0 01.94 2.29c-.83 1.37.74 2.94 2.11 2.11a1.53 1.53 0 012.29.94c.38 1.56 2.6 1.56 2.98 0a1.53 1.53 0 012.29-.94c1.37.83 2.94-.74 2.11-2.11a1.53 1.53 0 01.94-2.29c1.56-.38 1.56-2.6 0-2.98a1.53 1.53 0 01-.94-2.29c.83-1.37-.74-2.94-2.11-2.11a1.53 1.53 0 01-2.29-.94zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>
+      </button>
+    </nav>
+  </aside>
+
+  <!-- ===================== CONVERSATIONS LIST ===================== -->
+  <section class="flex w-80 flex-col border-r border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+    <div class="flex items-center justify-between border-b border-gray-100 p-4 dark:border-gray-800">
+      <h2 class="text-base font-semibold text-gray-800 dark:text-white/90">Conversation</h2>
+      <button type="button" title="Start a new chat" aria-label="Start a new chat" class="flex items-center gap-1 text-xs font-medium text-brand-500 hover:text-brand-600">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+        New Chat
+      </button>
+    </div>
+
+    <div class="p-3">
+      <label for="search-conv" class="sr-only">Search conversations</label>
+      <div class="relative">
+        <svg xmlns="http://www.w3.org/2000/svg" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd"/>
+        </svg>
+        <input
+          id="search-conv"
+          type="text"
+          placeholder="Search here"
+          class="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-3 text-sm text-gray-700 placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-800 dark:bg-gray-800 dark:text-gray-200"
+        />
+      </div>
+    </div>
+
+    <div class="flex items-center justify-between px-4 pb-2">
+      <button type="button" class="flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400">
+        Recent Chats
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+      </button>
+    </div>
+
+    <!-- Chat list -->
+    <div class="flex-1 space-y-1 overflow-y-auto px-2 pb-4">
+
+      <!-- Item -->
+      <button type="button" class="flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left hover:bg-gray-50 dark:hover:bg-gray-800">
+        <span class="relative shrink-0">
+          <img class="h-11 w-11 rounded-full object-cover" src="https://randomuser.me/api/portraits/men/11.jpg" alt="Gerald Dean" />
+        </span>
+        <span class="min-w-0 flex-1">
+          <span class="flex items-center justify-between">
+            <span class="truncate text-sm font-medium text-gray-800 dark:text-white/90">Gerald Dean</span>
+            <span class="shrink-0 text-[11px] text-gray-400">6:50 pm</span>
+          </span>
+          <span class="flex items-center gap-1 truncate text-xs text-gray-500 dark:text-gray-400">
+            I am ready.
+            <span class="h-2 w-2 shrink-0 rounded-full bg-brand-500"></span>
+          </span>
+        </span>
+      </button>
+
+      <!-- Item (active + menu open) -->
+      <div class="relative">
+        <button type="button" aria-current="true" class="flex w-full items-center gap-3 rounded-lg bg-brand-50 px-2 py-2.5 text-left dark:bg-brand-500/10">
+          <img class="h-11 w-11 rounded-full object-cover" src="https://randomuser.me/api/portraits/men/22.jpg" alt="Aris Christofi" />
+          <span class="min-w-0 flex-1">
+            <span class="flex items-center justify-between">
+              <span class="truncate text-sm font-medium text-gray-800 dark:text-white/90">Aris Christofi</span>
+              <span class="shrink-0 text-[11px] text-brand-500">2:44 pm</span>
+            </span>
+            <span class="truncate text-xs text-brand-600 dark:text-brand-400">You are most welcome.😊</span>
+          </span>
+        </button>
+        <button
+          type="button"
+          title="Conversation options"
+          aria-label="Conversation options"
+          aria-haspopup="menu"
+          aria-expanded="true"
+          class="absolute right-2 top-2.5 rounded p-1 text-gray-400 hover:text-gray-600"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 6a2 2 0 100-4 2 2 0 000 4zM10 12a2 2 0 100-4 2 2 0 000 4zM10 18a2 2 0 100-4 2 2 0 000 4z"/></svg>
+        </button>
+
+        <!-- Dropdown menu -->
+        <div role="menu" class="absolute right-2 top-10 z-10 w-36 rounded-lg bg-brand-600 py-1 shadow-lg">
+          <button type="button" role="menuitem" class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-white hover:bg-white/10">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd"/></svg>
+            Block
+          </button>
+          <button type="button" role="menuitem" class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-white hover:bg-white/10">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M8 2a1 1 0 00-1 1v1H4.5a.5.5 0 000 1h11a.5.5 0 000-1H13V3a1 1 0 00-1-1H8zM4.5 6l.62 10.13A2 2 0 007.12 18h5.76a2 2 0 001.99-1.87L15.5 6h-11z" clip-rule="evenodd"/></svg>
+            Delete
+          </button>
+          <button type="button" role="menuitem" class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-white hover:bg-white/10">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/></svg>
+            Mark as Read
+          </button>
+        </div>
+      </div>
+
+      <!-- Item -->
+      <button type="button" class="flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left hover:bg-gray-50 dark:hover:bg-gray-800">
+        <img class="h-11 w-11 rounded-full object-cover" src="https://randomuser.me/api/portraits/women/33.jpg" alt="Eddie Barnett" />
+        <span class="min-w-0 flex-1">
+          <span class="flex items-center justify-between">
+            <span class="truncate text-sm font-medium text-gray-800 dark:text-white/90">Eddie Barnett</span>
+            <span class="shrink-0 text-[11px] text-gray-400">3:30 pm</span>
+          </span>
+          <span class="truncate text-xs text-gray-500 dark:text-gray-400">Thanks</span>
+        </span>
+      </button>
+
+      <!-- Item -->
+      <button type="button" class="flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left hover:bg-gray-50 dark:hover:bg-gray-800">
+        <img class="h-11 w-11 rounded-full object-cover" src="https://randomuser.me/api/portraits/men/44.jpg" alt="Julian Mendez" />
+        <span class="min-w-0 flex-1">
+          <span class="flex items-center justify-between">
+            <span class="truncate text-sm font-medium text-gray-800 dark:text-white/90">Julian Mendez</span>
+            <span class="shrink-0 text-[11px] text-gray-400">1 day</span>
+          </span>
+          <span class="truncate text-xs text-gray-500 dark:text-gray-400">Are you sure?</span>
+        </span>
+      </button>
+
+      <!-- Item -->
+      <button type="button" class="flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left hover:bg-gray-50 dark:hover:bg-gray-800">
+        <img class="h-11 w-11 rounded-full object-cover" src="https://randomuser.me/api/portraits/men/55.jpg" alt="Henry Drake" />
+        <span class="min-w-0 flex-1">
+          <span class="flex items-center justify-between">
+            <span class="truncate text-sm font-medium text-gray-800 dark:text-white/90">Henry Drake</span>
+            <span class="shrink-0 text-[11px] text-gray-400">1 day</span>
+          </span>
+          <span class="truncate text-xs text-gray-500 dark:text-gray-400">What can I do right</span>
+        </span>
+      </button>
+
+      <!-- Item -->
+      <button type="button" class="flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left hover:bg-gray-50 dark:hover:bg-gray-800">
+        <img class="h-11 w-11 rounded-full object-cover" src="https://randomuser.me/api/portraits/women/66.jpg" alt="Mabelle McKenzie" />
+        <span class="min-w-0 flex-1">
+          <span class="flex items-center justify-between">
+            <span class="truncate text-sm font-medium text-gray-800 dark:text-white/90">Mabelle McKenzie</span>
+            <span class="shrink-0 text-[11px] text-gray-400">1 day ago</span>
+          </span>
+          <span class="truncate text-xs text-gray-500 dark:text-gray-400">I am glad.</span>
+        </span>
+      </button>
+
+      <!-- Item -->
+      <button type="button" class="flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left hover:bg-gray-50 dark:hover:bg-gray-800">
+        <img class="h-11 w-11 rounded-full object-cover" src="https://randomuser.me/api/portraits/men/61.jpg" alt="Gerald Dean" />
+        <span class="min-w-0 flex-1">
+          <span class="flex items-center justify-between">
+            <span class="truncate text-sm font-medium text-gray-800 dark:text-white/90">Gerald Dean</span>
+            <span class="shrink-0 text-[11px] text-gray-400">3 days ago</span>
+          </span>
+          <span class="truncate text-xs text-gray-500 dark:text-gray-400">Thanks for reply</span>
+        </span>
+      </button>
+
+      <!-- Item -->
+      <button type="button" class="flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left hover:bg-gray-50 dark:hover:bg-gray-800">
+        <img class="h-11 w-11 rounded-full object-cover" src="https://randomuser.me/api/portraits/men/77.jpg" alt="Shawn Spencer" />
+        <span class="min-w-0 flex-1">
+          <span class="flex items-center justify-between">
+            <span class="truncate text-sm font-medium text-gray-800 dark:text-white/90">Shawn Spencer</span>
+            <span class="shrink-0 text-[11px] text-gray-400">13 March</span>
+          </span>
+          <span class="truncate text-xs text-gray-500 dark:text-gray-400">I am ready.</span>
+        </span>
+      </button>
+    </div>
+  </section>
+
+  <!-- ===================== CHAT WINDOW ===================== -->
+  <section class="flex flex-1 flex-col bg-gray-50 dark:bg-gray-950">
+
+    <!-- Chat header -->
+    <div class="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4 dark:border-gray-800 dark:bg-gray-900">
+      <div class="flex items-center gap-3">
+        <img class="h-10 w-10 rounded-full object-cover" src="https://randomuser.me/api/portraits/men/22.jpg" alt="Aris Christofi" />
+        <div>
+          <h3 class="text-sm font-semibold text-gray-800 dark:text-white/90">Aris Christofi</h3>
+          <p class="flex items-center gap-1 text-xs text-success-500">
+            <span class="h-1.5 w-1.5 rounded-full bg-success-500"></span> Online
+          </p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button type="button" title="Start video call" aria-label="Start video call" class="rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M2 6a2 2 0 012-2h7a2 2 0 012 2v2.5l3.4-2.2a.6.6 0 01.9.5v7.4a.6.6 0 01-.9.5L13 12.5V15a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/></svg>
+        </button>
+        <button type="button" title="Start voice call" aria-label="Start voice call" class="rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M2 3.5A1.5 1.5 0 013.5 2h1.148a1.5 1.5 0 011.465 1.175l.716 3.223a1.5 1.5 0 01-.464 1.42l-.923.831a11 11 0 006.31 6.31l.83-.923a1.5 1.5 0 011.421-.464l3.223.716A1.5 1.5 0 0118 15.352V16.5a1.5 1.5 0 01-1.5 1.5H15C7.82 18 2 12.18 2 5V3.5z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Messages -->
+    <div class="flex-1 space-y-6 overflow-y-auto px-6 py-6">
+
+      <!-- Incoming -->
+      <div class="flex items-start gap-3">
+        <img class="h-8 w-8 rounded-full object-cover" src="https://randomuser.me/api/portraits/men/22.jpg" alt="Aris Christofi" />
+        <div class="max-w-md">
+          <div class="rounded-2xl rounded-tl-none bg-white px-4 py-3 text-sm text-gray-700 shadow-theme-xs dark:bg-gray-900 dark:text-gray-300">
+            This powerful marketing tool is often used matter of factly, and we have to wonder.
+          </div>
+          <p class="mt-1 text-[11px] text-gray-400">Message sent 2:30 pm</p>
+        </div>
+      </div>
+
+      <!-- Incoming with name -->
+      <div class="flex items-start gap-3">
+        <img class="h-8 w-8 rounded-full object-cover" src="https://randomuser.me/api/portraits/men/22.jpg" alt="Aris Christofi" />
+        <div class="max-w-md">
+          <p class="mb-1 text-xs font-medium text-gray-500 dark:text-gray-400">Aris Christofi</p>
+          <div class="rounded-2xl rounded-tl-none bg-white px-4 py-3 text-sm text-gray-700 shadow-theme-xs dark:bg-gray-900 dark:text-gray-300">
+            Everybody that has ever been to a meeting, can recall the all familiar "passing" the business cards. This powerful marketing tool is often
+          </div>
+        </div>
+      </div>
+
+      <!-- Outgoing file -->
+      <div class="flex flex-col items-end gap-1">
+        <div class="flex items-center gap-3 rounded-2xl rounded-tr-none bg-brand-500 px-4 py-3 text-white">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V7.914a2 2 0 00-.586-1.414l-3.914-3.914A2 2 0 0012.086 2H4z" clip-rule="evenodd"/></svg>
+          <div class="text-sm">
+            <p class="font-medium">Style Sheet.Zip</p>
+            <p class="text-xs text-white/70">350.43 kb</p>
+          </div>
+        </div>
+        <p class="text-[11px] text-gray-400">Message sent 2:40 pm</p>
+      </div>
+
+      <!-- Incoming -->
+      <div class="flex items-start gap-3">
+        <img class="h-8 w-8 rounded-full object-cover" src="https://randomuser.me/api/portraits/men/22.jpg" alt="Aris Christofi" />
+        <div class="max-w-md">
+          <div class="rounded-2xl rounded-tl-none bg-white px-4 py-3 text-sm text-gray-700 shadow-theme-xs dark:bg-gray-900 dark:text-gray-300">
+            Thanks for the file sharing. That has ever been to a meeting, can recall the all familiar "passing" the business cards.
+          </div>
+          <p class="mt-1 text-[11px] text-gray-400">Message seen 2:41 pm</p>
+        </div>
+      </div>
+
+      <!-- Outgoing -->
+      <div class="flex flex-col items-end gap-1">
+        <div class="rounded-2xl rounded-tr-none bg-brand-500 px-4 py-3 text-sm text-white">
+          You are most welcome. 😊
+        </div>
+        <p class="text-[11px] text-gray-400">Message sent 2:44 pm</p>
+      </div>
+    </div>
+
+    <!-- Composer -->
+    <div class="border-t border-gray-200 bg-white px-6 py-4 dark:border-gray-800 dark:bg-gray-900">
+      <div class="flex items-center gap-2">
+        <button type="button" title="Attach a file" aria-label="Attach a file" class="rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+        </button>
+        <button type="button" title="Attach a document" aria-label="Attach a document" class="rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V7.914a2 2 0 00-.586-1.414l-3.914-3.914A2 2 0 0012.086 2H4z" clip-rule="evenodd"/></svg>
+        </button>
+        <button type="button" title="Insert emoji" aria-label="Insert emoji" class="rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 100 2 1 1 0 000-2zm5 0a1 1 0 100 2 1 1 0 000-2zm-6.5 5a.75.75 0 011.06-.02c.646.598 1.523.95 2.44.95s1.794-.352 2.44-.95a.75.75 0 111.02 1.1A5.98 5.98 0 0110 15.5a5.98 5.98 0 01-3.46-1.42.75.75 0 01-.04-1.08z" clip-rule="evenodd"/></svg>
+        </button>
+
+        <label for="chat-input" class="sr-only">Type a message</label>
+        <input
+          id="chat-input"
+          type="text"
+          placeholder="Type a message here"
+          class="flex-1 rounded-full border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-700 placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-800 dark:bg-gray-800 dark:text-gray-200"
+        />
+
+        <button type="button" title="Send message" aria-label="Send message" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-500 text-white hover:bg-brand-600">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3.105 2.289a.75.75 0 00-.826.95l1.414 4.925A1.5 1.5 0 005.135 9.25h6.115a.75.75 0 010 1.5H5.135a1.5 1.5 0 00-1.442 1.086l-1.414 4.926a.75.75 0 00.826.95 28.897 28.897 0 0015.293-7.154.75.75 0 000-1.115A28.897 28.897 0 003.105 2.289z"/></svg>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== CONTACT DETAILS PANEL ===================== -->
+  <aside class="hidden w-80 border-l border-gray-200 bg-white p-6 lg:block dark:border-gray-800 dark:bg-gray-900">
+    <div class="flex flex-col items-center text-center">
+      <div class="relative">
+        <img class="h-20 w-20 rounded-full object-cover" src="https://randomuser.me/api/portraits/men/22.jpg" alt="Aris Christofi" />
+        <button type="button" title="Edit profile picture" aria-label="Edit profile picture" class="absolute -bottom-1 -right-1 rounded-full bg-gray-100 p-1.5 text-gray-500 hover:bg-gray-200 dark:bg-gray-800">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.53 1.53 0 01-2.29.94c-1.37-.83-2.94.74-2.11 2.11.53.88.18 2.02-.94 2.29-1.56.38-1.56 2.6 0 2.98a1.53 1.53 0 01.94 2.29c-.83 1.37.74 2.94 2.11 2.11a1.53 1.53 0 012.29.94c.38 1.56 2.6 1.56 2.98 0a1.53 1.53 0 012.29-.94c1.37.83 2.94-.74 2.11-2.11a1.53 1.53 0 01.94-2.29c1.56-.38 1.56-2.6 0-2.98a1.53 1.53 0 01-.94-2.29c.83-1.37-.74-2.94-2.11-2.11a1.53 1.53 0 01-2.29-.94zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>
+        </button>
+      </div>
+      <h3 class="mt-3 text-sm font-semibold text-gray-800 dark:text-white/90">Aris Christofi</h3>
+      <p class="text-xs text-gray-400">Admin</p>
+    </div>
+
+    <div class="mt-6 space-y-4">
+      <div class="flex items-center justify-between">
+        <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Personal Information</h4>
+        <button type="button" title="Collapse personal information" aria-label="Collapse personal information" class="text-gray-400 hover:text-gray-600">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M14.77 12.79a.75.75 0 01-1.06-.02L10 8.832l-3.71 3.938a.75.75 0 11-1.08-1.04l4.25-4.5a.75.75 0 011.08 0l4.25 4.5a.75.75 0 01-.02 1.06z" clip-rule="evenodd"/></svg>
+        </button>
+      </div>
+      <p class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/></svg>
+        Support@whelp.net
+      </p>
+      <p class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M2 3.5A1.5 1.5 0 013.5 2h1.148a1.5 1.5 0 011.465 1.175l.716 3.223a1.5 1.5 0 01-.464 1.42l-.923.831a11 11 0 006.31 6.31l.83-.923a1.5 1.5 0 011.421-.464l3.223.716A1.5 1.5 0 0118 15.352V16.5a1.5 1.5 0 01-1.5 1.5H15C7.82 18 2 12.18 2 5V3.5z" clip-rule="evenodd"/></svg>
+        +1 (786) 903-7331
+      </p>
+      <p class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg>
+        Mon - Fri: 09 am - 06 pm
+      </p>
+    </div>
+
+    <div class="mt-6 space-y-1 border-t border-gray-100 pt-4 dark:border-gray-800">
+      <button type="button" class="flex w-full items-center justify-between rounded-lg px-2 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800">
+        <span class="flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+          Add Tag
+        </span>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 6a2 2 0 100-4 2 2 0 000 4zM10 12a2 2 0 100-4 2 2 0 000 4zM10 18a2 2 0 100-4 2 2 0 000 4z"/></svg>
+      </button>
+      <button type="button" class="flex w-full items-center justify-between rounded-lg px-2 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800">
+        <span class="flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.958a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.368 2.448a1 1 0 00-.364 1.118l1.286 3.957c.3.922-.755 1.688-1.54 1.118l-3.367-2.447a1 1 0 00-1.175 0l-3.367 2.447c-.784.57-1.838-.196-1.539-1.118l1.286-3.957a1 1 0 00-.363-1.118L2.98 9.385c-.783-.57-.38-1.81.588-1.81h4.163a1 1 0 00.95-.69l1.286-3.958z"/></svg>
+          Chat Rating
+        </span>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 6a2 2 0 100-4 2 2 0 000 4zM10 12a2 2 0 100-4 2 2 0 000 4zM10 18a2 2 0 100-4 2 2 0 000 4z"/></svg>
+      </button>
+      <button type="button" class="flex w-full items-center justify-between rounded-lg px-2 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800">
+        <span class="flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/><path fill-rule="evenodd" d="M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg>
+          View Pages
+        </span>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 6a2 2 0 100-4 2 2 0 000 4zM10 12a2 2 0 100-4 2 2 0 000 4zM10 18a2 2 0 100-4 2 2 0 000 4z"/></svg>
+      </button>
+      <button type="button" class="flex w-full items-center justify-between rounded-lg px-2 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800">
+        <span class="font-medium">Shared Document</span>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+      </button>
+    </div>
+  </aside>
+
+</div>

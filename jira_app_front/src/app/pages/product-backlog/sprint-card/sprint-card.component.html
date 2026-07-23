@@ -1,0 +1,126 @@
+<div class="rounded-2xl border border-gray-200 bg-white shadow-theme-sm dark:border-gray-800 dark:bg-gray-900 overflow-hidden transition-all duration-300">
+  <!-- Sprint Header -->
+  <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+    <div class="flex items-center justify-between mb-2">
+      <div class="flex items-center gap-3">
+        <button
+          (click)="toggleCollapse()"
+          title="Toggle sprint details"
+          class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+        >
+          <svg
+            class="w-4 h-4 transition-transform duration-200"
+            [class.-rotate-90]="isCollapsed()"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+          </svg>
+        </button>
+        <h3 class="text-base font-semibold text-gray-800 dark:text-white">{{ sprint.name }}</h3>
+        <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full {{ statusColor }}">
+          {{ sprint.status || 'Planning' }}
+        </span>
+      </div>
+      <span class="text-xs font-medium text-gray-500 dark:text-gray-400">
+        {{ sprint.tickets.length }} tickets
+      </span>
+    </div>
+
+    <!-- Goal -->
+    @if (isEditingGoal) {
+      <div class="flex items-center gap-2 mt-2">
+        <input
+          type="text"
+          [(ngModel)]="editGoalValue"
+          placeholder="Enter sprint goal..."
+          class="flex-1 text-sm rounded-lg border border-gray-200 bg-transparent px-3 py-1.5 text-gray-700 placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:text-gray-300 dark:placeholder:text-white/30"
+          (keyup.enter)="saveGoal()"
+          (keyup.escape)="cancelEditGoal()"
+          #goalInput
+        />
+        <button
+          (click)="saveGoal()"
+          class="inline-flex items-center justify-center rounded-lg bg-brand-500 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-brand-600 transition-colors"
+        >
+          Save
+        </button>
+        <button
+          (click)="cancelEditGoal()"
+          class="inline-flex items-center justify-center rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors"
+        >
+          Cancel
+        </button>
+      </div>
+    } @else {
+      @if (sprint.goal) {
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{{ sprint.goal }}</p>
+      }
+    }
+
+    <!-- Progress Bar -->
+    <div class="mt-3">
+      <div class="flex items-center justify-between mb-1">
+        <span class="text-xs text-gray-500 dark:text-gray-400">Progress</span>
+        <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ completedTickets }}/{{ sprint.tickets.length }}</span>
+      </div>
+      <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+        <div
+          class="h-1.5 rounded-full transition-all duration-500"
+          [class.bg-brand-500]="progressPercent < 50"
+          [class.bg-orange-500]="progressPercent >= 50 && progressPercent < 80"
+          [class.bg-success-500]="progressPercent >= 80"
+          [style.width.%]="progressPercent"
+        ></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sprint Body - Ticket List -->
+  @if (!isCollapsed()) {
+    <div
+      cdkDropList
+      [id]="'sprint-' + sprint.id"
+      [cdkDropListData]="sprint.tickets"
+      (cdkDropListDropped)="onDrop($event)"
+      [cdkDropListConnectedTo]="connectedDropLists"
+      class="min-h-[120px] p-3 space-y-2 transition-colors"
+      cdkDropListOrientation="vertical"
+    >
+      @for (ticket of sprint.tickets; track trackByTicketId($index, ticket)) {
+        <div cdkDrag>
+          <app-ticket-card [ticket]="mapToTicket(ticket)" />
+        </div>
+      } @empty {
+        <div class="flex items-center justify-center h-20 text-xs text-gray-400 dark:text-gray-500 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl">
+          Drop tickets here
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Sprint Footer -->
+  @if (!isCollapsed()) {
+    <div class="px-5 py-3 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
+      @if (sprint.goal && !isEditingGoal) {
+        <button
+          (click)="startEditGoal()"
+          class="inline-flex items-center gap-1.5 text-xs font-medium text-brand-500 hover:text-brand-600 dark:text-brand-400 dark:hover:text-brand-300 transition-colors"
+        >
+          <svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+          </svg>
+          Edit Goal
+        </button>
+      }
+      @if (sprint.startDate || sprint.endDate) {
+        <span class="text-xs text-gray-400 dark:text-gray-500">
+          {{ sprint.startDate ? (sprint.startDate | date:'shortDate') : '' }}
+          {{ sprint.startDate && sprint.endDate ? ' - ' : '' }}
+          {{ sprint.endDate ? (sprint.endDate | date:'shortDate') : '' }}
+        </span>
+      }
+    </div>
+  }
+</div>
+

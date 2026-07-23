@@ -1,0 +1,39 @@
+<div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 shadow-theme-sm hover:shadow-theme-md transition-all duration-200 cursor-grab active:cursor-grabbing">
+  <div class="flex items-start justify-between mb-2">
+    <h4 class="text-sm font-semibold text-gray-800 dark:text-white leading-5">{{ ticket.title }}</h4>
+    <span class="text-[10px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap ml-2 {{ priorityColor }}">
+      {{ ticket.priority }}
+    </span>
+  </div>
+
+  @if (ticket.description) {
+    <p class="text-xs text-gray-500 dark:text-gray-400 mb-3 line-clamp-2">{{ ticket.description }}</p>
+  }
+
+  @if (ticket.labels.length > 0) {
+    <div class="flex flex-wrap gap-1.5 mb-3">
+      @for (label of ticket.labels; track $index) {
+        <span class="text-[10px] font-medium px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+          {{ label }}
+        </span>
+      }
+    </div>
+  }
+
+  <div class="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-800">
+    <div class="flex items-center gap-2">
+      <img
+        [src]="ticket.assignedUser.avatar"
+        [alt]="ticket.assignedUser.name"
+        class="w-6 h-6 rounded-full object-cover"
+      />
+      <span class="text-xs text-gray-500 dark:text-gray-400">{{ ticket.assignedUser.name }}</span>
+    </div>
+    <div class="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M8 2C8.41421 2 8.75 2.33579 8.75 2.75V3.75H15.25V2.75C15.25 2.33579 15.5858 2 16 2C16.4142 2 16.75 2.33579 16.75 2.75V3.75H18.5C19.7426 3.75 20.75 4.75736 20.75 6V9V19C20.75 20.2426 19.7426 21.25 18.5 21.25H5.5C4.25736 21.25 3.25 20.2426 3.25 19V9V6C3.25 4.75736 4.25736 3.75 5.5 3.75H7.25V2.75C7.25 2.33579 7.58579 2 8 2Z" fill="currentColor"/>
+      </svg>
+      <span>{{ ticket.dueDate }}</span>
+    </div>
+  </div>
+</div>

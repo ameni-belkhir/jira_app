@@ -1,0 +1,12 @@
+D:\5ArcTic\stage\Application\jira_app_back\API\bin\Debug\net8.0\Presentation.deps.json
+D:\5ArcTic\stage\Application\jira_app_back\API\bin\Debug\net8.0\Presentation.dll
+D:\5ArcTic\stage\Application\jira_app_back\API\bin\Debug\net8.0\Presentation.pdb
+D:\5ArcTic\stage\Application\jira_app_back\API\obj\Debug\net8.0\Presentation.csproj.AssemblyReference.cache
+D:\5ArcTic\stage\Application\jira_app_back\API\obj\Debug\net8.0\Presentation.GeneratedMSBuildEditorConfig.editorconfig
+D:\5ArcTic\stage\Application\jira_app_back\API\obj\Debug\net8.0\Presentation.AssemblyInfoInputs.cache
+D:\5ArcTic\stage\Application\jira_app_back\API\obj\Debug\net8.0\Presentation.AssemblyInfo.cs
+D:\5ArcTic\stage\Application\jira_app_back\API\obj\Debug\net8.0\Presentation.csproj.CoreCompileInputs.cache
+D:\5ArcTic\stage\Application\jira_app_back\API\obj\Debug\net8.0\Presentation.dll
+D:\5ArcTic\stage\Application\jira_app_back\API\obj\Debug\net8.0\refint\Presentation.dll
+D:\5ArcTic\stage\Application\jira_app_back\API\obj\Debug\net8.0\Presentation.pdb
+D:\5ArcTic\stage\Application\jira_app_back\API\obj\Debug\net8.0\ref\Presentation.dll
