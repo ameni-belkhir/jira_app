@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -6,6 +6,8 @@ import { finalize, switchMap } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { UserService, UserProfile, UpdateUserRequest } from '../../services/user.service';
 import { AuthService } from '../../services/auth.service';
+import { NotificationService } from '../../shared/services/notification.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-profile',
@@ -37,6 +39,8 @@ export class ProfileComponent implements OnInit {
   private readonly MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
   private readonly ACCEPTED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 
+  private notification = inject(NotificationService);
+
   constructor(
     private userService: UserService,
     private authService: AuthService,
@@ -51,15 +55,20 @@ export class ProfileComponent implements OnInit {
     const userId = this.authService.getUserId();
     if (!userId) {
       this.error.set('User not authenticated.');
+      this.notification.error('Utilisateur non authentifié.');
       return;
     }
 
     this.loading.set(true);
     this.error.set('');
     this.success.set('');
+    this.notification.loading('Chargement du profil…');
 
     this.userService.getUser(userId)
-      .pipe(finalize(() => this.loading.set(false)))
+      .pipe(finalize(() => {
+        this.loading.set(false);
+        this.notification.dismiss();
+      }))
       .subscribe({
         next: (user) => {
           this.user.set(user);
@@ -68,6 +77,7 @@ export class ProfileComponent implements OnInit {
           if (user.profileImage) {
             this.imagePreview = this.getProfileImageUrl(user.profileImage);
           }
+          this.notification.success('Profil chargé avec succès.');
         },
         error: (err: HttpErrorResponse) => this.handleLoadError(err)
       });
@@ -75,23 +85,25 @@ export class ProfileComponent implements OnInit {
 
   private getProfileImageUrl(path: string): string {
     if (path.startsWith('http') || path.startsWith('data:')) return path;
-    // If it's a relative path, prepend the API base URL
-    const baseUrl = 'https://localhost:7207';
+    // Extract backend base (no /api suffix) from apiUrl
+    const baseUrl = environment.apiUrl.replace('/api', '');
     return path.startsWith('/') ? `${baseUrl}${path}` : `${baseUrl}/${path}`;
   }
 
   private handleLoadError(err: HttpErrorResponse): void {
-    if (err.status === 0) {
-      this.error.set('Cannot connect to server. Please check your connection.');
-    } else if (err.status === 401 || err.status === 403) {
-      this.error.set('Session expired. Please log in again.');
+    const msg = err.status === 0
+      ? 'Impossible de se connecter au serveur.'
+      : err.status === 401 || err.status === 403
+        ? 'Session expirée. Veuillez vous reconnecter.'
+        : err.status === 404
+          ? 'Profil utilisateur introuvable.'
+          : err.status === 500
+            ? 'Serveur indisponible.'
+            : 'Échec du chargement du profil.';
+    this.error.set(msg);
+    this.notification.error(msg);
+    if (err.status === 401 || err.status === 403) {
       this.router.navigate(['/login']);
-    } else if (err.status === 404) {
-      this.error.set('User profile not found.');
-    } else if (err.status === 500) {
-      this.error.set('Server unavailable. Please try again later.');
-    } else {
-      this.error.set('Failed to load profile. Please try again.');
     }
   }
 
@@ -106,22 +118,20 @@ export class ProfileComponent implements OnInit {
 
     const file = input.files[0];
 
-    // Validate type
     if (!this.ACCEPTED_TYPES.includes(file.type)) {
-      this.imageError = 'Invalid format. Accepted: JPG, JPEG, PNG, WEBP.';
+      this.imageError = 'Format invalide. Accepté : JPG, JPEG, PNG, WEBP.';
+      this.notification.validation('Format de fichier invalide.');
       return;
     }
 
-    // Validate size
     if (file.size > this.MAX_FILE_SIZE) {
-      this.imageError = 'File too large. Maximum size is 5 MB.';
+      this.imageError = 'Fichier trop volumineux. Maximum 5 Mo.';
+      this.notification.validation('Fichier trop volumineux. Maximum 5 Mo.');
       return;
     }
 
-    // Store file for later upload
     this.selectedImage = file;
 
-    // Create preview
     const reader = new FileReader();
     reader.onload = () => {
       this.imagePreview = reader.result as string;
@@ -142,23 +152,24 @@ export class ProfileComponent implements OnInit {
     this.success.set('');
 
     if (!this.nom.trim() || !this.prenom.trim()) {
+      this.notification.validation('Veuillez remplir tous les champs obligatoires.');
       return;
     }
 
     const userId = this.authService.getUserId();
     if (!userId) {
       this.error.set('User not authenticated.');
+      this.notification.error('Utilisateur non authentifié.');
       return;
     }
 
     this.saving.set(true);
+    this.notification.loading('Enregistrement du profil…');
 
-    // Step 1: Upload image if selected
     const imageUpload$ = this.selectedImage
       ? this.userService.uploadProfilePicture(this.selectedImage).pipe(
           switchMap((response) => {
             this.imagePreview = this.getProfileImageUrl(response.profileImageUrl);
-            // Update header/dropdown avatar via localStorage event
             localStorage.setItem('userAvatar', this.imagePreview);
             window.dispatchEvent(new Event('storage'));
             return this.userService.updateUser(userId, {
@@ -175,7 +186,10 @@ export class ProfileComponent implements OnInit {
         });
 
     imageUpload$
-      .pipe(finalize(() => this.saving.set(false)))
+      .pipe(finalize(() => {
+        this.saving.set(false);
+        this.notification.dismiss();
+      }))
       .subscribe({
         next: (updatedUser) => {
           this.user.set(updatedUser);
@@ -183,30 +197,33 @@ export class ProfileComponent implements OnInit {
           this.submitted = false;
           this.selectedImage = null;
 
-          // Update localStorage for header/dropdown to reflect changes
           const fullName = `${updatedUser.prenom || ''} ${updatedUser.nom || ''}`.trim();
           if (fullName) localStorage.setItem('userName', fullName);
           localStorage.setItem('userAvatar', this.getProfileImageUrl(updatedUser.profileImage || ''));
           window.dispatchEvent(new Event('storage'));
+
+          this.notification.success('Profil mis à jour avec succès.');
         },
         error: (err: HttpErrorResponse) => this.handleSaveError(err)
       });
   }
 
   private handleSaveError(err: HttpErrorResponse): void {
-    if (err.status === 0) {
-      this.error.set('Cannot connect to server. Please check your connection.');
-    } else if (err.status === 400) {
-      this.error.set('Invalid data. Please check your inputs.');
-    } else if (err.status === 401 || err.status === 403) {
-      this.error.set('Session expired. Please log in again.');
+    const msg = err.status === 0
+      ? 'Impossible de se connecter au serveur.'
+      : err.status === 400
+        ? 'Données invalides. Vérifiez vos champs.'
+        : err.status === 401 || err.status === 403
+          ? 'Session expirée. Veuillez vous reconnecter.'
+          : err.status === 404
+            ? 'Utilisateur introuvable.'
+            : err.status === 500
+              ? 'Serveur indisponible.'
+              : 'Échec de la mise à jour du profil.';
+    this.error.set(msg);
+    this.notification.error(msg);
+    if (err.status === 401 || err.status === 403) {
       this.router.navigate(['/login']);
-    } else if (err.status === 404) {
-      this.error.set('User not found.');
-    } else if (err.status === 500) {
-      this.error.set('Server unavailable. Please try again later.');
-    } else {
-      this.error.set('Failed to update profile. Please try again.');
     }
   }
 }

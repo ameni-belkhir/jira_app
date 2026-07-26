@@ -38,9 +38,20 @@ export class UserService {
     return this.http.put<UserProfile>(`${this.apiUrl}/Users/${id}`, data);
   }
 
-  uploadProfilePicture(file: File): Observable<UploadProfileImageResponse> {
+uploadProfilePicture(file: File): Observable<UploadProfileImageResponse> {
     const formData = new FormData();
-    formData.append('image', file, file.name);
+    formData.append('file', file, file.name);
+
+    // Debug: log FormData keys and values
+    console.log('[UploadProfilePicture] FormData entries:');
+    formData.forEach((value, key) => {
+      if (value instanceof File) {
+        console.log(`  ${key}: File(name=${value.name}, size=${value.size}, type=${value.type})`);
+      } else {
+        console.log(`  ${key}: ${value}`);
+      }
+    });
+
     return this.http.post<UploadProfileImageResponse>(`${this.apiUrl}/Users/upload-profile-picture`, formData);
   }
 }

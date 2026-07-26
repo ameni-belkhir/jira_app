@@ -13,6 +13,7 @@ export interface BacklogTicket {
   assignedToAvatar?: string;
   creationDate?: string;
   sprintId?: number | null;
+  color?: string;
 }
 
 export interface BacklogSprint {
@@ -27,7 +28,7 @@ export interface BacklogSprint {
 }
 
 export interface BacklogResponse {
-  unassignedTickets: BacklogTicket[];
+  backlogTickets: BacklogTicket[];
   sprints: BacklogSprint[];
 }
 
@@ -52,20 +53,29 @@ export interface MoveTicketRequest {
   sprintId: number | null;
 }
 
+export interface CreateTicketRequest {
+  titre: string;
+  description: string | null;
+  priority: string;          // Backend expects: 'BAS' | 'MOYENNE' | 'HAUTE' | 'CRITIQUE'
+  projectId: number;
+  creatorId: number;
+  sprintId?: number | null;
+  color?: string;
+}
+
 export interface BackendProject {
   id: number;
-  name: string;
+  nom: string;
   description?: string;
-  status?: string;
-  ticketCount?: number;
-  totalTickets?: number;
-  dueDate?: string;
-  teamMembers?: string[];
+  responsable?: string;
+  memberIds: number[];
 }
 
 export interface CreateProjectRequest {
-  name: string;
+  nom: string;
   description: string;
+  responsable: string;
+  memberIds: number[];
 }
 
 @Injectable({
@@ -77,7 +87,11 @@ export class ProjectService {
   constructor(private http: HttpClient) {}
 
   getProjects(): Observable<BackendProject[]> {
-    return this.http.get<BackendProject[]>(`${this.apiUrl}/projects`);
+    return this.http.get<BackendProject[]>(`${this.apiUrl}/Projects`);
+  }
+
+  getProject(id: number): Observable<BackendProject> {
+    return this.http.get<BackendProject>(`${this.apiUrl}/Projects/${id}`);
   }
 
   createProject(data: CreateProjectRequest): Observable<BackendProject> {
@@ -102,6 +116,10 @@ export class ProjectService {
 
   moveTicketToSprint(ticketId: number, data: MoveTicketRequest): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/tickets/${ticketId}/move-to-sprint`, data);
+  }
+
+  createTicket(data: CreateTicketRequest): Observable<BacklogTicket> {
+    return this.http.post<BacklogTicket>(`${this.apiUrl}/Tickets`, data);
   }
 }
 

@@ -152,6 +152,9 @@
           "assetTargetFallback": true,
           "warn": true,
           "frameworkReferences": {
+            "Microsoft.AspNetCore.App": {
+              "privateAssets": "none"
+            },
             "Microsoft.NETCore.App": {
               "privateAssets": "all"
             }
@@ -258,6 +261,9 @@
             "framework": "net8.0",
             "targetAlias": "net8.0",
             "projectReferences": {
+              "D:\\5ArcTic\\stage\\Application\\jira_app_back\\Application\\Application.csproj": {
+                "projectPath": "D:\\5ArcTic\\stage\\Application\\jira_app_back\\Application\\Application.csproj"
+              },
               "D:\\5ArcTic\\stage\\Application\\jira_app_back\\Domain\\Domain.csproj": {
                 "projectPath": "D:\\5ArcTic\\stage\\Application\\jira_app_back\\Domain\\Domain.csproj"
               }
@@ -281,10 +287,6 @@
           "framework": "net8.0",
           "targetAlias": "net8.0",
           "dependencies": {
-            "MailKit": {
-              "target": "Package",
-              "version": "[4.16.0, )"
-            },
             "Microsoft.EntityFrameworkCore": {
               "target": "Package",
               "version": "[8.0.11, )"

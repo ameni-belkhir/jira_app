@@ -1,9 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { AuthPageLayoutComponent } from '../../shared/layout/auth-page-layout/auth-page-layout.component';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
+import { NotificationService } from '../../shared/services/notification.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { finalize } from 'rxjs';
 
@@ -25,6 +26,8 @@ export class VerifyEmailComponent implements OnInit {
   error = '';
   loading = false;
   email = '';
+
+  private notification = inject(NotificationService);
 
   constructor(
     private fb: FormBuilder,
@@ -55,30 +58,36 @@ export class VerifyEmailComponent implements OnInit {
     this.error = '';
 
     if (this.verifyForm.invalid) {
+      this.notification.validation('Veuillez entrer le code de vérification.');
       return;
     }
 
     this.loading = true;
+    this.notification.loading('Vérification du code…');
 
     this.authService.verifyCode({
       email: this.email,
       code: this.verifyForm.value.code
     })
-      .pipe(finalize(() => this.loading = false))
+      .pipe(finalize(() => {
+        this.loading = false;
+        this.notification.dismiss();
+      }))
       .subscribe({
         next: () => {
+          this.notification.success('Email vérifié avec succès ! Vous pouvez maintenant vous connecter.');
           this.router.navigate(['/login']);
         },
         error: (err: HttpErrorResponse) => {
-          if (err.status === 400) {
-            this.error = 'Invalid or expired verification code. Please try again.';
-          } else if (err.status === 500) {
-            this.error = 'Server unavailable. Please try again later.';
-          } else if (err.status === 0) {
-            this.error = 'Cannot connect to server. Please check your connection.';
-          } else {
-            this.error = 'An unexpected error occurred. Please try again.';
-          }
+          const msg = err.status === 400
+            ? 'Code de vérification invalide ou expiré.'
+            : err.status === 500
+              ? 'Serveur indisponible.'
+              : err.status === 0
+                ? 'Impossible de se connecter au serveur.'
+                : 'Une erreur inattendue est survenue.';
+          this.error = msg;
+          this.notification.error(msg);
         }
       });
   }

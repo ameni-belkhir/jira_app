@@ -1,9 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { AuthPageLayoutComponent } from '../../shared/layout/auth-page-layout/auth-page-layout.component';
 import { Router, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AuthService, RegisterRequest } from '../../services/auth.service';
+import { NotificationService } from '../../shared/services/notification.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { finalize } from 'rxjs';
 
@@ -25,6 +26,8 @@ export class SignupComponent {
   error = '';
   loading = false;
 
+  private notification = inject(NotificationService);
+
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
@@ -39,6 +42,11 @@ export class SignupComponent {
     }, {
       validators: this.passwordMatchValidator
     });
+
+    // Redirect to dashboard if already authenticated
+    if (this.authService.isAuthenticated) {
+      this.router.navigate(['/dashboard'], { replaceUrl: true });
+    }
   }
 
   passwordMatchValidator(g: FormGroup) {
@@ -56,10 +64,12 @@ export class SignupComponent {
     this.error = '';
 
     if (this.signupForm.invalid) {
+      this.notification.validation('Veuillez remplir tous les champs correctement.');
       return;
     }
 
     this.loading = true;
+    this.notification.loading('Création du compte…');
 
     const registerData: RegisterRequest = {
       nom: this.signupForm.value.nom,
@@ -70,22 +80,27 @@ export class SignupComponent {
     };
 
     this.authService.register(registerData)
-      .pipe(finalize(() => this.loading = false))
+      .pipe(finalize(() => {
+        this.loading = false;
+        this.notification.dismiss();
+      }))
       .subscribe({
         next: () => {
+          this.notification.success('Compte créé avec succès ! Vérifiez votre email.');
           this.router.navigate(['/verify-email'], { queryParams: { email: this.signupForm.value.email } });
         },
         error: (err: HttpErrorResponse) => {
-          if (err.status === 400) {
-            this.error = 'Invalid request. Please check your input.';
-          } else if (err.status === 500) {
-            this.error = 'Server unavailable. Please try again later.';
-          } else if (err.status === 0) {
-            this.error = 'Cannot connect to server. Please check your connection.';
-          } else {
-            this.error = 'An unexpected error occurred. Please try again.';
-          }
+          const msg = err.status === 400
+            ? 'Requête invalide. Vérifiez vos informations.'
+            : err.status === 500
+              ? 'Serveur indisponible.'
+              : err.status === 0
+                ? 'Impossible de se connecter au serveur.'
+                : 'Une erreur inattendue est survenue.';
+          this.error = msg;
+          this.notification.error(msg);
         }
       });
   }
 }
+

@@ -13,3 +13,4 @@ D:\5ArcTic\stage\Application\jira_app_back\Application\obj\Debug\net8.0\Applicat
 D:\5ArcTic\stage\Application\jira_app_back\Application\obj\Debug\net8.0\refint\Application.dll
 D:\5ArcTic\stage\Application\jira_app_back\Application\obj\Debug\net8.0\Application.pdb
 D:\5ArcTic\stage\Application\jira_app_back\Application\obj\Debug\net8.0\ref\Application.dll
+D:\5ArcTic\stage\Application\jira_app_back\Application\obj\Debug\net8.0\Application.sourcelink.json

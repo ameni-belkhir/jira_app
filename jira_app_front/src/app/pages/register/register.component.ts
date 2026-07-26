@@ -1,0 +1,140 @@
+import { Component, OnInit, inject } from '@angular/core';
+import { Router, ActivatedRoute, RouterModule } from '@angular/router';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { AuthService, RegisterRequest } from '../../services/auth.service';
+import { NotificationService } from '../../shared/services/notification.service';
+import { HttpErrorResponse } from '@angular/common/http';
+import { finalize } from 'rxjs';
+import { AuthPageLayoutComponent } from '../../shared/layout/auth-page-layout/auth-page-layout.component';
+
+@Component({
+  selector: 'app-register',
+  standalone: true,
+  imports: [
+    AuthPageLayoutComponent,
+    RouterModule,
+    ReactiveFormsModule,
+    CommonModule
+  ],
+  templateUrl: './register.component.html',
+  styles: ``
+})
+export class RegisterComponent implements OnInit {
+  registerForm: FormGroup;
+  submitted = false;
+  error = '';
+  loading = false;
+
+  // URL params from invitation
+  token: string | null = null;
+  invitationEmail: string | null = null;
+  invitationRole: string | null = null;
+  projectId: number | null = null;
+
+  private notification = inject(NotificationService);
+
+  constructor(
+    private fb: FormBuilder,
+    private authService: AuthService,
+    private router: Router,
+    private route: ActivatedRoute
+  ) {
+    this.registerForm = this.fb.group({
+      prenom: ['', [Validators.required, Validators.minLength(2)]],
+      nom: ['', [Validators.required, Validators.minLength(2)]],
+      email: [{ value: '', disabled: false }, [Validators.required, Validators.email]],
+      password: ['', [Validators.required, Validators.minLength(6)]],
+      confirmPassword: ['', [Validators.required]]
+    }, {
+      validators: this.passwordMatchValidator
+    });
+  }
+
+  ngOnInit(): void {
+    // Redirect to dashboard if already authenticated
+    if (this.authService.isAuthenticated) {
+      this.router.navigate(['/dashboard'], { replaceUrl: true });
+      return;
+    }
+
+    this.route.queryParams.subscribe(params => {
+      this.token = params['token'] || null;
+      this.invitationEmail = params['email'] || null;
+      // TODO: RÉACTIVER — Décommenter quand le système d'invitation sera implémenté
+      // this.invitationRole = params['role'] || null;
+      this.projectId = params['projectId'] ? Number(params['projectId']) : null;
+
+      if (this.invitationEmail) {
+        this.registerForm.patchValue({ email: this.invitationEmail });
+      }
+    });
+  }
+
+  passwordMatchValidator(g: FormGroup) {
+    const password = g.get('password')?.value;
+    const confirm = g.get('confirmPassword')?.value;
+    return password === confirm ? null : { mismatch: true };
+  }
+
+  get f() {
+    return this.registerForm.controls;
+  }
+
+  onSubmit(): void {
+    this.submitted = true;
+    this.error = '';
+
+    if (this.registerForm.invalid) {
+      this.notification.validation('Veuillez remplir tous les champs correctement.');
+      return;
+    }
+
+    this.loading = true;
+    this.notification.loading('Inscription en cours…');
+
+    // Map invitation role to roleId
+    let roleId = 1;
+    if (this.invitationRole === 'Senior') {
+      roleId = 2;
+    } else if (this.invitationRole === 'Developer') {
+      roleId = 3;
+    }
+
+    const registerData: RegisterRequest = {
+      nom: this.registerForm.value.nom,
+      prenom: this.registerForm.value.prenom,
+      email: this.registerForm.value.email,
+      password: this.registerForm.value.password,
+      roleId: roleId
+    };
+
+    this.authService.register(registerData)
+      .pipe(finalize(() => {
+        this.loading = false;
+        this.notification.dismiss();
+      }))
+      .subscribe({
+        next: () => {
+          this.notification.success('Inscription réussie ! Vérifiez votre email.');
+          const queryParams: any = { email: this.registerForm.value.email };
+          if (this.projectId) {
+            queryParams.projectId = this.projectId;
+          }
+          this.router.navigate(['/verify-email'], { queryParams });
+        },
+        error: (err: HttpErrorResponse) => {
+          const msg = err.status === 400
+            ? 'Requête invalide. Vérifiez vos informations.'
+            : err.status === 500
+              ? 'Serveur indisponible.'
+              : err.status === 0
+                ? 'Impossible de se connecter au serveur.'
+                : 'Une erreur inattendue est survenue.';
+          this.error = msg;
+          this.notification.error(msg);
+        }
+      });
+  }
+}
+

@@ -15,3 +15,6 @@ D:\5ArcTic\stage\Application\jira_app_back\Infrastructure\obj\Debug\net8.0\refin
 D:\5ArcTic\stage\Application\jira_app_back\Infrastructure\obj\Debug\net8.0\Infrastructure.pdb
 D:\5ArcTic\stage\Application\jira_app_back\Infrastructure\obj\Debug\net8.0\Infrastructure.genruntimeconfig.cache
 D:\5ArcTic\stage\Application\jira_app_back\Infrastructure\obj\Debug\net8.0\ref\Infrastructure.dll
+D:\5ArcTic\stage\Application\jira_app_back\Infrastructure\obj\Debug\net8.0\Infrastructure.sourcelink.json
+D:\5ArcTic\stage\Application\jira_app_back\Infrastructure\bin\Debug\net8.0\Application.dll
+D:\5ArcTic\stage\Application\jira_app_back\Infrastructure\bin\Debug\net8.0\Application.pdb

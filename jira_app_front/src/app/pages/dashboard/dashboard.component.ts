@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, inject } from '@angular/core';
 import { RouterModule, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -6,6 +6,7 @@ import { finalize } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ProjectCardComponent } from '../projects/project-card/project-card.component';
 import { ProjectService, BackendProject, CreateProjectRequest } from '../../services/project.service';
+import { NotificationService } from '../../shared/services/notification.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -24,8 +25,11 @@ export class DashboardComponent implements OnInit {
   showCreateModal = signal(false);
   newProjectName = '';
   newProjectDescription = '';
+  newProjectResponsable = '';
   savingProject = signal(false);
   projectError = '';
+
+  private notification = inject(NotificationService);
 
   constructor(
     private projectService: ProjectService,
@@ -39,23 +43,30 @@ export class DashboardComponent implements OnInit {
   loadProjects(): void {
     this.loading.set(true);
     this.error.set('');
+    this.notification.loading('Chargement des projets…');
 
     this.projectService.getProjects()
-      .pipe(finalize(() => this.loading.set(false)))
+      .pipe(finalize(() => {
+        this.loading.set(false);
+        this.notification.dismiss();
+      }))
       .subscribe({
         next: (data) => {
           this.projects.set(data);
+          this.notification.success('Projets chargés avec succès.');
         },
         error: (err: HttpErrorResponse) => {
-          if (err.status === 0) {
-            this.error.set('Cannot connect to server. Please check your connection.');
-          } else if (err.status === 401 || err.status === 403) {
-            this.error.set('Session expired. Please log in again.');
+          const msg = err.status === 0
+            ? 'Impossible de se connecter au serveur.'
+            : err.status === 401 || err.status === 403
+              ? 'Session expirée.'
+              : err.status === 500
+                ? 'Serveur indisponible.'
+                : 'Échec du chargement des projets.';
+          this.error.set(msg);
+          this.notification.error(msg);
+          if (err.status === 401 || err.status === 403) {
             this.router.navigate(['/login']);
-          } else if (err.status === 500) {
-            this.error.set('Server unavailable. Please try again later.');
-          } else {
-            this.error.set('Failed to load projects. Please try again.');
           }
         }
       });
@@ -65,6 +76,7 @@ export class DashboardComponent implements OnInit {
   openCreateProjectModal(): void {
     this.newProjectName = '';
     this.newProjectDescription = '';
+    this.newProjectResponsable = '';
     this.projectError = '';
     this.showCreateModal.set(true);
   }
@@ -75,35 +87,47 @@ export class DashboardComponent implements OnInit {
 
   onCreateProject(): void {
     if (!this.newProjectName.trim()) {
-      this.projectError = 'Project name is required.';
+      this.projectError = 'Le nom du projet est requis.';
+      this.notification.validation('Le nom du projet est requis.');
       return;
     }
 
     this.savingProject.set(true);
     this.projectError = '';
+    this.notification.loading('Création du projet…');
 
     const data: CreateProjectRequest = {
-      name: this.newProjectName.trim(),
-      description: this.newProjectDescription.trim()
+      nom: this.newProjectName.trim(),
+      description: this.newProjectDescription.trim(),
+      responsable: this.newProjectResponsable.trim(),
+      memberIds: []
     };
 
     this.projectService.createProject(data)
-      .pipe(finalize(() => this.savingProject.set(false)))
+      .pipe(finalize(() => {
+        this.savingProject.set(false);
+        this.notification.dismiss();
+      }))
       .subscribe({
         next: () => {
           this.showCreateModal.set(false);
-          this.loadProjects(); // Refresh dashboard
+          this.loadProjects();
+          this.notification.success('Projet créé avec succès.');
         },
         error: (err: HttpErrorResponse) => {
-          if (err.status === 400) {
-            this.projectError = 'Invalid project data. Please check your inputs.';
-          } else if (err.status === 500) {
-            this.projectError = 'Server unavailable. Please try again later.';
-          } else {
-            this.projectError = 'Failed to create project. Please try again.';
-          }
+          const msg = err.status === 400
+            ? 'Données du projet invalides.'
+            : err.status === 500
+              ? 'Serveur indisponible.'
+              : 'Échec de la création du projet.';
+          this.projectError = msg;
+          this.notification.error(msg);
         }
       });
+  }
+
+  goToProjectBacklog(project: BackendProject): void {
+    this.router.navigate(['/projects', project.id, 'backlog']);
   }
 
   onBackdropClick(event: MouseEvent): void {

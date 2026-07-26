@@ -1,72 +1,112 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ProjectCardComponent } from './project-card/project-card.component';
-import type { Project } from '../dashboard/dashboard.component';
+import { ProjectService, BackendProject, CreateProjectRequest } from '../../services/project.service';
+import { finalize } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   selector: 'app-projects',
   standalone: true,
-  imports: [RouterModule, CommonModule, ProjectCardComponent],
+  imports: [RouterModule, CommonModule, FormsModule, ProjectCardComponent],
   templateUrl: './projects.component.html',
   styles: ``
 })
-export class ProjectsComponent {
-  projects: Project[] = [
-    {
-      id: 1,
-      name: 'CRM System',
-      description: 'Customer relationship management platform with analytics and reporting.',
-      ticketCount: 18,
-      totalTickets: 24,
-      status: 'In Progress',
-      statusColor: 'text-brand-500',
-      teamMembers: ['/images/user/user-01.jpg', '/images/user/user-02.jpg', '/images/user/user-03.jpg'],
-      dueDate: 'Dec 15, 2026'
-    },
-    {
-      id: 2,
-      name: 'E-Commerce Website',
-      description: 'Online shopping platform with payment gateway integration.',
-      ticketCount: 12,
-      totalTickets: 30,
-      status: 'Active',
-      statusColor: 'text-success-500',
-      teamMembers: ['/images/user/user-04.jpg', '/images/user/user-05.jpg'],
-      dueDate: 'Jan 10, 2027'
-    },
-    {
-      id: 3,
-      name: 'Mobile Application',
-      description: 'Cross-platform mobile app built with Flutter for iOS and Android.',
-      ticketCount: 7,
-      totalTickets: 18,
-      status: 'Planning',
-      statusColor: 'text-orange-500',
-      teamMembers: ['/images/user/user-06.jpg', '/images/user/user-07.jpg', '/images/user/user-08.jpg'],
-      dueDate: 'Feb 28, 2027'
-    },
-    {
-      id: 4,
-      name: 'Internal HR',
-      description: 'Employee management system with payroll and leave tracking.',
-      ticketCount: 22,
-      totalTickets: 22,
-      status: 'Completed',
-      statusColor: 'text-success-600',
-      teamMembers: ['/images/user/user-09.jpg', '/images/user/user-10.jpg'],
-      dueDate: 'Nov 5, 2026'
-    },
-    {
-      id: 5,
-      name: 'Inventory System',
-      description: 'Warehouse inventory tracking with barcode scanning and real-time updates.',
-      ticketCount: 9,
-      totalTickets: 15,
-      status: 'In Review',
-      statusColor: 'text-purple-500',
-      teamMembers: ['/images/user/user-11.jpg', '/images/user/user-12.jpg', '/images/user/user-13.jpg'],
-      dueDate: 'Mar 20, 2027'
+export class ProjectsComponent implements OnInit {
+  projects = signal<BackendProject[]>([]);
+  loading = signal(false);
+  error = signal('');
+
+  // Create project modal
+  showCreateModal = signal(false);
+  newProjectName = '';
+  newProjectDescription = '';
+  newProjectResponsable = '';
+  savingProject = signal(false);
+  projectError = '';
+
+  constructor(private projectService: ProjectService) {}
+
+  ngOnInit(): void {
+    this.loadProjects();
+  }
+
+  loadProjects(): void {
+    this.loading.set(true);
+    this.error.set('');
+
+    this.projectService.getProjects()
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: (data) => {
+          this.projects.set(data);
+        },
+        error: (err: HttpErrorResponse) => {
+          if (err.status === 0) {
+            this.error.set('Cannot connect to server. Please check your connection.');
+          } else if (err.status === 500) {
+            this.error.set('Server unavailable. Please try again later.');
+          } else {
+            this.error.set('Failed to load projects. Please try again.');
+          }
+        }
+      });
+  }
+
+  // Open create project modal
+  openCreateProjectModal(): void {
+    this.newProjectName = '';
+    this.newProjectDescription = '';
+    this.newProjectResponsable = '';
+    this.projectError = '';
+    this.showCreateModal.set(true);
+  }
+
+  closeCreateProjectModal(): void {
+    this.showCreateModal.set(false);
+  }
+
+  onCreateProject(): void {
+    if (!this.newProjectName.trim()) {
+      this.projectError = 'Project name is required.';
+      return;
     }
-  ];
+
+    this.savingProject.set(true);
+    this.projectError = '';
+
+    const data: CreateProjectRequest = {
+      nom: this.newProjectName.trim(),
+      description: this.newProjectDescription.trim(),
+      responsable: this.newProjectResponsable.trim(),
+      memberIds: []
+    };
+
+    this.projectService.createProject(data)
+      .pipe(finalize(() => this.savingProject.set(false)))
+      .subscribe({
+        next: () => {
+          this.showCreateModal.set(false);
+          this.loadProjects();
+        },
+        error: (err: HttpErrorResponse) => {
+          if (err.status === 400) {
+            this.projectError = 'Invalid project data. Please check your inputs.';
+          } else if (err.status === 500) {
+            this.projectError = 'Server unavailable. Please try again later.';
+          } else {
+            this.projectError = 'Failed to create project. Please try again.';
+          }
+        }
+      });
+  }
+
+  onBackdropClick(event: MouseEvent): void {
+    if ((event.target as HTMLElement).classList.contains('modal-backdrop')) {
+      this.closeCreateProjectModal();
+    }
+  }
 }
+

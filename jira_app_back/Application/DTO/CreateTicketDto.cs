@@ -16,8 +16,13 @@ namespace Application.DTO
 
         public int? ProjectId { get; set; }
 
+        public int? SprintId { get; set; }
+
         public string? Status { get; set; }
 
         public string? Priority { get; set; }
+
+        // Couleur optionnelle (hex), ex: "#ff0000"
+        public string? Color { get; set; } = "#ffffff";
     }
 }

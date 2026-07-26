@@ -6,7 +6,7 @@
   <div class="flex items-start justify-between mb-4">
     <div>
       <h3 class="text-lg font-semibold text-gray-800 dark:text-white group-hover:text-brand-500 transition-colors">
-        {{ p.name }}
+        {{ p.nom }}
       </h3>
       @if (p.description) {
         <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
@@ -14,69 +14,24 @@
         </p>
       }
     </div>
-    @if (p.status) {
-      <span class="text-xs font-medium px-2.5 py-1 rounded-full border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 whitespace-nowrap ml-3">
-        {{ p.status }}
-      </span>
-    }
   </div>
 
-  <!-- Progress Bar -->
-  <div class="mb-4">
-    <div class="flex items-center justify-between mb-1.5">
-      <span class="text-xs text-gray-500 dark:text-gray-400">Progress</span>
-      <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ progressPercent }}%</span>
-    </div>
-    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-      <div
-        class="h-2 rounded-full transition-all duration-500"
-        [ngClass]="{
-          'bg-brand-500': progressPercent < 50,
-          'bg-orange-500': progressPercent >= 50 && progressPercent < 80,
-          'bg-success-500': progressPercent >= 80
-        }"
-        [style.width.%]="progressPercent"
-      ></div>
-    </div>
-  </div>
-
-  @if (p.teamMembers && p.teamMembers.length > 0 || p.dueDate) {
-    <div class="flex items-center justify-between">
-      <!-- Team Members -->
-      @if (p.teamMembers && p.teamMembers.length > 0) {
-        <div class="flex -space-x-2">
-          @for (avatar of p.teamMembers.slice(0, 3); track $index) {
-            <img
-              [src]="avatar"
-              alt="Team member"
-              class="w-8 h-8 rounded-full border-2 border-white dark:border-gray-900 object-cover"
-            />
-          }
-          @if (p.teamMembers.length > 3) {
-            <span class="w-8 h-8 rounded-full border-2 border-white dark:border-gray-900 bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-xs font-medium text-gray-600 dark:text-gray-400">
-              +{{ p.teamMembers.length - 3 }}
-            </span>
-          }
-        </div>
-      }
-      <!-- Due Date -->
-      @if (p.dueDate) {
-        <div class="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="shrink-0">
-            <path fill-rule="evenodd" clip-rule="evenodd" d="M8 2C8.41421 2 8.75 2.33579 8.75 2.75V3.75H15.25V2.75C15.25 2.33579 15.5858 2 16 2C16.4142 2 16.75 2.33579 16.75 2.75V3.75H18.5C19.7426 3.75 20.75 4.75736 20.75 6V9V19C20.75 20.2426 19.7426 21.25 18.5 21.25H5.5C4.25736 21.25 3.25 20.2426 3.25 19V9V6C3.25 4.75736 4.25736 3.75 5.5 3.75H7.25V2.75C7.25 2.33579 7.58579 2 8 2ZM8 5.25H5.5C5.08579 5.25 4.75 5.58579 4.75 6V8.25H19.25V6C19.25 5.58579 18.9142 5.25 18.5 5.25H16H8ZM19.25 9.75H4.75V19C4.75 19.4142 5.08579 19.75 5.5 19.75H18.5C18.9142 19.75 19.25 19.4142 19.25 19V9.75Z" fill="currentColor"/>
-          </svg>
-          <span>Due {{ p.dueDate }}</span>
-        </div>
-      }
+  <!-- Responsable -->
+  @if (p.responsable) {
+    <div class="flex items-center gap-2 mb-4">
+      <svg class="w-4 h-4 text-gray-400 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+      </svg>
+      <span class="text-sm text-gray-500 dark:text-gray-400">{{ p.responsable }}</span>
     </div>
   }
 
-  <!-- Ticket count -->
-  <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="shrink-0">
-      <path fill-rule="evenodd" clip-rule="evenodd" d="M5.5 3.25C4.25736 3.25 3.25 4.25736 3.25 5.5V18.5C3.25 19.7426 4.25736 20.75 5.5 20.75H18.5001C19.7427 20.75 20.7501 19.7426 20.7501 18.5V5.5C20.7501 4.25736 19.7427 3.25 18.5001 3.25H5.5ZM4.75 5.5C4.75 5.08579 5.08579 4.75 5.5 4.75H18.5001C18.9143 4.75 19.2501 5.08579 19.2501 5.5V18.5C19.2501 18.9142 18.9143 19.25 18.5001 19.25H5.5C5.08579 19.25 4.75 18.9142 4.75 18.5V5.5ZM6.25005 9.7143C6.25005 9.30008 6.58583 8.9643 7.00005 8.9643L17 8.96429C17.4143 8.96429 17.75 9.30008 17.75 9.71429C17.75 10.1285 17.4143 10.4643 17 10.4643L7.00005 10.4643C6.58583 10.4643 6.25005 10.1285 6.25005 9.7143ZM6.25005 14.2857C6.25005 13.8715 6.58583 13.5357 7.00005 13.5357H17C17.4143 13.5357 17.75 13.8715 17.75 14.2857C17.75 14.6999 17.4143 15.0357 17 15.0357H7.00005C6.58583 15.0357 6.25005 14.6999 6.25005 14.2857Z" fill="currentColor"/>
+  <!-- Member count -->
+  <div class="pt-3 border-t border-gray-100 dark:border-gray-800 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+    <svg class="w-4 h-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+      <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
     </svg>
-    <span>{{ (p.ticketCount ?? 0) }} / {{ (p.totalTickets ?? 0) }} tickets</span>
+    <span>{{ p.memberIds.length }} member(s)</span>
   </div>
 </a>
 

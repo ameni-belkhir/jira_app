@@ -1,4 +1,7 @@
-<div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 shadow-theme-sm hover:shadow-theme-md transition-all duration-200 cursor-grab active:cursor-grabbing">
+<div
+  class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 shadow-theme-sm hover:shadow-theme-md transition-all duration-200 cursor-grab active:cursor-grabbing"
+  [ngStyle]="{'border-left': '4px solid ' + (ticket.color || '#3b82f6')}"
+>
   <div class="flex items-start justify-between mb-2">
     <h4 class="text-sm font-semibold text-gray-800 dark:text-white leading-5">{{ ticket.title }}</h4>
     <span class="text-[10px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap ml-2 {{ priorityColor }}">
@@ -23,8 +26,9 @@
   <div class="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-800">
     <div class="flex items-center gap-2">
       <img
-        [src]="ticket.assignedUser.avatar"
-        [alt]="ticket.assignedUser.name"
+        [src]="ticket.assignedUser.avatar | safeImage"
+        alt="{{ ticket.assignedUser.name }}"
+        title="{{ ticket.assignedUser.name }}"
         class="w-6 h-6 rounded-full object-cover"
       />
       <span class="text-xs text-gray-500 dark:text-gray-400">{{ ticket.assignedUser.name }}</span>

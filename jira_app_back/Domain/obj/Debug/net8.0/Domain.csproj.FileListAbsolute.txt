@@ -9,3 +9,4 @@ D:\5ArcTic\stage\Application\jira_app_back\Domain\obj\Debug\net8.0\Domain.dll
 D:\5ArcTic\stage\Application\jira_app_back\Domain\obj\Debug\net8.0\refint\Domain.dll
 D:\5ArcTic\stage\Application\jira_app_back\Domain\obj\Debug\net8.0\Domain.pdb
 D:\5ArcTic\stage\Application\jira_app_back\Domain\obj\Debug\net8.0\ref\Domain.dll
+D:\5ArcTic\stage\Application\jira_app_back\Domain\obj\Debug\net8.0\Domain.sourcelink.json

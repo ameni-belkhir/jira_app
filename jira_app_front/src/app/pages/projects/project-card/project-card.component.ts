@@ -12,9 +12,4 @@ import type { BackendProject } from '../../../services/project.service';
 })
 export class ProjectCardComponent {
   @Input({ required: true }) project!: BackendProject;
-
-  get progressPercent(): number {
-    if (!this.project.totalTickets || this.project.totalTickets === 0) return 0;
-    return Math.round(((this.project.ticketCount || 0) / this.project.totalTickets) * 100);
-  }
 }

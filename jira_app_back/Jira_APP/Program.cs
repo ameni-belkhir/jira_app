@@ -69,8 +69,7 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Register AuthService
-builder.Services.AddScoped<Jira_APP.Services.IAuthService, Jira_APP.Services.AuthService>();
+// AuthService registration moved to Infrastructure dependency injection
 
 // JWT Authentication
 var jwtSecret = builder.Configuration["Jwt:SecretKey"];

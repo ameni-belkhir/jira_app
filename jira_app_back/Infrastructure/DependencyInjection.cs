@@ -24,16 +24,7 @@ namespace Infrastructure
                     configuration.GetConnectionString("DefaultConnection"),
                     b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
 
-            // Bind SMTP settings manually to avoid additional package dependency
-            services.Configure<Services.SmtpSettings>(options =>
-            {
-                var section = configuration.GetSection("SmtpSettings");
-                options.Server = section["Server"] ?? string.Empty;
-                options.Port = int.TryParse(section["Port"], out var p) ? p : 587;
-                options.SenderName = section["SenderName"] ?? string.Empty;
-                options.SenderEmail = section["SenderEmail"] ?? string.Empty;
-                options.Password = section["Password"] ?? string.Empty;
-            });
+            // No SMTP/email service in this build: email-dependent flows removed
 
             // Register repositories
             services.AddScoped<IUserRepository, UserRepository>();
@@ -45,8 +36,8 @@ namespace Infrastructure
             services.AddScoped<IConversationRepository, ConversationRepository>();
             services.AddScoped<IMessageRepository, MessageRepository>();
 
-            // Email service
-            services.AddScoped<Services.IEmailService, Services.EmailService>();
+            // Register AuthService implementation
+            services.AddScoped<Application.Interfaces.IAuthService, Services.AuthService>();
             // File storage (local)
             services.AddScoped<Services.IFileStorageService, Services.LocalFileStorageService>();
 

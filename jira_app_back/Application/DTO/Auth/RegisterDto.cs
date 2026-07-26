@@ -17,7 +17,7 @@ namespace Application.DTO.Auth
         [Required]
         public string Password { get; set; } = string.Empty;
 
-        [Required]
-        public int RoleId { get; set; }
+        // RoleId optionnel : si absent, le service d'auth attribuera un rôle par défaut
+        public int? RoleId { get; set; }
     }
 }

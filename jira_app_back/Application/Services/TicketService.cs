@@ -40,6 +40,16 @@ namespace Application.Services
 
         public async Task<TicketDto> CreateAsync(TicketDto dto)
         {
+            // Validate creator exists to avoid DB foreign-key errors
+            var creator = await _userRepository.GetByIdAsync(dto.CreatorId);
+            if (creator == null) throw new InvalidOperationException("Creator not found");
+
+            if (dto.AssigneeId.HasValue)
+            {
+                var assignee = await _userRepository.GetByIdAsync(dto.AssigneeId.Value);
+                if (assignee == null) throw new InvalidOperationException("Assignee not found");
+            }
+
             var ticket = new Ticket
             {
                 Titre = dto.Titre,
@@ -48,7 +58,8 @@ namespace Application.Services
                 AssigneeId = dto.AssigneeId,
                 ProjectId = dto.ProjectId,
                 Status = Enum.TryParse<Status>(dto.Status, out var s) ? s : Status.A_FAIRE,
-                Priority = Enum.TryParse<Priority>(dto.Priority, out var p) ? p : Priority.MOYENNE
+                Priority = Enum.TryParse<Priority>(dto.Priority, out var p) ? p : Priority.MOYENNE,
+                Color = string.IsNullOrEmpty(dto.Color) ? "#ffffff" : dto.Color
             };
 
             await _ticketRepository.AddAsync(ticket);
@@ -63,9 +74,16 @@ namespace Application.Services
             if (ticket == null) return false;
             ticket.Titre = dto.Titre;
             ticket.Description = dto.Description;
+            // Validate assignee if provided
+            if (dto.AssigneeId.HasValue)
+            {
+                var assignee = await _userRepository.GetByIdAsync(dto.AssigneeId.Value);
+                if (assignee == null) throw new InvalidOperationException("Assignee not found");
+            }
             ticket.AssigneeId = dto.AssigneeId;
             ticket.Status = Enum.TryParse<Status>(dto.Status, out var s) ? s : ticket.Status;
             ticket.Priority = Enum.TryParse<Priority>(dto.Priority, out var p) ? p : ticket.Priority;
+            ticket.Color = string.IsNullOrEmpty(dto.Color) ? ticket.Color : dto.Color;
             _ticketRepository.Update(ticket);
             return await _ticketRepository.SaveChangesAsync();
         }
@@ -90,6 +108,8 @@ namespace Application.Services
             Priority = ticket.Priority.ToString(),
             DateCreation = ticket.DateCreation,
             DateResolution = ticket.DateResolution
+            ,
+            Color = ticket.Color ?? "#ffffff"
         };
     }
 }

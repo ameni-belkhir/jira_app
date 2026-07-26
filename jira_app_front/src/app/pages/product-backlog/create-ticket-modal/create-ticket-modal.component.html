@@ -1,0 +1,124 @@
+@if (isOpen()) {
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center modal-backdrop"
+    (click)="onBackdropClick($event)"
+  >
+    <!-- Backdrop -->
+    <div class="fixed inset-0 bg-black/40 dark:bg-black/60 transition-opacity"></div>
+
+    <!-- Modal -->
+    <div class="relative z-10 w-full max-w-md mx-4 bg-white dark:bg-gray-900 rounded-2xl shadow-theme-xl border border-gray-200 dark:border-gray-800 animate-fadeIn">
+      <!-- Header -->
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800">
+        <h2 class="text-lg font-semibold text-gray-800 dark:text-white">New Ticket</h2>
+        <button
+          (click)="closeModal()"
+          title="Close modal"
+          class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+        >
+          <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Body -->
+      <form #ticketForm="ngForm" (ngSubmit)="onSubmit()">
+        <div class="px-6 py-5 space-y-4">
+          <!-- Title -->
+          <div>
+            <label class="block mb-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+              Ticket Title <span class="text-error-500">*</span>
+            </label>
+            <input
+              type="text"
+              name="title"
+              [(ngModel)]="title"
+              #titleInput="ngModel"
+              required
+              placeholder="e.g., Implement login page"
+              class="block w-full rounded-lg border border-gray-200 bg-transparent px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:text-white/90 dark:placeholder:text-white/30"
+              [class.border-error-500]="submitted && titleInput.invalid"
+            />
+            @if (submitted && titleInput.invalid) {
+              <p class="mt-1 text-xs text-error-500">Ticket title is required.</p>
+            }
+          </div>
+
+          <!-- Description -->
+          <div>
+            <label class="block mb-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+              Description
+            </label>
+            <textarea
+              name="description"
+              [(ngModel)]="description"
+              placeholder="Describe the ticket..."
+              rows="3"
+              class="block w-full rounded-lg border border-gray-200 bg-transparent px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:text-white/90 dark:placeholder:text-white/30 resize-none"
+            ></textarea>
+          </div>
+
+          <!-- Priority -->
+          <div>
+            <label class="block mb-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+              Priority
+            </label>
+            <select
+              name="priority"
+              [(ngModel)]="priority"
+              title="Select ticket priority"
+              aria-label="Ticket priority"
+              class="block w-full rounded-lg border border-gray-200 bg-transparent px-4 py-2.5 text-sm text-gray-800 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:text-white/90"
+            >
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+              <option value="Critical">Critical</option>
+            </select>
+          </div>
+
+          <!-- Color -->
+          <div>
+            <label class="block mb-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+              Ticket Color
+            </label>
+            <div class="flex items-center gap-3">
+              @for (c of presetColors; track c.value) {
+                <button
+                  type="button"
+                  title="{{c.label}}"
+                  aria-label="{{c.label}}"
+                  (click)="color = c.value"
+                  class="w-8 h-8 rounded-full border-2 transition-all duration-150"
+                  [class.border-gray-400]="color === c.value"
+                  [class.border-transparent]="color !== c.value"
+                  [class.scale-110]="color === c.value"
+                  [style.background-color]="c.value"
+                ></button>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 dark:border-gray-800">
+          <button
+            type="button"
+            (click)="closeModal()"
+            class="inline-flex items-center justify-center rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="inline-flex items-center justify-center rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-600 transition-colors"
+          >
+            Create Ticket
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+

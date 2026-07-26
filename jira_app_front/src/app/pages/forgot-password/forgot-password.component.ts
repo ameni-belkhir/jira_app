@@ -1,9 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { AuthPageLayoutComponent } from '../../shared/layout/auth-page-layout/auth-page-layout.component';
 import { Router, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
+import { NotificationService } from '../../shared/services/notification.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { finalize } from 'rxjs';
 
@@ -26,6 +27,8 @@ export class ForgotPasswordComponent {
   success = '';
   loading = false;
 
+  private notification = inject(NotificationService);
+
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
@@ -46,31 +49,35 @@ export class ForgotPasswordComponent {
     this.success = '';
 
     if (this.forgotForm.invalid) {
+      this.notification.validation('Veuillez entrer votre email.');
       return;
     }
 
     this.loading = true;
+    this.notification.loading('Envoi de l\'email de réinitialisation…');
 
-    this.authService.forgotPassword({
-      email: this.forgotForm.value.email
-    })
-      .pipe(finalize(() => this.loading = false))
+    this.authService.forgotPassword({ email: this.forgotForm.value.email })
+      .pipe(finalize(() => {
+        this.loading = false;
+        this.notification.dismiss();
+      }))
       .subscribe({
         next: () => {
+          this.notification.success('Email de réinitialisation envoyé. Vérifiez votre boîte de réception.');
           this.router.navigate(['/reset-password'], { queryParams: { email: this.forgotForm.value.email } });
         },
         error: (err: HttpErrorResponse) => {
-          if (err.status === 400) {
-            this.error = 'Invalid email address.';
-          } else if (err.status === 404) {
-            this.error = 'No account found with this email address.';
-          } else if (err.status === 500) {
-            this.error = 'Server unavailable. Please try again later.';
-          } else if (err.status === 0) {
-            this.error = 'Cannot connect to server. Please check your connection.';
-          } else {
-            this.error = 'An unexpected error occurred. Please try again.';
-          }
+          const msg = err.status === 400
+            ? 'Adresse email invalide.'
+            : err.status === 404
+              ? 'Aucun compte trouvé avec cet email.'
+              : err.status === 500
+                ? 'Serveur indisponible.'
+                : err.status === 0
+                  ? 'Impossible de se connecter au serveur.'
+                  : 'Une erreur inattendue est survenue.';
+          this.error = msg;
+          this.notification.error(msg);
         }
       });
   }

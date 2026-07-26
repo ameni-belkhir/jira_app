@@ -1,0 +1,121 @@
+@if (error()) {
+  <div class="p-4 mb-4 rounded-lg bg-error-50 border border-error-200 text-sm text-error-700 dark:bg-error-500/10 dark:border-error-500/20 dark:text-error-400">
+    {{ error() }}
+  </div>
+}
+
+@if (loading()) {
+  <div class="flex items-center justify-center py-12">
+    <div class="flex flex-col items-center gap-3">
+      <svg class="w-8 h-8 text-brand-500 animate-spin" viewBox="0 0 24 24" fill="none">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+      </svg>
+      <span class="text-sm text-gray-500 dark:text-gray-400">Chargement du Kanban...</span>
+    </div>
+  </div>
+}
+
+@if (!loading()) {
+  <!-- 3‑column Kanban layout -->
+  <div class="flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
+
+    <!-- ===== A FAIRE ===== -->
+    <div class="flex-shrink-0 w-72">
+      <div class="flex items-center justify-between mb-3 px-1">
+        <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">À FAIRE</h3>
+        <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+          {{ aFaire().length }}
+        </span>
+      </div>
+
+      <div
+        cdkDropList
+        id="a-faire"
+        [cdkDropListData]="aFaire()"
+        (cdkDropListDropped)="onDrop($event)"
+        [cdkDropListConnectedTo]="['en-cours', 'fait']"
+        class="min-h-[200px] space-y-3 p-2 rounded-xl bg-gray-50 dark:bg-gray-900/50 border-2 border-dashed border-gray-200 dark:border-gray-800 transition-colors"
+        cdkDropListOrientation="vertical"
+      >
+        @for (ticket of aFaire(); track trackByTicketId($index, ticket)) {
+          <div cdkDrag>
+            <app-ticket-card [ticket]="mapToTicket(ticket)" />
+          </div>
+        }
+
+        @if (aFaire().length === 0) {
+          <div class="flex items-center justify-center h-24 text-xs text-gray-400 dark:text-gray-500">
+            Déposer les tickets ici
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- ===== EN COURS ===== -->
+    <div class="flex-shrink-0 w-72">
+      <div class="flex items-center justify-between mb-3 px-1">
+        <h3 class="text-sm font-semibold text-blue-600 dark:text-blue-400">EN COURS</h3>
+        <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">
+          {{ enCours().length }}
+        </span>
+      </div>
+
+      <div
+        cdkDropList
+        id="en-cours"
+        [cdkDropListData]="enCours()"
+        (cdkDropListDropped)="onDrop($event)"
+        [cdkDropListConnectedTo]="['a-faire', 'fait']"
+        class="min-h-[200px] space-y-3 p-2 rounded-xl bg-blue-50 dark:bg-blue-900/10 border-2 border-dashed border-blue-200 dark:border-blue-800 transition-colors"
+        cdkDropListOrientation="vertical"
+      >
+        @for (ticket of enCours(); track trackByTicketId($index, ticket)) {
+          <div cdkDrag>
+            <app-ticket-card [ticket]="mapToTicket(ticket)" />
+          </div>
+        }
+
+        @if (enCours().length === 0) {
+          <div class="flex items-center justify-center h-24 text-xs text-gray-400 dark:text-gray-500">
+            Déposer les tickets ici
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- ===== FAIT ===== -->
+    <div class="flex-shrink-0 w-72">
+      <div class="flex items-center justify-between mb-3 px-1">
+        <h3 class="text-sm font-semibold text-success-600 dark:text-success-400">FAIT</h3>
+        <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-400">
+          {{ fait().length }}
+        </span>
+      </div>
+
+      <div
+        cdkDropList
+        id="fait"
+        [cdkDropListData]="fait()"
+        (cdkDropListDropped)="onDrop($event)"
+        [cdkDropListConnectedTo]="['a-faire', 'en-cours']"
+        class="min-h-[200px] space-y-3 p-2 rounded-xl bg-success-50 dark:bg-success-900/10 border-2 border-dashed border-success-200 dark:border-success-800 transition-colors"
+        cdkDropListOrientation="vertical"
+      >
+        @for (ticket of fait(); track trackByTicketId($index, ticket)) {
+          <div cdkDrag>
+            <app-ticket-card [ticket]="mapToTicket(ticket)" />
+          </div>
+        }
+
+        @if (fait().length === 0) {
+          <div class="flex items-center justify-center h-24 text-xs text-gray-400 dark:text-gray-500">
+            Déposer les tickets ici
+          </div>
+        }
+      </div>
+    </div>
+
+  </div>
+}
+

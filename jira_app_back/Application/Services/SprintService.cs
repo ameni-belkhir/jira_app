@@ -53,7 +53,8 @@ namespace Application.Services
             var sprints = await _sprintRepository.GetByProjectIdAsync(projectId);
             var sprintDtos = sprints.Select(MapToDto).ToList();
 
-            var backlogTickets = (await _ticketRepository.GetByProjectIdAsync(projectId))
+            var tickets = await _ticketRepository.GetByProjectIdAsync(projectId);
+            var backlogTickets = tickets
                 .Where(t => t.SprintId == null)
                 .Select(t => new TicketDto
                 {
@@ -66,7 +67,8 @@ namespace Application.Services
                     Status = t.Status.ToString(),
                     Priority = t.Priority.ToString(),
                     DateCreation = t.DateCreation,
-                    DateResolution = t.DateResolution
+                    DateResolution = t.DateResolution,
+                    Color = t.Color ?? "#ffffff"
                 }).ToList();
 
             return new ProjectBacklogDto
@@ -127,7 +129,8 @@ namespace Application.Services
                 Status = t.Status.ToString(),
                 Priority = t.Priority.ToString(),
                 DateCreation = t.DateCreation,
-                DateResolution = t.DateResolution
+                DateResolution = t.DateResolution,
+                Color = t.Color ?? "#ffffff"
             }).ToList() ?? new List<TicketDto>()
         };
     }

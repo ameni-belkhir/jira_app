@@ -118,11 +118,7 @@ export class AuthService {
   }
 
   private clearStorage(): void {
-    localStorage.removeItem(this.TOKEN_KEY);
-    localStorage.removeItem(this.EMAIL_KEY);
-    localStorage.removeItem(this.ROLE_KEY);
-    localStorage.removeItem(this.EXPIRATION_KEY);
-    localStorage.removeItem(this.USER_ID_KEY);
+    localStorage.clear();
   }
 
   getToken(): string | null {

@@ -189,6 +189,38 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "Jira_APP.Controllers.InvitationsController",
+    "Method": "Send",
+    "RelativePath": "api/Invitations/send",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "Application.DTO.CreateInvitationDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Jira_APP.Controllers.InvitationsController",
+    "Method": "Validate",
+    "RelativePath": "api/Invitations/validate",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "token",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "Jira_APP.Controllers.ProjectsController",
     "Method": "Get",
     "RelativePath": "api/Projects",
@@ -340,6 +372,26 @@
     "ReturnTypes": [
       {
         "Type": "System.Collections.Generic.IEnumerable\u00601[[Application.DTO.SprintDto, Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "Jira_APP.Controllers.ProjectsController",
+    "Method": "GetMyProjects",
+    "RelativePath": "api/Projects/my-projects",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[Application.DTO.ProjectDto, Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
         "MediaTypes": [
           "text/plain",
           "application/json",
@@ -506,6 +558,32 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "Jira_APP.Controllers.SprintsController",
+    "Method": "GetTicketsBySprint",
+    "RelativePath": "api/sprints/{id}/tickets",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[Application.DTO.SprintTicketDto, Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
     "ContainingType": "Jira_APP.Controllers.TicketsController",
     "Method": "Get",
     "RelativePath": "api/Tickets",
@@ -609,6 +687,27 @@
       {
         "Name": "id",
         "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Jira_APP.Controllers.TicketsController",
+    "Method": "UpdateStatus",
+    "RelativePath": "api/Tickets/{id}/status",
+    "HttpMethod": "PATCH",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "payload",
+        "Type": "System.Text.Json.JsonElement",
         "IsRequired": true
       }
     ],

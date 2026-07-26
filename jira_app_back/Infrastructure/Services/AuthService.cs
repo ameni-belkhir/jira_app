@@ -10,23 +10,23 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Domain.Entity;
 using Microsoft.EntityFrameworkCore;
+using Application.Interfaces;
+using Microsoft.Extensions.Logging;
 
-namespace Jira_APP.Services
+namespace Infrastructure.Services
 {
     public class AuthService : IAuthService
     {
         private readonly ApplicationDbContext _db;
         private readonly IConfiguration _config;
         private readonly PasswordHasher<User> _passwordHasher;
-        private readonly Infrastructure.Services.IEmailService _emailService;
-        private readonly Microsoft.Extensions.Logging.ILogger<AuthService> _logger;
+        private readonly ILogger<AuthService> _logger;
 
-        public AuthService(ApplicationDbContext db, IConfiguration config, Infrastructure.Services.IEmailService emailService, Microsoft.Extensions.Logging.ILogger<AuthService> logger)
+        public AuthService(ApplicationDbContext db, IConfiguration config, ILogger<AuthService> logger)
         {
             _db = db;
             _config = config;
             _passwordHasher = new PasswordHasher<User>();
-            _emailService = emailService;
             _logger = logger;
         }
 
@@ -36,37 +36,46 @@ namespace Jira_APP.Services
             var exists = await _db.Users.AnyAsync(u => u.Email == dto.Email);
             if (exists) throw new InvalidOperationException("User already exists");
 
-            // generate 4-digit verification code
-            var code = Random.Shared.Next(1000, 9999).ToString();
+            // déterminer le rôle à attribuer
+            int roleIdToAssign;
+            var anyUsers = await _db.Users.AnyAsync();
+            if (!anyUsers)
+            {
+                // premier utilisateur -> ScrumMaster
+                var scrumRole = await _db.Roles.FirstOrDefaultAsync(r => r.Description == "ScrumMaster");
+                if (scrumRole == null) throw new InvalidOperationException("Role 'ScrumMaster' introuvable en base de données.");
+                roleIdToAssign = scrumRole.Id;
+            }
+            else
+            {
+                if (dto.RoleId.HasValue && dto.RoleId.Value > 0)
+                {
+                    roleIdToAssign = dto.RoleId.Value;
+                }
+                else
+                {
+                    var devRole = await _db.Roles.FirstOrDefaultAsync(r => r.Description == "Developer");
+                    if (devRole == null) throw new InvalidOperationException("Role 'Developer' introuvable en base de données.");
+                    roleIdToAssign = devRole.Id;
+                }
+            }
 
             var user = new User
             {
                 Nom = dto.Nom,
                 Prenom = dto.Prenom,
                 Email = dto.Email,
-                RoleId = dto.RoleId
+                RoleId = roleIdToAssign
             };
             user.Password = _passwordHasher.HashPassword(user, dto.Password);
-            user.IsEmailVerified = false;
-            user.VerificationCode = code;
-            user.VerificationCodeExpiration = DateTime.UtcNow.AddMinutes(15);
+            // Activation immédiate : utilisateur vérifié
+            user.IsEmailVerified = true;
+            user.VerificationCode = null;
+            user.VerificationCodeExpiration = null;
 
             _db.Users.Add(user);
             var saved = await _db.SaveChangesAsync();
             if (saved <= 0) throw new InvalidOperationException("Impossible de créer l'utilisateur en base de données.");
-
-            // send verification email and surface errors
-            try
-            {
-                var subject = "Code de vérification";
-                var body = $"Bonjour {user.Nom},\n\nVotre code de vérification est : {code}\nIl expire dans 15 minutes.";
-                await _emailService.SendEmailAsync(user.Email, subject, body);
-            }
-            catch (System.Exception ex)
-            {
-                _logger.LogError(ex, "Failed to send verification email to {Email}", user.Email);
-                throw new InvalidOperationException($"Echec envoi e-mail de vérification: {ex.Message}");
-            }
         }
 
         public async Task<AuthResponseDto?> LoginAsync(LoginDto dto)
@@ -75,26 +84,9 @@ namespace Jira_APP.Services
             if (user == null) return null;
             var result = _passwordHasher.VerifyHashedPassword(user, user.Password, dto.Password);
             if (result == PasswordVerificationResult.Failed) return null;
-            if (!user.IsEmailVerified)
-            {
-                throw new InvalidOperationException("Email not verified. Veuillez vérifier votre adresse e-mail avant de vous connecter.");
-            }
-            var token = GenerateToken(user);
+            // Since registration now activates user immediately, no verification check needed
+            var token = await GenerateTokenAsync(user);
             return new AuthResponseDto { Token = token, Email = user.Email, Role = (await _db.Roles.FindAsync(user.RoleId))?.Description ?? string.Empty, Expiration = DateTime.UtcNow.AddMinutes(int.Parse(_config["Jwt:ExpiryInMinutes"] ?? "60")), ProfileImageUrl = user.ProfileImageUrl };
-        }
-
-        public async Task<bool> VerifyCodeAsync(Application.DTO.Auth.VerifyCodeDto dto)
-        {
-            var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
-            if (user == null) return false;
-            if (user.VerificationCode == null) return false;
-            if (user.VerificationCodeExpiration == null || user.VerificationCodeExpiration < DateTime.UtcNow) return false;
-            if (user.VerificationCode != dto.Code) return false;
-            user.IsEmailVerified = true;
-            user.VerificationCode = null;
-            user.VerificationCodeExpiration = null;
-            _db.Users.Update(user);
-            return await _db.SaveChangesAsync() > 0;
         }
 
         public async Task<bool> ForgotPasswordAsync(Application.DTO.Auth.ForgotPasswordDto dto)
@@ -107,14 +99,7 @@ namespace Jira_APP.Services
             _db.Users.Update(user);
             var saved = await _db.SaveChangesAsync();
             if (saved <= 0) return false;
-            try
-            {
-                await _emailService.SendResetPasswordTokenAsync(user.Email, user.Nom, token);
-            }
-            catch
-            {
-                // ignore
-            }
+            // No email sending in this build; token is stored for client-driven workflows
             return true;
         }
 
@@ -132,19 +117,22 @@ namespace Jira_APP.Services
             return await _db.SaveChangesAsync() > 0;
         }
 
-        private string GenerateToken(User user)
+        private async Task<string> GenerateTokenAsync(User user)
         {
             var secret = _config["Jwt:SecretKey"] ?? throw new InvalidOperationException("Jwt:SecretKey not configured");
             var issuer = _config["Jwt:Issuer"] ?? "";
             var audience = _config["Jwt:Audience"] ?? "";
             var expiryMinutes = int.Parse(_config["Jwt:ExpiryInMinutes"] ?? "60");
 
+            var role = await _db.Roles.FindAsync(user.RoleId);
+            var roleDesc = role?.Description ?? string.Empty;
+
             var claims = new[]
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Role, user.RoleId.ToString())
+                new Claim(ClaimTypes.Role, roleDesc)
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));

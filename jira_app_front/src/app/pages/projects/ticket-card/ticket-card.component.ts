@@ -1,5 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { SafeImagePipe } from '../../../shared/pipe/safe-image.pipe';
 
 export interface Ticket {
   id: number;
@@ -10,12 +11,13 @@ export interface Ticket {
   labels: string[];
   description: string;
   status: 'todo' | 'in-progress' | 'testing' | 'done';
+  color?: string;
 }
 
 @Component({
   selector: 'app-ticket-card',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, SafeImagePipe],
   templateUrl: './ticket-card.component.html',
   styles: ``
 })

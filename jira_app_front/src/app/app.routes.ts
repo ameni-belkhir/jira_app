@@ -2,30 +2,34 @@ import { Routes } from '@angular/router';
 import { AppLayoutComponent } from './shared/layout/app-layout/app-layout.component';
 import { LoginComponent } from './pages/login/login.component';
 import { SignupComponent } from './pages/signup/signup.component';
+import { RegisterComponent } from './pages/register/register.component';
 import { VerifyEmailComponent } from './pages/verify-email/verify-email.component';
 import { ForgotPasswordComponent } from './pages/forgot-password/forgot-password.component';
 import { ResetPasswordComponent } from './pages/reset-password/reset-password.component';
 import { DashboardComponent } from './pages/dashboard/dashboard.component';
-import { TicketsComponent } from './pages/tickets/tickets.component';
+import { ProjectsComponent } from './pages/projects/projects.component';
 import { ChatComponent } from './pages/chat/chat.component';
 import { StatisticsComponent } from './pages/statistics/statistics.component';
-import { ChatbotComponent } from './pages/chatbot/chatbot.component';
-import { UsersComponent } from './pages/users/users.component';
-import { RolesComponent } from './pages/roles/roles.component';
 import { ProductBacklogComponent } from './pages/product-backlog/product-backlog.component';
+import { SprintKanbanViewComponent } from './pages/product-backlog/sprint-kanban-view/sprint-kanban-view.component';
 import { ProfileComponent } from './pages/profile/profile.component';
 import { AuthGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: '/signup',
+    redirectTo: '/dashboard',
     pathMatch: 'full',
   },
   {
     path: 'signup',
     component: SignupComponent,
     title: 'Sign Up | Jira App',
+  },
+  {
+    path: 'register',
+    component: RegisterComponent,
+    title: 'Register | Jira App',
   },
   {
     path: 'login',
@@ -58,34 +62,38 @@ export const routes: Routes = [
         title: 'Dashboard | Jira App',
       },
       {
-        path: 'tickets',
-        component: TicketsComponent,
-        title: 'Tickets | Jira App',
+        path: 'projects',
+        component: ProjectsComponent,
+        title: 'Projects | Jira App',
+      },
+{
+        path: 'projects/:id/backlog',
+        component: ProductBacklogComponent,
+        title: 'Product Backlog | Jira App',
+        // TODO: RÉACTIVER — Ajouter canActivate: [RoleGuard], data: { roles: ['Developer', 'Senior', 'ScrumMaster'] }
+      },
+      {
+        path: 'projects/:projectId/sprint/:sprintId/kanban',
+        component: SprintKanbanViewComponent,
+        title: 'Sprint Kanban | Jira App',
+      },
+      {
+        path: 'projects/:id',
+        redirectTo: (route) => {
+          const id = route.params['id'];
+          return `/projects/${id}/backlog`;
+        },
+        pathMatch: 'full',
       },
       {
         path: 'chat',
         component: ChatComponent,
-        title: 'Chat | Jira App',
+        title: 'Messages | Jira App',
       },
       {
         path: 'statistics',
         component: StatisticsComponent,
-        title: 'Statistics | Jira App',
-      },
-      {
-        path: 'chatbot',
-        component: ChatbotComponent,
-        title: 'Chatbot | Jira App',
-      },
-      {
-        path: 'users',
-        component: UsersComponent,
-        title: 'Users | Jira App',
-      },
-      {
-        path: 'roles',
-        component: RolesComponent,
-        title: 'Roles | Jira App',
+        title: 'Analytics | Jira App',
       },
       {
         path: 'profile',
@@ -97,20 +105,11 @@ export const routes: Routes = [
         redirectTo: '/projects/1/backlog',
         pathMatch: 'full',
       },
-      {
-        path: 'projects/:id/backlog',
-        component: ProductBacklogComponent,
-        title: 'Product Backlog | Jira App',
-      },
-      {
-        path: 'projects/:id',
-        redirectTo: '/projects/:id/backlog',
-        pathMatch: 'full',
-      },
     ],
   },
   {
     path: '**',
-    redirectTo: '/signup',
+    redirectTo: '/dashboard',
   },
 ];
+

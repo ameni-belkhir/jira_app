@@ -22,6 +22,7 @@ namespace Infrastructure.Persistence
         public DbSet<Project> Projects => Set<Project>();
         public DbSet<Sprint> Sprints => Set<Sprint>();
         public DbSet<Ticket> Tickets => Set<Ticket>();
+        public DbSet<Invitation> Invitations => Set<Invitation>();
         public DbSet<Commentaire> Commentaires => Set<Commentaire>();
         public DbSet<Conversation> Conversations => Set<Conversation>();
         public DbSet<Message> Messages => Set<Message>();
@@ -125,6 +126,13 @@ namespace Infrastructure.Persistence
                 new Role { Id = 2, Description = "Responsable" },
                 new Role { Id = 3, Description = "Member" }
             );
+
+            // Indexes for performance
+            modelBuilder.Entity<User>().HasIndex(u => u.Email).IsUnique();
+            modelBuilder.Entity<Ticket>().HasIndex(t => t.ProjectId);
+            modelBuilder.Entity<Ticket>().HasIndex(t => t.SprintId);
+            modelBuilder.Entity<Ticket>().HasIndex(t => t.AssigneeId);
+            modelBuilder.Entity<Invitation>().HasIndex(i => i.Token).IsUnique();
         }
         }
 }

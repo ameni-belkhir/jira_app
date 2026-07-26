@@ -769,6 +769,41 @@ span.flatpickr-weekday,
   @apply border-brand-500 bg-brand-500 dark:border-brand-500;
 }
 
+/* ===== Angular Material Snackbar Notification Styles ===== */
+.notification-success {
+  --mdc-snackbar-container-color: #12b76a;
+  --mat-snack-bar-button-color: #ffffff;
+  --mdc-snackbar-supporting-text-color: #ffffff;
+  --mat-snack-bar-button-color: #ffffff;
+}
+
+.notification-error {
+  --mdc-snackbar-container-color: #f04438;
+  --mat-snack-bar-button-color: #ffffff;
+  --mdc-snackbar-supporting-text-color: #ffffff;
+  --mat-snack-bar-button-color: #ffffff;
+}
+
+.notification-loading {
+  --mdc-snackbar-container-color: #465fff;
+  --mat-snack-bar-button-color: #ffffff;
+  --mdc-snackbar-supporting-text-color: #ffffff;
+  --mat-snack-bar-button-color: #ffffff;
+}
+
+.notification-validation {
+  --mdc-snackbar-container-color: #f79009;
+  --mat-snack-bar-button-color: #ffffff;
+  --mdc-snackbar-supporting-text-color: #ffffff;
+  --mat-snack-bar-button-color: #ffffff;
+}
+
+/* Override snackbar button styles */
+.mat-mdc-snack-bar-container .mdc-snackbar__action {
+  color: #ffffff !important;
+  font-weight: 600;
+}
+
 .task {
   transition: all 0.2s ease; /* Smooth transition for visual effects */
 }

@@ -36,5 +36,8 @@ namespace Domain.Entity
 
         // Conversations liées
         public ICollection<Conversation> Conversations { get; set; } = new List<Conversation>();
+
+        // Couleur d'affichage du ticket (hex)
+        public string? Color { get; set; } = "#ffffff";
     }
 }

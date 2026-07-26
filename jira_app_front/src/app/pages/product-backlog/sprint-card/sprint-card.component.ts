@@ -17,6 +17,7 @@ export class SprintCardComponent {
   @Input() connectedDropLists: string[] = [];
   @Output() ticketDropped = new EventEmitter<{ ticketId: number; sprintId: number | null }>();
   @Output() goalUpdated = new EventEmitter<{ sprintId: number; goal: string }>();
+  @Output() viewKanban = new EventEmitter<number>();
 
   isEditingGoal = false;
   editGoalValue = '';
@@ -41,8 +42,14 @@ export class SprintCardComponent {
     }
   }
 
-  toggleCollapse(): void {
+  toggleCollapse(event: MouseEvent): void {
+    event.stopPropagation();
     this.isCollapsed.update(v => !v);
+  }
+
+  navigateToKanban(event: MouseEvent): void {
+    event.stopPropagation();
+    this.viewKanban.emit(this.sprint.id);
   }
 
   startEditGoal(): void {
@@ -86,7 +93,7 @@ export class SprintCardComponent {
       priority: (ticket.priority as Ticket['priority']) || 'Medium',
       assignedUser: {
         name: ticket.assignedTo || 'Unassigned',
-        avatar: ticket.assignedToAvatar || '/images/user/user-01.jpg'
+        avatar: ticket.assignedToAvatar || ''
       },
       dueDate: ticket.creationDate ? new Date(ticket.creationDate).toLocaleDateString() : '',
       labels: [],

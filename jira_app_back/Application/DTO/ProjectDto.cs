@@ -9,5 +9,8 @@ namespace Application.DTO
         public string Responsable { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public ICollection<int> MemberIds { get; set; } = new List<int>();
+        // Related entity ids present on Project
+        public ICollection<int> TicketIds { get; set; } = new List<int>();
+        public ICollection<int> SprintIds { get; set; } = new List<int>();
     }
 }

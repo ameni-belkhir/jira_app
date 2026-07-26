@@ -12,9 +12,19 @@ export class AuthGuard implements CanActivate {
   ) {}
 
   canActivate(): boolean | UrlTree {
+    // Primary check: use AuthService's isAuthenticated (backed by BehaviorSubject + localStorage check)
     if (this.authService.isAuthenticated) {
       return true;
     }
+
+    // Safety net: directly verify token in localStorage
+    // This covers edge cases where BehaviorSubject might be out of sync
+    const token = this.authService.getToken();
+    if (token) {
+      return true;
+    }
+
+    // No valid token → redirect to /login with replaceUrl to prevent back navigation
     return this.router.parseUrl('/login');
   }
 }
