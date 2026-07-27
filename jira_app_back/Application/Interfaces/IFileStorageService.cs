@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 
-namespace Infrastructure.Services
+namespace Application.Interfaces
 {
     public interface IFileStorageService
     {

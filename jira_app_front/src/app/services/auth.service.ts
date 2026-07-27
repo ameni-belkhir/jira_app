@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 export interface LoginRequest {
@@ -8,11 +8,18 @@ export interface LoginRequest {
   password: string;
 }
 
-export interface LoginResponse {
+export type LoginResponse = LoginSuccessResponse | LoginTwoFactorResponse;
+
+export interface LoginSuccessResponse {
   token: string;
   email: string;
   role: string;
   expiration: string;
+}
+
+export interface LoginTwoFactorResponse {
+  requiresTwoFactor: true;
+  email: string;
 }
 
 export interface RegisterRequest {
@@ -78,9 +85,7 @@ export class AuthService {
   }
 
   login(credentials: LoginRequest): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${this.apiUrl}/Auth/login`, credentials).pipe(
-      tap(response => this.handleLoginResponse(response))
-    );
+    return this.http.post<LoginResponse>(`${this.apiUrl}/Auth/login`, credentials);
   }
 
   register(data: RegisterRequest): Observable<any> {
@@ -88,6 +93,14 @@ export class AuthService {
   }
 
   verifyCode(data: VerifyCodeRequest): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/Auth/verify-code`, data);
+  }
+
+  verifyLoginCode(data: VerifyCodeRequest): Observable<LoginSuccessResponse> {
+    return this.http.post<LoginSuccessResponse>(`${this.apiUrl}/Auth/verify-login-code`, data);
+  }
+
+  verifyRegistrationCode(data: VerifyCodeRequest): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/Auth/verify-code`, data);
   }
 
@@ -99,12 +112,15 @@ export class AuthService {
     return this.http.post<any>(`${this.apiUrl}/Auth/reset-password`, data);
   }
 
-  private handleLoginResponse(response: LoginResponse): void {
+  /**
+   * Saves the authentication session from a successful login (or 2FA verification).
+   * Stores token, email, role, expiration, and userId in localStorage.
+   */
+  saveAuthSession(response: LoginSuccessResponse): void {
     localStorage.setItem(this.TOKEN_KEY, response.token);
     localStorage.setItem(this.EMAIL_KEY, response.email);
     localStorage.setItem(this.ROLE_KEY, response.role);
     localStorage.setItem(this.EXPIRATION_KEY, response.expiration);
-    // Extract userId from JWT and store it
     const userId = this.getUserIdFromToken(response.token);
     if (userId) {
       localStorage.setItem(this.USER_ID_KEY, userId);

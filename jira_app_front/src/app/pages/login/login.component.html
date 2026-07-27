@@ -5,31 +5,78 @@
         <h1 class="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md">Sign In</h1>
         <p class="text-sm text-gray-500 dark:text-gray-400">Enter your email and password to sign in!</p>
       </div>
-      <div *ngIf="error" class="mb-4 p-3 rounded-lg bg-error-50 border border-error-200 text-error-700 text-sm">{{ error }}</div>
+
+      @if (error) {
+        <div class="mb-4 p-3 rounded-lg bg-error-50 border border-error-200 text-error-700 text-sm">{{ error }}</div>
+      }
+
+      @if (emailNotVerified) {
+        <div class="mb-4 p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 text-sm dark:bg-amber-500/10 dark:border-amber-500/20 dark:text-amber-400">
+          <p class="mb-2">Votre compte n'a pas encore été vérifié.</p>
+          <a [routerLink]="'/verify-email'" [queryParams]="{ email: loginForm.get('email')?.value }" class="font-medium underline hover:no-underline">
+            Cliquez ici pour vérifier votre email
+          </a>
+        </div>
+      }
+
       <form (ngSubmit)="onLogin()" [formGroup]="loginForm">
-        <div>
-          <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Email *</label>
-          <input type="email" formControlName="email" placeholder="info@gmail.com" class="block w-full rounded-lg border border-gray-200 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-800 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30" />
+        <div class="space-y-5">
+          <div>
+            <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Email *</label>
+            <input
+              type="email"
+              formControlName="email"
+              placeholder="info@gmail.com"
+              class="block w-full rounded-lg border border-gray-200 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-800 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30"
+              [ngClass]="{'border-error-500': submitted && f['email'].errors}"
+            />
+            @if (submitted && f['email'].errors) {
+              <p class="mt-1 text-xs text-error-500">
+                @if (f['email'].errors['required']) { Email is required. }
+                @if (f['email'].errors['email']) { Please enter a valid email. }
+              </p>
+            }
+          </div>
+
+          <div>
+            <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Password *</label>
+            <input
+              type="password"
+              formControlName="password"
+              placeholder="Enter your password"
+              class="block w-full rounded-lg border border-gray-200 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-800 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30"
+              [ngClass]="{'border-error-500': submitted && f['password'].errors}"
+            />
+            @if (submitted && f['password'].errors) {
+              <p class="mt-1 text-xs text-error-500">
+                @if (f['password'].errors['required']) { Password is required. }
+              </p>
+            }
+          </div>
         </div>
-        <div>
-          <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Password *</label>
-          <input type="password" formControlName="password" placeholder="Enter your password" class="block w-full rounded-lg border border-gray-200 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-800 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30" />
-        </div>
-        <button type="submit" [disabled]="loading" class="w-full inline-flex items-center justify-center rounded-lg bg-brand-500 px-6 py-3 text-sm font-medium text-white hover:bg-brand-600 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 disabled:opacity-50 disabled:cursor-not-allowed">
-          <ng-container *ngIf="loading; else signInText">
+
+        <button
+          type="submit"
+          [disabled]="loading"
+          class="mt-5 w-full inline-flex items-center justify-center rounded-lg bg-brand-500 px-6 py-3 text-sm font-medium text-white hover:bg-brand-600 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          @if (loading) {
             <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
             Signing in...
-          </ng-container>
-          <ng-template #signInText>Sign In</ng-template>
+          } @else {
+            Sign In
+          }
         </button>
+
         <div class="flex items-center justify-between mt-4">
           <a routerLink="/forgot-password" class="text-sm text-brand-500 hover:text-brand-600 dark:text-brand-400">Forgot Password?</a>
-          <a routerLink="/signup" class="text-sm text-brand-500 hover:text-brand-600 dark:text-brand-400">Create an account</a>
+          <a routerLink="/register" class="text-sm text-brand-500 hover:text-brand-600 dark:text-brand-400">Create an account</a>
         </div>
       </form>
     </div>
   </div>
 </app-auth-page-layout>
+

@@ -104,7 +104,6 @@ D:\5ArcTic\stage\Application\jira_app_back\Jira_APP\obj\Debug\net8.0\staticwebas
 D:\5ArcTic\stage\Application\jira_app_back\Jira_APP\obj\Debug\net8.0\staticwebassets.development.json
 D:\5ArcTic\stage\Application\jira_app_back\Jira_APP\obj\Debug\net8.0\staticwebassets.build.endpoints.json
 D:\5ArcTic\stage\Application\jira_app_back\Jira_APP\obj\Debug\net8.0\swae.build.ex.cache
-D:\5ArcTic\stage\Application\jira_app_back\Jira_APP\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
 D:\5ArcTic\stage\Application\jira_app_back\Jira_APP\obj\Debug\net8.0\Jira_APP.csproj.Up2Date
 D:\5ArcTic\stage\Application\jira_app_back\Jira_APP\obj\Debug\net8.0\Jira_APP.dll
 D:\5ArcTic\stage\Application\jira_app_back\Jira_APP\obj\Debug\net8.0\refint\Jira_APP.dll
@@ -178,5 +177,11 @@ D:\5ArcTic\stage\Application\jira_app_back\Jira_APP\bin\Debug\net8.0\zh-Hans\Mic
 D:\5ArcTic\stage\Application\jira_app_back\Jira_APP\bin\Debug\net8.0\zh-Hant\Microsoft.CodeAnalysis.Workspaces.resources.dll
 D:\5ArcTic\stage\Application\jira_app_back\Jira_APP\obj\Debug\net8.0\Jira_APP.MvcApplicationPartsAssemblyInfo.cs
 D:\5ArcTic\stage\Application\jira_app_back\Jira_APP\bin\Debug\net8.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+D:\5ArcTic\stage\Application\jira_app_back\Jira_APP\bin\Debug\net8.0\BouncyCastle.Cryptography.dll
+D:\5ArcTic\stage\Application\jira_app_back\Jira_APP\bin\Debug\net8.0\MailKit.dll
+D:\5ArcTic\stage\Application\jira_app_back\Jira_APP\bin\Debug\net8.0\MimeKit.dll
+D:\5ArcTic\stage\Application\jira_app_back\Jira_APP\bin\Debug\net8.0\System.Security.Cryptography.Pkcs.dll
+D:\5ArcTic\stage\Application\jira_app_back\Jira_APP\bin\Debug\net8.0\runtimes\win\lib\net8.0\System.Security.Cryptography.Pkcs.dll
 D:\5ArcTic\stage\Application\jira_app_back\Jira_APP\bin\Debug\net8.0\Jira_APP.staticwebassets.runtime.json
 D:\5ArcTic\stage\Application\jira_app_back\Jira_APP\obj\Debug\net8.0\Jira_APP.sourcelink.json
+D:\5ArcTic\stage\Application\jira_app_back\Jira_APP\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt

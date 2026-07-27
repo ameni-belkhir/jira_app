@@ -4,14 +4,14 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using Application.DTO.Auth;
+using Application.Interfaces;
 using Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Domain.Entity;
 using Microsoft.EntityFrameworkCore;
-using Application.Interfaces;
-using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Services
 {
@@ -20,13 +20,15 @@ namespace Infrastructure.Services
         private readonly ApplicationDbContext _db;
         private readonly IConfiguration _config;
         private readonly PasswordHasher<User> _passwordHasher;
-        private readonly ILogger<AuthService> _logger;
+        private readonly IEmailService _emailService;
+        private readonly Microsoft.Extensions.Logging.ILogger<AuthService> _logger;
 
-        public AuthService(ApplicationDbContext db, IConfiguration config, ILogger<AuthService> logger)
+        public AuthService(ApplicationDbContext db, IConfiguration config, IEmailService emailService, Microsoft.Extensions.Logging.ILogger<AuthService> logger)
         {
             _db = db;
             _config = config;
             _passwordHasher = new PasswordHasher<User>();
+            _emailService = emailService;
             _logger = logger;
         }
 
@@ -35,6 +37,9 @@ namespace Infrastructure.Services
             // check existing
             var exists = await _db.Users.AnyAsync(u => u.Email == dto.Email);
             if (exists) throw new InvalidOperationException("User already exists");
+
+            // generate 4-digit verification code
+            var code = Random.Shared.Next(1000, 9999).ToString();
 
             // déterminer le rôle à attribuer
             int roleIdToAssign;
@@ -68,14 +73,26 @@ namespace Infrastructure.Services
                 RoleId = roleIdToAssign
             };
             user.Password = _passwordHasher.HashPassword(user, dto.Password);
-            // Activation immédiate : utilisateur vérifié
-            user.IsEmailVerified = true;
-            user.VerificationCode = null;
-            user.VerificationCodeExpiration = null;
+            user.IsEmailVerified = false;
+            user.VerificationCode = code;
+            user.VerificationCodeExpiration = DateTime.UtcNow.AddMinutes(15);
 
             _db.Users.Add(user);
             var saved = await _db.SaveChangesAsync();
             if (saved <= 0) throw new InvalidOperationException("Impossible de créer l'utilisateur en base de données.");
+
+            // send verification email and surface errors
+            try
+            {
+                var subject = "Code de vérification";
+                var body = $"Bonjour {user.Nom},\n\nVotre code de vérification est : {code}\nIl expire dans 15 minutes.";
+                await _emailService.SendEmailAsync(user.Email, subject, body);
+            }
+            catch (System.Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send verification email to {Email}", user.Email);
+                throw new InvalidOperationException($"Echec envoi e-mail de vérification: {ex.Message}");
+            }
         }
 
         public async Task<AuthResponseDto?> LoginAsync(LoginDto dto)
@@ -84,9 +101,26 @@ namespace Infrastructure.Services
             if (user == null) return null;
             var result = _passwordHasher.VerifyHashedPassword(user, user.Password, dto.Password);
             if (result == PasswordVerificationResult.Failed) return null;
-            // Since registration now activates user immediately, no verification check needed
+            if (!user.IsEmailVerified)
+            {
+                throw new InvalidOperationException("Email not verified. Veuillez vérifier votre adresse e-mail avant de vous connecter.");
+            }
             var token = await GenerateTokenAsync(user);
             return new AuthResponseDto { Token = token, Email = user.Email, Role = (await _db.Roles.FindAsync(user.RoleId))?.Description ?? string.Empty, Expiration = DateTime.UtcNow.AddMinutes(int.Parse(_config["Jwt:ExpiryInMinutes"] ?? "60")), ProfileImageUrl = user.ProfileImageUrl };
+        }
+
+        public async Task<bool> VerifyCodeAsync(Application.DTO.Auth.VerifyCodeDto dto)
+        {
+            var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
+            if (user == null) return false;
+            if (user.VerificationCode == null) return false;
+            if (user.VerificationCodeExpiration == null || user.VerificationCodeExpiration < DateTime.UtcNow) return false;
+            if (user.VerificationCode != dto.Code) return false;
+            user.IsEmailVerified = true;
+            user.VerificationCode = null;
+            user.VerificationCodeExpiration = null;
+            _db.Users.Update(user);
+            return await _db.SaveChangesAsync() > 0;
         }
 
         public async Task<bool> ForgotPasswordAsync(Application.DTO.Auth.ForgotPasswordDto dto)
@@ -99,7 +133,14 @@ namespace Infrastructure.Services
             _db.Users.Update(user);
             var saved = await _db.SaveChangesAsync();
             if (saved <= 0) return false;
-            // No email sending in this build; token is stored for client-driven workflows
+            try
+            {
+                await _emailService.SendResetPasswordTokenAsync(user.Email, user.Nom, token);
+            }
+            catch
+            {
+                // ignore
+            }
             return true;
         }
 

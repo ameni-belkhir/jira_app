@@ -7,7 +7,8 @@ namespace Application.Interfaces
     {
         Task RegisterAsync(RegisterDto dto);
         Task<AuthResponseDto?> LoginAsync(LoginDto dto);
-        Task<bool> ForgotPasswordAsync(ForgotPasswordDto dto);
-        Task<bool> ResetPasswordAsync(ResetPasswordDto dto);
+        Task<bool> VerifyCodeAsync(Application.DTO.Auth.VerifyCodeDto dto);
+        Task<bool> ForgotPasswordAsync(Application.DTO.Auth.ForgotPasswordDto dto);
+        Task<bool> ResetPasswordAsync(Application.DTO.Auth.ResetPasswordDto dto);
     }
 }

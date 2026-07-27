@@ -21,10 +21,13 @@ import { AuthPageLayoutComponent } from '../../shared/layout/auth-page-layout/au
   styles: ``
 })
 export class RegisterComponent implements OnInit {
+  step: 'register' | 'verifyCode' = 'register';
   registerForm: FormGroup;
+  verifyForm: FormGroup;
   submitted = false;
   error = '';
   loading = false;
+  registeredEmail = '';
 
   // URL params from invitation
   token: string | null = null;
@@ -48,6 +51,10 @@ export class RegisterComponent implements OnInit {
       confirmPassword: ['', [Validators.required]]
     }, {
       validators: this.passwordMatchValidator
+    });
+
+    this.verifyForm = this.fb.group({
+      code: ['', [Validators.required, Validators.pattern(/^\d{4}$/)]]
     });
   }
 
@@ -79,6 +86,10 @@ export class RegisterComponent implements OnInit {
 
   get f() {
     return this.registerForm.controls;
+  }
+
+  get vf() {
+    return this.verifyForm.controls;
   }
 
   onSubmit(): void {
@@ -116,12 +127,9 @@ export class RegisterComponent implements OnInit {
       }))
       .subscribe({
         next: () => {
-          this.notification.success('Inscription réussie ! Vérifiez votre email.');
-          const queryParams: any = { email: this.registerForm.value.email };
-          if (this.projectId) {
-            queryParams.projectId = this.projectId;
-          }
-          this.router.navigate(['/verify-email'], { queryParams });
+          this.registeredEmail = this.registerForm.value.email;
+          this.step = 'verifyCode';
+          this.notification.success('Un code de vérification vous a été envoyé par email.');
         },
         error: (err: HttpErrorResponse) => {
           const msg = err.status === 400
@@ -135,6 +143,82 @@ export class RegisterComponent implements OnInit {
           this.notification.error(msg);
         }
       });
+  }
+
+  onVerifyCode(): void {
+    this.submitted = true;
+    this.error = '';
+
+    if (this.verifyForm.invalid) {
+      this.notification.validation('Veuillez entrer le code à 4 chiffres.');
+      return;
+    }
+
+    this.loading = true;
+    this.notification.loading('Vérification du code…');
+
+    this.authService.verifyRegistrationCode({
+      email: this.registeredEmail,
+      code: this.verifyForm.value.code
+    })
+      .pipe(finalize(() => {
+        this.loading = false;
+        this.notification.dismiss();
+      }))
+      .subscribe({
+        next: () => {
+          this.notification.success('E-mail vérifié avec succès.');
+          this.router.navigate(['/login']);
+        },
+        error: (err: HttpErrorResponse) => {
+          const msg = err.status === 400
+            ? 'Code de vérification invalide ou expiré.'
+            : err.status === 500
+              ? 'Serveur indisponible.'
+              : err.status === 0
+                ? 'Impossible de se connecter au serveur.'
+                : 'Une erreur inattendue est survenue.';
+          this.error = msg;
+          this.notification.error(msg);
+        }
+      });
+  }
+
+  resendCode(): void {
+    this.loading = true;
+    this.notification.loading('Renvoi du code…');
+
+    const registerData: RegisterRequest = {
+      nom: this.registerForm.value.nom,
+      prenom: this.registerForm.value.prenom,
+      email: this.registeredEmail,
+      password: this.registerForm.value.password,
+      roleId: 1
+    };
+
+    this.authService.register(registerData)
+      .pipe(finalize(() => {
+        this.loading = false;
+        this.notification.dismiss();
+      }))
+      .subscribe({
+        next: () => {
+          this.error = '';
+          this.verifyForm.reset();
+          this.submitted = false;
+          this.notification.success('Un nouveau code vous a été envoyé par email.');
+        },
+        error: () => {
+          this.notification.error('Impossible de renvoyer le code. Veuillez réessayer.');
+        }
+      });
+  }
+
+  goBackToForm(): void {
+    this.step = 'register';
+    this.error = '';
+    this.submitted = false;
+    this.verifyForm.reset();
   }
 }
 

@@ -18,7 +18,7 @@ import { AuthGuard } from './guards/auth.guard';
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: '/dashboard',
+    redirectTo: 'register',
     pathMatch: 'full',
   },
   {
@@ -109,7 +109,7 @@ export const routes: Routes = [
   },
   {
     path: '**',
-    redirectTo: '/dashboard',
+    redirectTo: 'register',
   },
 ];
 

@@ -1,10 +1,10 @@
 ﻿using Infrastructure.Persistence;
 using Domain.Interfaces;
 using Infrastructure.Repositories;
+using Application.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,7 +24,16 @@ namespace Infrastructure
                     configuration.GetConnectionString("DefaultConnection"),
                     b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
 
-            // No SMTP/email service in this build: email-dependent flows removed
+            // Bind SMTP settings manually to avoid additional package dependency
+            services.Configure<Services.SmtpSettings>(options =>
+            {
+                var section = configuration.GetSection("SmtpSettings");
+                options.Server = section["Server"] ?? string.Empty;
+                options.Port = int.TryParse(section["Port"], out var p) ? p : 587;
+                options.SenderName = section["SenderName"] ?? string.Empty;
+                options.SenderEmail = section["SenderEmail"] ?? string.Empty;
+                options.Password = section["Password"] ?? string.Empty;
+            });
 
             // Register repositories
             services.AddScoped<IUserRepository, UserRepository>();
@@ -36,10 +45,11 @@ namespace Infrastructure
             services.AddScoped<IConversationRepository, ConversationRepository>();
             services.AddScoped<IMessageRepository, MessageRepository>();
 
-            // Register AuthService implementation
-            services.AddScoped<Application.Interfaces.IAuthService, Services.AuthService>();
+            // Email service
+            services.AddScoped<IEmailService, Services.EmailService>();
             // File storage (local)
-            services.AddScoped<Services.IFileStorageService, Services.LocalFileStorageService>();
+            services.AddScoped<IFileStorageService, Services.LocalFileStorageService>();
+            services.AddScoped<IAuthService, Services.AuthService>();
 
             return services;
         }

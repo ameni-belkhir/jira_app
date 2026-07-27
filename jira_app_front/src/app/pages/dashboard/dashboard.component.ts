@@ -6,6 +6,7 @@ import { finalize } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ProjectCardComponent } from '../projects/project-card/project-card.component';
 import { ProjectService, BackendProject, CreateProjectRequest } from '../../services/project.service';
+import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../shared/services/notification.service';
 
 @Component({
@@ -33,10 +34,18 @@ export class DashboardComponent implements OnInit {
 
   constructor(
     private projectService: ProjectService,
+    private authService: AuthService,
     private router: Router
   ) {}
 
   ngOnInit(): void {
+    // Only load projects if the user is authenticated
+    // (the AuthGuard on the route should already prevent unauthenticated access,
+    //  but this is an additional safety net to avoid unnecessary API calls)
+    if (!this.authService.isAuthenticated) {
+      this.router.navigate(['/login'], { replaceUrl: true });
+      return;
+    }
     this.loadProjects();
   }
 

@@ -25,7 +25,7 @@ namespace Jira_APP.Controllers
             try
             {
                 await _auth.RegisterAsync(dto);
-                return Created(string.Empty, new { message = "Compte créé." });
+                return Created(string.Empty, new { message = "Compte créé. Veuillez vérifier votre boîte mail pour entrer le code de confirmation." });
             }
             catch (System.InvalidOperationException ex)
             {
@@ -50,7 +50,22 @@ namespace Jira_APP.Controllers
             }
         }
 
-        // VerifyCode endpoint removed: registration now activates user immediately.
+        [HttpPost("verify-code")]
+        public async Task<IActionResult> VerifyCode([FromBody] Application.DTO.Auth.VerifyCodeDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            try
+            {
+                var ok = await _auth.VerifyCodeAsync(dto);
+                if (!ok) return BadRequest(new { error = "Code invalide ou expiré." });
+                return Ok(new { message = "E-mail vérifié avec succès." });
+            }
+            catch (System.Exception ex)
+            {
+                _logger.LogError(ex, "VerifyCode failed for {Email}", dto.Email);
+                return BadRequest(new { error = ex.Message });
+            }
+        }
 
         [HttpPost("forgot-password")]
         public async Task<IActionResult> ForgotPassword([FromBody] Application.DTO.Auth.ForgotPasswordDto dto)

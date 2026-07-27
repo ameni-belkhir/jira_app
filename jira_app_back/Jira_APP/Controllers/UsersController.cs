@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Domain.Entity;
 using Application.DTO;
+using Application.Interfaces;
 
 using Microsoft.AspNetCore.Authorization;
 
@@ -19,9 +20,9 @@ namespace Jira_APP.Controllers
     public class UsersController : ControllerBase
     {
         private readonly ApplicationDbContext _db;
-        private readonly Infrastructure.Services.IFileStorageService _fileStorage;
+        private readonly IFileStorageService _fileStorage;
 
-        public UsersController(ApplicationDbContext db, Infrastructure.Services.IFileStorageService fileStorage)
+        public UsersController(ApplicationDbContext db, IFileStorageService fileStorage)
         {
             _db = db;
             _fileStorage = fileStorage;

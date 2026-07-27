@@ -69,8 +69,6 @@ builder.Services.AddCors(options =>
     });
 });
 
-// AuthService registration moved to Infrastructure dependency injection
-
 // JWT Authentication
 var jwtSecret = builder.Configuration["Jwt:SecretKey"];
 if (!string.IsNullOrEmpty(jwtSecret))

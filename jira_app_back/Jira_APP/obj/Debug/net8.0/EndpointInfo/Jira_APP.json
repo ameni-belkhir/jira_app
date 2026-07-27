@@ -345,58 +345,6 @@
         }
       }
     },
-    "/api/Invitations/validate": {
-      "get": {
-        "tags": [
-          "Invitations"
-        ],
-        "parameters": [
-          {
-            "name": "token",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/Invitations/send": {
-      "post": {
-        "tags": [
-          "Invitations"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateInvitationDto"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateInvitationDto"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateInvitationDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
     "/api/Projects": {
       "get": {
         "tags": [
@@ -578,44 +526,6 @@
         "responses": {
           "200": {
             "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/Projects/my-projects": {
-      "get": {
-        "tags": [
-          "Projects"
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ProjectDto"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ProjectDto"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ProjectDto"
-                  }
-                }
-              }
-            }
           }
         }
       }
@@ -1022,55 +932,6 @@
         "responses": {
           "200": {
             "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/sprints/{id}/tickets": {
-      "get": {
-        "tags": [
-          "Sprints"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/SprintTicketDto"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/SprintTicketDto"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/SprintTicketDto"
-                  }
-                }
-              }
-            }
           }
         }
       }
@@ -1566,34 +1427,6 @@
         },
         "additionalProperties": false
       },
-      "CreateInvitationDto": {
-        "required": [
-          "email"
-        ],
-        "type": "object",
-        "properties": {
-          "email": {
-            "minLength": 1,
-            "type": "string",
-            "format": "email"
-          },
-          "role": {
-            "type": "string",
-            "nullable": true
-          },
-          "projectId": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "expiresInDays": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
       "CreateProjectDto": {
         "required": [
           "nom"
@@ -1891,10 +1724,6 @@
             "type": "integer",
             "format": "int32",
             "nullable": true
-          },
-          "token": {
-            "type": "string",
-            "nullable": true
           }
         },
         "additionalProperties": false
@@ -1984,53 +1813,6 @@
               "$ref": "#/components/schemas/TicketDto"
             },
             "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "SprintTicketDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "titre": {
-            "type": "string",
-            "nullable": true
-          },
-          "description": {
-            "type": "string",
-            "nullable": true
-          },
-          "priority": {
-            "type": "string",
-            "nullable": true
-          },
-          "status": {
-            "type": "string",
-            "nullable": true
-          },
-          "creatorId": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "creatorName": {
-            "type": "string",
-            "nullable": true
-          },
-          "assigneeId": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "assigneeName": {
-            "type": "string",
-            "nullable": true
-          },
-          "dateCreation": {
-            "type": "string",
-            "format": "date-time"
           }
         },
         "additionalProperties": false
