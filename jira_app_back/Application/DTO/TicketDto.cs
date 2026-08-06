@@ -17,6 +17,7 @@ namespace Application.DTO
         public DateTime DateCreation { get; set; }
         public DateTime? DateResolution { get; set; }
         public string Color { get; set; } = "#ffffff";
+        public bool HasSubTickets { get; set; }
         // Related collections
         public ICollection<int> CommentaireIds { get; set; } = new List<int>();
         public ICollection<int> ConversationIds { get; set; } = new List<int>();

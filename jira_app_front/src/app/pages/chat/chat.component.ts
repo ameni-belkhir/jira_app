@@ -1,131 +1,146 @@
-import { Component, ElementRef, ViewChild, AfterViewChecked, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-
-interface Message {
-  id: number;
-  senderId: number;
-  text: string;
-  timestamp: Date;
-  read: boolean;
-}
-
-interface Conversation {
-  id: number;
-  name: string;
-  avatar: string;
-  lastMessage: string;
-  time: string;
-  online: boolean;
-  messages: Message[];
-}
+import { Subscription } from 'rxjs';
+import { ChatService, Conversation, ChatMessage } from '../../services/chat.service';
+import { AuthService } from '../../services/auth.service';
+import { ChatSidebarComponent } from './chat-sidebar/chat-sidebar.component';
+import { ChatWindowComponent } from './chat-window/chat-window.component';
 
 @Component({
   selector: 'app-chat',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, ChatSidebarComponent, ChatWindowComponent],
   templateUrl: './chat.component.html',
-  styles: ``
+  styles: ``,
 })
-export class ChatComponent implements AfterViewChecked {
-  @ViewChild('messageContainer') private messageContainer!: ElementRef;
+export class ChatComponent implements OnInit, OnDestroy {
+  private chatService = inject(ChatService);
+  private authService = inject(AuthService);
 
-  searchTerm = '';
-  newMessage = '';
+  conversations = signal<Conversation[]>([]);
   activeConversation = signal<Conversation | null>(null);
+  messages = signal<ChatMessage[]>([]);
+  typingUsers = signal<Record<string, string>>({});
+  onlineUsers = signal<Record<string, boolean>>({});
+  currentUserId: string | number | null = null;
 
-  conversations: Conversation[] = [
-    {
-      id: 1, name: 'Emily Chen', avatar: '/images/user/user-01.jpg',
-      lastMessage: 'Sure, I will review the PR today', time: '2 min ago', online: true,
-      messages: [
-        { id: 1, senderId: 1, text: 'Hey, have you seen the latest design mockups?', timestamp: new Date('2026-07-21T10:00:00'), read: true },
-        { id: 2, senderId: 0, text: 'Not yet, can you send me the link?', timestamp: new Date('2026-07-21T10:02:00'), read: true },
-        { id: 3, senderId: 1, text: 'Sure, I will review the PR today', timestamp: new Date('2026-07-21T10:05:00'), read: true },
-      ]
-    },
-    {
-      id: 2, name: 'Alex Rivera', avatar: '/images/user/user-02.jpg',
-      lastMessage: 'Deploy is scheduled for tomorrow', time: '15 min ago', online: true,
-      messages: [
-        { id: 1, senderId: 2, text: 'The CI pipeline is ready', timestamp: new Date('2026-07-21T09:30:00'), read: true },
-        { id: 2, senderId: 0, text: 'Great, any issues?', timestamp: new Date('2026-07-21T09:32:00'), read: true },
-        { id: 3, senderId: 2, text: 'Deploy is scheduled for tomorrow', timestamp: new Date('2026-07-21T09:35:00'), read: false },
-      ]
-    },
-    {
-      id: 3, name: 'Sarah Kim', avatar: '/images/user/user-03.jpg',
-      lastMessage: 'API docs are ready for review', time: '1 hour ago', online: false,
-      messages: [
-        { id: 1, senderId: 3, text: 'I finished the documentation', timestamp: new Date('2026-07-21T08:00:00'), read: true },
-        { id: 2, senderId: 0, text: 'Awesome, I will check it out', timestamp: new Date('2026-07-21T08:15:00'), read: true },
-        { id: 3, senderId: 3, text: 'API docs are ready for review', timestamp: new Date('2026-07-21T08:30:00'), read: true },
-      ]
-    },
-    {
-      id: 4, name: 'James Wilson', avatar: '/images/user/user-04.jpg',
-      lastMessage: 'Authentication module is complete', time: '3 hours ago', online: false,
-      messages: [
-        { id: 1, senderId: 4, text: 'JWT auth is fully implemented', timestamp: new Date('2026-07-21T06:00:00'), read: true },
-        { id: 2, senderId: 0, text: 'Nice work! Let us test it', timestamp: new Date('2026-07-21T06:30:00'), read: true },
-        { id: 3, senderId: 4, text: 'Authentication module is complete', timestamp: new Date('2026-07-21T07:00:00'), read: true },
-      ]
-    },
-  ];
+  private subs: Subscription[] = [];
 
-  get filteredConversations(): Conversation[] {
-    if (this.searchTerm.trim() === '') return this.conversations;
-    const term = this.searchTerm.toLowerCase();
-    return this.conversations.filter(c => c.name.toLowerCase().includes(term));
+  ngOnInit(): void {
+    this.currentUserId = this.authService.getUserId();
+
+    // Wire up the SignalR-driven observables.
+    this.subs.push(
+      this.chatService.activeConversations$.subscribe((convs) => {
+        this.conversations.set(convs);
+        // Keep active conversation reference in sync.
+        const active = this.activeConversation();
+        if (active) {
+          const updated = convs.find((c) => c.id === active.id);
+          if (updated) this.activeConversation.set(updated);
+        }
+      }),
+      this.chatService.messages$.subscribe((msgs) => this.messages.set(msgs)),
+      this.chatService.typingUsers$.subscribe((t) => this.typingUsers.set(t)),
+      this.chatService.onlineUsers$.subscribe((o) => this.onlineUsers.set(o)),
+    );
+
+    // Seed with demo conversations so the UI is populated while the
+    // SignalR / REST backend delivers real data.
+    this.seedConversations();
+
+    // Start the real-time connection (JWT authenticated).
+    this.chatService.startConnection();
+  }
+
+  ngOnDestroy(): void {
+    this.subs.forEach((s) => s.unsubscribe());
+    // Keep the connection alive across navigation; only stop on logout.
+    // If you want it bound to the page lifecycle, uncomment the next line:
+    // this.chatService.stopConnection();
   }
 
   selectConversation(conv: Conversation): void {
     this.activeConversation.set(conv);
+    this.chatService.setActiveConversation(conv.id);
+    this.chatService.markAsRead(conv.id);
   }
 
-  sendMessage(): void {
+  onSend(payload: { text: string; type: 'text' | 'file' | 'image'; fileName?: string; fileSize?: number }): void {
     const conv = this.activeConversation();
-    if (conv == null || this.newMessage.trim() === '') return;
-
-    conv.messages.push({
-      id: Date.now(),
-      senderId: 0,
-      text: this.newMessage.trim(),
-      timestamp: new Date(),
-      read: true
-    });
-    conv.lastMessage = this.newMessage.trim();
-    conv.time = 'just now';
-    this.newMessage = '';
-    this.activeConversation.set({ ...conv });
+    if (!conv) return;
+    this.chatService.sendMessage(conv.id, payload.text, payload.type, payload.fileName, payload.fileSize);
   }
 
-  ngAfterViewChecked(): void {
-    this.scrollToBottom();
+  onTyping(typing: boolean): void {
+    const conv = this.activeConversation();
+    if (!conv) return;
+    this.chatService.sendTyping(conv.id, typing);
   }
 
-  private scrollToBottom(): void {
-    try {
-      this.messageContainer.nativeElement.scrollTop = this.messageContainer.nativeElement.scrollHeight;
-    } catch(e) { }
+onMarkAsRead(): void {
+    const conv = this.activeConversation();
+    if (!conv) return;
+    this.chatService.markAsRead(conv.id);
   }
 
-  formatTime(date: Date): string {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  }
-
-  isOwnMessage(msg: Message): boolean {
-    return msg.senderId === 0;
-  }
-
-  isOtherMessage(msg: Message): boolean {
-    return msg.senderId !== 0;
-  }
-
-  getMessageClasses(msg: Message): string {
-    if (this.isOwnMessage(msg)) {
-      return 'px-4 py-2.5 rounded-2xl text-sm leading-5 bg-brand-500 text-white rounded-br-md';
+  isConversationOnline(): boolean {
+    const conv = this.activeConversation();
+    if (!conv) return false;
+    if (conv.isOnline !== undefined) return conv.isOnline;
+    if (conv.otherUserId != null) {
+      return !!this.onlineUsers()[String(conv.otherUserId)];
     }
-    return 'px-4 py-2.5 rounded-2xl text-sm leading-5 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-white/90 rounded-bl-md';
+    return false;
+  }
+
+  private seedConversations(): void {
+    const now = new Date();
+    const demo: Conversation[] = [
+      {
+        id: 1,
+        name: 'Emily Chen',
+        otherUserId: 101,
+        avatar: '/images/user/user-01.jpg',
+        lastMessage: 'J\u2019ai bien reçu ton message.',
+        lastMessageAt: new Date(now.getTime() - 2 * 60000),
+        unreadCount: 2,
+        isOnline: true,
+        messages: [
+          { id: 1, conversationId: 1, senderId: 101, senderName: 'Emily Chen', text: 'Salut ! Tu as vu les maquettes ?', timestamp: new Date(now.getTime() - 10 * 60000), isRead: true },
+          { id: 2, conversationId: 1, senderId: 0, text: 'Pas encore, tu peux m\u2019envoyer le lien ?', timestamp: new Date(now.getTime() - 8 * 60000), isRead: true },
+          { id: 3, conversationId: 1, senderId: 101, senderName: 'Emily Chen', text: 'J\u2019ai bien reçu ton message.', timestamp: new Date(now.getTime() - 2 * 60000), isRead: false },
+        ],
+      },
+      {
+        id: 2,
+        name: 'Alex Rivera',
+        otherUserId: 102,
+        avatar: '/images/user/user-02.jpg',
+        lastMessage: 'Le déploiement est prévu demain.',
+        lastMessageAt: new Date(now.getTime() - 15 * 60000),
+        isOnline: true,
+        messages: [
+          { id: 1, conversationId: 2, senderId: 102, senderName: 'Alex Rivera', text: 'Le pipeline CI est prêt.', timestamp: new Date(now.getTime() - 30 * 60000), isRead: true },
+          { id: 2, conversationId: 2, senderId: 0, text: 'Super, des soucis ?', timestamp: new Date(now.getTime() - 20 * 60000), isRead: true },
+          { id: 3, conversationId: 2, senderId: 102, senderName: 'Alex Rivera', text: 'Le déploiement est prévu demain.', timestamp: new Date(now.getTime() - 15 * 60000), isRead: false },
+        ],
+      },
+      {
+        id: 3,
+        name: 'Sarah Kim',
+        otherUserId: 103,
+        avatar: '/images/user/user-03.jpg',
+        lastMessage: 'La doc API est prête.',
+        lastMessageAt: new Date(now.getTime() - 60 * 60000),
+        isOnline: false,
+        messages: [
+          { id: 1, conversationId: 3, senderId: 103, senderName: 'Sarah Kim', text: 'J\u2019ai terminé la documentation.', timestamp: new Date(now.getTime() - 120 * 60000), isRead: true },
+          { id: 2, conversationId: 3, senderId: 0, text: 'Génial, je vais vérifier.', timestamp: new Date(now.getTime() - 90 * 60000), isRead: true },
+          { id: 3, conversationId: 3, senderId: 103, senderName: 'Sarah Kim', text: 'La doc API est prête.', timestamp: new Date(now.getTime() - 60 * 60000), isRead: true },
+        ],
+      },
+    ];
+    this.chatService.setConversations(demo);
   }
 }

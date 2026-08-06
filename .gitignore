@@ -1,2 +1,6 @@
 .vs/
 *.vsidx
+
+# Secrets locaux - ne JAMAIS commiter
+appsettings.Local.json
+appsettings.Development.json

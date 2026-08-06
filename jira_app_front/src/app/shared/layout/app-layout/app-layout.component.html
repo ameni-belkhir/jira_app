@@ -17,5 +17,11 @@
     <div class="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6">
       <router-outlet></router-outlet>
     </div>
-  </div>
 </div>
+
+@if (showChangePasswordModal()) {
+  <app-change-password-modal (passwordChanged)="onPasswordChanged()" />
+}
+
+<!-- Floating AI chatbot widget -->
+<app-chatbot-widget />

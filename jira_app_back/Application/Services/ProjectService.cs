@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -32,26 +33,67 @@ namespace Application.Services
             return projects.Select(MapToDto);
         }
 
+        /// <summary>
+        /// Retourne les projets visibles par un utilisateur selon son rôle global :
+        /// - "Admin" : tous les projets.
+        /// - "ScrumMaster" : projets créés par lui OU projets dont il est membre.
+        /// - autres : uniquement les projets dont il est membre.
+        /// </summary>
+        public async Task<IEnumerable<ProjectDto>> GetProjectsForUserAsync(int userId, string userRole)
+        {
+            var allProjects = await _projectRepository.GetAllAsync();
+
+            if (string.Equals(userRole, "Admin", StringComparison.OrdinalIgnoreCase))
+            {
+                return allProjects.Select(MapToDto);
+            }
+
+            if (string.Equals(userRole, "ScrumMaster", StringComparison.OrdinalIgnoreCase))
+            {
+                return allProjects
+                    .Where(p => p.CreatedById == userId ||
+                                p.Members.Any(m => m.UserId == userId))
+                    .Select(MapToDto);
+            }
+
+            return allProjects
+                .Where(p => p.Members.Any(m => m.UserId == userId))
+                .Select(MapToDto);
+        }
+
         public async Task<ProjectDto> CreateAsync(ProjectDto dto)
         {
             var project = new Project
             {
                 Nom = dto.Nom,
                 Responsable = dto.Responsable,
-                Description = dto.Description
+                Description = dto.Description,
+                CreatedById = dto.CreatedById
             };
 
-            // Optionally attach members by ids
-            foreach (var memberId in dto.MemberIds)
+            // Le créateur est automatiquement ScrumMaster
+            project.Members.Add(new ProjectMember
             {
-                var user = await _userRepository.GetByIdAsync(memberId);
-                if (user != null) project.Members.Add(user);
+                UserId = dto.CreatedById,
+                RoleInProject = "ScrumMaster",
+                JoinedAt = DateTime.UtcNow
+            });
+
+            // Ajout des Scrum Masters sélectionnés
+            foreach (var scrumMasterId in dto.ScrumMasterIds.Distinct().Where(id => id != dto.CreatedById))
+            {
+                project.Members.Add(new ProjectMember
+                {
+                    UserId = scrumMasterId,
+                    RoleInProject = "ScrumMaster",
+                    JoinedAt = DateTime.UtcNow
+                });
             }
 
             await _projectRepository.AddAsync(project);
             await _projectRepository.SaveChangesAsync();
             dto.Id = project.Id;
-            return dto;
+            return MapToDto(project);
         }
 
         public async Task<bool> UpdateAsync(ProjectDto dto)
@@ -61,8 +103,6 @@ namespace Application.Services
             project.Nom = dto.Nom;
             project.Description = dto.Description;
             project.Responsable = dto.Responsable;
-
-            // Members synchronization omitted for brevity
 
             _projectRepository.Update(project);
             return await _projectRepository.SaveChangesAsync();
@@ -82,7 +122,18 @@ namespace Application.Services
             Nom = project.Nom,
             Responsable = project.Responsable,
             Description = project.Description,
-            MemberIds = project.Members.Select(m => m.Id).ToList()
+            CreatedById = project.CreatedById,
+            Members = project.Members?.Select(m => new ProjectMemberSummaryDto
+            {
+                UserId = m.UserId,
+                Nom = m.User?.Nom ?? "",
+                Prenom = m.User?.Prenom ?? "",
+                RoleInProject = m.RoleInProject
+            }).ToList() ?? new List<ProjectMemberSummaryDto>(),
+            ScrumMasterIds = project.Members?
+                .Where(m => m.RoleInProject == "ScrumMaster")
+                .Select(m => m.UserId)
+                .ToList() ?? new List<int>()
         };
     }
 }

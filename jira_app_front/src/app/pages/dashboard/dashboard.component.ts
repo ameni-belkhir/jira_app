@@ -8,6 +8,7 @@ import { ProjectCardComponent } from '../projects/project-card/project-card.comp
 import { ProjectService, BackendProject, CreateProjectRequest } from '../../services/project.service';
 import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../shared/services/notification.service';
+import { ProjectPlanBridgeService } from '../../shared/services/project-plan-bridge.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -30,12 +31,16 @@ export class DashboardComponent implements OnInit {
   savingProject = signal(false);
   projectError = '';
 
-  private notification = inject(NotificationService);
+private notification = inject(NotificationService);
+
+  /** Met en valeur visuellement les champs pré-remplis par l'IA. */
+  highlightPrefilled = signal(false);
 
   constructor(
     private projectService: ProjectService,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private planBridge: ProjectPlanBridgeService
   ) {}
 
   ngOnInit(): void {
@@ -81,13 +86,42 @@ export class DashboardComponent implements OnInit {
       });
   }
 
-  // Open create project modal
+// Open create project modal
   openCreateProjectModal(): void {
     this.newProjectName = '';
     this.newProjectDescription = '';
     this.newProjectResponsable = '';
     this.projectError = '';
     this.showCreateModal.set(true);
+
+    // Pré-remplissage automatique depuis le plan généré par l'IA (s'il existe)
+    const plan = this.planBridge.plan();
+    if (plan) {
+      this.prefillFromPlan(plan);
+    }
+  }
+
+  /**
+   * Applique le plan de projet généré par l'IA au formulaire de création,
+   * puis met en valeur les champs pré-remplis pendant 3 secondes.
+   */
+  private prefillFromPlan(plan: any): void {
+    const name = plan?.projectName || plan?.nom || '';
+    const description = plan?.projectDescription || plan?.description || '';
+
+    if (name) this.newProjectName = name;
+    if (description) this.newProjectDescription = description;
+
+    if (name || description) {
+      this.notification.success('Formulaire pré-rempli grâce à l\u2019IA !');
+
+      // Met en valeur les champs pendant 3 secondes
+      this.highlightPrefilled.set(true);
+      setTimeout(() => this.highlightPrefilled.set(false), 3000);
+
+      // Le plan est consommé : on le nettoie pour éviter un pré-remplissage répété
+      this.planBridge.clearPlan();
+    }
   }
 
   closeCreateProjectModal(): void {
@@ -101,7 +135,7 @@ export class DashboardComponent implements OnInit {
       return;
     }
 
-    this.savingProject.set(true);
+this.savingProject.set(true);
     this.projectError = '';
     this.notification.loading('Création du projet…');
 
@@ -109,7 +143,7 @@ export class DashboardComponent implements OnInit {
       nom: this.newProjectName.trim(),
       description: this.newProjectDescription.trim(),
       responsable: this.newProjectResponsable.trim(),
-      memberIds: []
+      scrumMasterIds: []
     };
 
     this.projectService.createProject(data)
@@ -145,4 +179,3 @@ export class DashboardComponent implements OnInit {
     }
   }
 }
-

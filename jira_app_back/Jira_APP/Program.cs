@@ -1,4 +1,5 @@
 using Infrastructure;
+using Infrastructure.Hubs;
 using Presentation;
 using Application;
 using Serilog;
@@ -10,15 +11,20 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Charge le fichier LOCAL non versionné (gitignored) pour les secrets de développement
+// (ex: Gemini:ApiKey). Ne jamais commiter ce fichier. Alternative : dotnet user-secrets.
+builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
+
 // Add services to the container.
 
 // Register controllers from the Presentation (API) assembly so MVC discovers them
 // Register controllers from the Presentation (API) assembly so MVC discovers them
 builder.Services.AddControllers()
-    .AddApplicationPart(typeof(Presentation.DependencyInjection).Assembly)
     .AddJsonOptions(x => x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
+// SignalR pour les notifications temps réel
+builder.Services.AddSignalR();
 // Ensure Swagger includes operations from controllers in referenced assemblies
 builder.Services.AddSwaggerGen(options =>
 {
@@ -69,12 +75,17 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+});
+
 // JWT Authentication
 var jwtSecret = builder.Configuration["Jwt:SecretKey"];
 if (!string.IsNullOrEmpty(jwtSecret))
 {
     var key = Encoding.UTF8.GetBytes(jwtSecret);
-    builder.Services.AddAuthentication(options =>
+builder.Services.AddAuthentication(options =>
     {
         options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
         options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -91,6 +102,23 @@ if (!string.IsNullOrEmpty(jwtSecret))
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(key)
+        };
+
+        // Important pour SignalR : extraire le token JWT depuis la query string
+        // car les connexions WebSocket ne peuvent pas passer de headers HTTP
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs/notifications"))
+                {
+                    context.Token = accessToken;
+                }
+                return Task.CompletedTask;
+            }
         };
     });
 }
@@ -121,9 +149,18 @@ app.UseStaticFiles();
 // Enable CORS for Angular client before authentication/authorization
 app.UseCors("AllowAngularApp");
 
+// Activer WebSockets pour SignalR (fallback LongPolling si WebSocket échoue)
+app.UseWebSockets();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Hub SignalR pour les notifications en temps réel
+app.MapHub<NotificationHub>("/hubs/notifications");
+
+// Hub SignalR pour la messagerie temps réel (type Messenger/Slack)
+app.MapHub<ChatHub>("/hubs/chat");
 
 app.Run();

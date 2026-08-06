@@ -1,7 +1,13 @@
 using System.Threading.Tasks;
 using Application.DTO.Auth;
 using Application.Interfaces;
+using Infrastructure.Persistence;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Jira_APP.Controllers
 {
@@ -10,11 +16,13 @@ namespace Jira_APP.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _auth;
+        private readonly ApplicationDbContext _db;
         private readonly Microsoft.Extensions.Logging.ILogger<AuthController> _logger;
 
-        public AuthController(IAuthService auth, Microsoft.Extensions.Logging.ILogger<AuthController> logger)
+        public AuthController(IAuthService auth, ApplicationDbContext db, Microsoft.Extensions.Logging.ILogger<AuthController> logger)
         {
             _auth = auth;
+            _db = db;
             _logger = logger;
         }
 
@@ -99,6 +107,43 @@ namespace Jira_APP.Controllers
                 _logger.LogError(ex, "ResetPassword failed for {Email}", dto.Email);
                 return BadRequest(new { error = ex.Message });
             }
+        }
+
+        [Authorize]
+        [HttpPost("change-password")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized();
+            }
+
+            var ok = await _auth.ChangePasswordAsync(userId, dto.NewPassword);
+            if (!ok) return NotFound();
+
+            return NoContent();
+        }
+
+        [Authorize]
+        [HttpGet("me/permissions")]
+        public async Task<ActionResult<IEnumerable<string>>> GetMyPermissions()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized();
+            }
+
+            var permissions = await _db.UserPermissions
+                .AsNoTracking()
+                .Where(p => p.UserId == userId && p.IsEnabled)
+                .Select(p => p.InterfaceKey)
+                .ToListAsync();
+
+            return Ok(permissions);
         }
     }
 }

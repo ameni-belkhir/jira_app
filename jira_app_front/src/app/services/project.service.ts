@@ -14,6 +14,8 @@ export interface BacklogTicket {
   creationDate?: string;
   sprintId?: number | null;
   color?: string;
+  hasSubTickets?: boolean;
+  parentTicketId?: number | null;
 }
 
 export interface BacklogSprint {
@@ -38,6 +40,7 @@ export interface SprintRequest {
   goal: string;
   startDate?: string;
   endDate?: string;
+  assignedUserIds?: number[];
 }
 
 export interface SprintUpdateRequest {
@@ -60,7 +63,27 @@ export interface CreateTicketRequest {
   projectId: number;
   creatorId: number;
   sprintId?: number | null;
+  parentTicketId?: number | null;
   color?: string;
+  /** ID unique du Developer assigné (champ réellement utilisé par le backend : CreateTicketDto.AssigneeId) */
+  assigneeId?: number | null;
+}
+
+export interface ProjectMemberSummary {
+  userId: number;
+  nom: string;
+  prenom: string;
+  roleInProject: string;
+}
+
+/** Utilisateur sélectionnable dans app-user-role-selector (nom + prénom + email). */
+export interface SelectableUser {
+  id: number;
+  nom: string;
+  prenom: string;
+  email: string;
+  roleInProject?: string;
+  role?: string;
 }
 
 export interface BackendProject {
@@ -68,14 +91,29 @@ export interface BackendProject {
   nom: string;
   description?: string;
   responsable?: string;
-  memberIds: number[];
+  members: ProjectMemberSummary[];
 }
 
 export interface CreateProjectRequest {
   nom: string;
   description: string;
   responsable: string;
-  memberIds: number[];
+  scrumMasterIds: number[];
+}
+
+export interface UpdateProjectRequest {
+  id: number;
+  nom: string;
+  description: string;
+  responsable: string;
+  scrumMasterIds: number[];
+}
+
+export interface AvailableScrumMaster {
+  id: number;
+  nom: string;
+  prenom: string;
+  email: string;
 }
 
 @Injectable({
@@ -96,6 +134,10 @@ export class ProjectService {
 
   createProject(data: CreateProjectRequest): Observable<BackendProject> {
     return this.http.post<BackendProject>(`${this.apiUrl}/Projects`, data);
+  }
+
+  updateProject(id: number, data: UpdateProjectRequest): Observable<BackendProject> {
+    return this.http.put<BackendProject>(`${this.apiUrl}/Projects/${id}`, data);
   }
 
   getBacklog(projectId: number): Observable<BacklogResponse> {
@@ -121,5 +163,22 @@ export class ProjectService {
   createTicket(data: CreateTicketRequest): Observable<BacklogTicket> {
     return this.http.post<BacklogTicket>(`${this.apiUrl}/Tickets`, data);
   }
-}
 
+  deleteProject(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/Projects/${id}`);
+  }
+
+  getMyRole(projectId: number): Observable<{ roleInProject: string | null }> {
+    return this.http.get<{ roleInProject: string | null }>(`${this.apiUrl}/projects/${projectId}/my-role`);
+  }
+
+  /** GET all users with the global role "ScrumMaster" (for multi-select in create project modal) */
+  getAvailableScrumMasters(): Observable<AvailableScrumMaster[]> {
+    return this.http.get<AvailableScrumMaster[]>(`${this.apiUrl}/projects/available-scrum-masters`);
+  }
+
+  /** GET tous les membres d'un projet (avec email + rôle) — endpoint backend réel GET /projects/{id}/members */
+  getProjectMembersWithEmail(projectId: number): Observable<SelectableUser[]> {
+    return this.http.get<SelectableUser[]>(`${this.apiUrl}/projects/${projectId}/members`);
+  }
+}

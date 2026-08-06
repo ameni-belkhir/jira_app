@@ -1,0 +1,85 @@
+@let currentProjects = projects();
+<div class="p-4 md:p-6 space-y-6">
+  <!-- Header -->
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Gestion des Projets</h1>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Liste de tous les projets de l'application</p>
+    </div>
+  </div>
+
+  <!-- Error -->
+  @if (error()) {
+    <div class="p-4 rounded-lg bg-error-50 border border-error-200 text-sm text-error-700 dark:bg-error-500/10 dark:border-error-500/20 dark:text-error-400">
+      {{ error() }}
+    </div>
+  }
+
+  <!-- Loading -->
+  @if (loading()) {
+    <div class="flex items-center justify-center py-12">
+      <div class="flex flex-col items-center gap-3">
+        <svg class="w-8 h-8 text-brand-500 animate-spin" viewBox="0 0 24 24" fill="none">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+        </svg>
+        <span class="text-sm text-gray-500 dark:text-gray-400">Chargement des projets…</span>
+      </div>
+    </div>
+  }
+
+  <!-- Projects Grid -->
+  @if (!loading() && currentProjects.length > 0) {
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      @for (project of currentProjects; track project.id) {
+        <div class="block bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-5 shadow-theme-sm transition-all duration-300">
+          <div class="flex items-start justify-between mb-4">
+            <div>
+              <h3 class="text-lg font-semibold text-gray-800 dark:text-white">
+                {{ project.nom }}
+              </h3>
+            </div>
+          </div>
+
+          <!-- Responsable -->
+          @if (project.responsable) {
+            <div class="flex items-center gap-2 mb-3">
+              <svg class="w-4 h-4 text-gray-400 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+              </svg>
+              <span class="text-sm text-gray-500 dark:text-gray-400">{{ project.responsable }}</span>
+            </div>
+          }
+
+          <!-- Stats row -->
+          <div class="pt-3 border-t border-gray-100 dark:border-gray-800 grid grid-cols-3 gap-4">
+            <div class="text-center">
+              <p class="text-lg font-semibold text-gray-800 dark:text-white">{{ project.memberCount }}</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">Membres</p>
+            </div>
+            <div class="text-center">
+              <p class="text-lg font-semibold text-gray-800 dark:text-white">{{ project.sprintCount ?? '-' }}</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">Sprints</p>
+            </div>
+            <div class="text-center">
+              <p class="text-lg font-semibold text-gray-800 dark:text-white">{{ project.ticketCount ?? '-' }}</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">Tickets</p>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Empty state -->
+  @if (!loading() && currentProjects.length === 0 && !error()) {
+    <div class="flex flex-col items-center justify-center py-12 text-center">
+      <svg class="w-12 h-12 text-gray-300 dark:text-gray-600 mb-3" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
+      </svg>
+      <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Aucun projet</h3>
+      <p class="text-xs text-gray-500 dark:text-gray-400">Aucun projet trouvé.</p>
+    </div>
+  }
+</div>
+

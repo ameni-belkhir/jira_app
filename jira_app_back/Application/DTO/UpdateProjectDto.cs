@@ -14,7 +14,5 @@ namespace Application.DTO
         public string Responsable { get; set; } = string.Empty;
 
         public string Description { get; set; } = string.Empty;
-
-        public ICollection<int> MemberIds { get; set; } = new List<int>();
     }
 }

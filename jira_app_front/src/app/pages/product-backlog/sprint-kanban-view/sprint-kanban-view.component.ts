@@ -20,7 +20,7 @@ import { SprintKanbanComponent } from '../sprint-kanban/sprint-kanban.component'
         <span class="text-gray-300 dark:text-gray-600">/</span>
         <span class="font-semibold text-gray-800 dark:text-white">Sprint Kanban</span>
       </div>
-      <app-sprint-kanban [sprintId]="sprintId" />
+      <app-sprint-kanban [sprintId]="sprintId" [projectId]="projectId" />
     </div>
   `,
   styles: ``

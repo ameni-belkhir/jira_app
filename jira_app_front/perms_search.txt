@@ -1,0 +1,18 @@
+﻿
+IgnoreCase LineNumber Line                                                                          
+---------- ---------- ----                                                                          
+      True         77             this.authService.loadPermissions().subscribe({                    
+      True         78               next: (perms) => this.authService.savePermissions(perms),       
+      True        170       this.savePermissions(permissions);                                      
+      True        181   loadPermissions(): Observable<string[]> {                                   
+      True        188   savePermissions(permissions: string[]): void {                              
+      True        209   hasPermission(key: string): boolean {                                       
+      True          9  * Usage: *appHasPermission="'admin.users.view'"                              
+      True         10  * Alternative: *appHasPermission="['admin.users.view', 'admin.users.edit']...
+      True         13   selector: '[appHasPermission]',                                             
+      True         16 export class HasPermissionDirective implements OnInit, OnDestroy {            
+      True         25   @Input() set appHasPermission(keys: string | string[]) {                    
+      True         42     const hasAccess = this.permissionKeys.some(key => this.authService.hasP...
+      True         16   permission?: string;         // Optional: if set, item visible only when ...
+
+

@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SafeImagePipe } from '../../../shared/pipe/safe-image.pipe';
 
@@ -23,6 +23,8 @@ export interface Ticket {
 })
 export class TicketCardComponent {
   @Input({ required: true }) ticket!: Ticket;
+  @Input() showSubticketButton: boolean = false;
+  @Output() viewSubtickets = new EventEmitter<number>();
 
   get priorityColor(): string {
     switch (this.ticket.priority) {
@@ -32,5 +34,10 @@ export class TicketCardComponent {
       case 'Critical': return 'bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400';
       default: return 'bg-gray-100 text-gray-600';
     }
+  }
+
+  onViewSubtickets(event: MouseEvent): void {
+    event.stopPropagation();
+    this.viewSubtickets.emit(this.ticket.id);
   }
 }

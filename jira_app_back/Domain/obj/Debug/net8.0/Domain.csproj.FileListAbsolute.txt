@@ -10,3 +10,9 @@ D:\5ArcTic\stage\Application\jira_app_back\Domain\obj\Debug\net8.0\refint\Domain
 D:\5ArcTic\stage\Application\jira_app_back\Domain\obj\Debug\net8.0\Domain.pdb
 D:\5ArcTic\stage\Application\jira_app_back\Domain\obj\Debug\net8.0\ref\Domain.dll
 D:\5ArcTic\stage\Application\jira_app_back\Domain\obj\Debug\net8.0\Domain.sourcelink.json
+C:\Users\ameni\AppData\Local\Temp\opencode\jira_build\Domain.deps.json
+C:\Users\ameni\AppData\Local\Temp\opencode\jira_build\Domain.dll
+C:\Users\ameni\AppData\Local\Temp\opencode\jira_build\Domain.pdb
+C:\Users\ameni\AppData\Local\Temp\opencode\jira_build2\Domain.deps.json
+C:\Users\ameni\AppData\Local\Temp\opencode\jira_build2\Domain.dll
+C:\Users\ameni\AppData\Local\Temp\opencode\jira_build2\Domain.pdb

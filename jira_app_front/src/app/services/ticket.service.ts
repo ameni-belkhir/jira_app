@@ -12,6 +12,16 @@ export interface SprintTicket {
   assignedTo?: string;
   assignedToAvatar?: string;
   color?: string;
+  hasSubTickets?: boolean;
+  parentTicketId?: number | null;
+}
+
+export interface SubTicket {
+  id: number;
+  title: string;
+  status: string;
+  priority: string;
+  assignedTo?: string;
 }
 
 @Injectable({
@@ -30,5 +40,8 @@ export class TicketService {
     console.log('[TicketService] PATCH /tickets/${ticketId}/status → body:', { status });
     return this.http.patch<void>(`${this.apiUrl}/tickets/${ticketId}/status`, { status });
   }
-}
 
+  getSubtickets(ticketId: number): Observable<SubTicket[]> {
+    return this.http.get<SubTicket[]>(`${this.apiUrl}/tickets/${ticketId}/subtickets`);
+  }
+}

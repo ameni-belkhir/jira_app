@@ -88,7 +88,7 @@
       cdkDropListOrientation="vertical"
     >
       @for (ticket of sprint.tickets; track trackByTicketId($index, ticket)) {
-        <div cdkDrag>
+        <div cdkDrag [cdkDragDisabled]="!canManageTickets">
           <app-ticket-card [ticket]="mapToTicket(ticket)" />
         </div>
       } @empty {

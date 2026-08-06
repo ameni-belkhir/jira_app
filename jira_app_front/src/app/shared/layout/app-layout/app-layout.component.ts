@@ -1,10 +1,13 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { SidebarService } from '../../services/sidebar.service';
 import { CommonModule } from '@angular/common';
 import { AppSidebarComponent } from '../app-sidebar/app-sidebar.component';
 import { BackdropComponent } from '../backdrop/backdrop.component';
 import { RouterModule } from '@angular/router';
 import { AppHeaderComponent } from '../app-header/app-header.component';
+import { AuthService } from '../../../services/auth.service';
+import { ChangePasswordModalComponent } from '../../components/change-password-modal/change-password-modal.component';
+import { ChatbotWidgetComponent } from '../../components/chatbot-widget/chatbot-widget.component';
 
 @Component({
   selector: 'app-layout',
@@ -13,20 +16,36 @@ import { AppHeaderComponent } from '../app-header/app-header.component';
     RouterModule,
     AppHeaderComponent,
     AppSidebarComponent,
-    BackdropComponent
+    BackdropComponent,
+    ChangePasswordModalComponent,
+    ChatbotWidgetComponent
   ],
   templateUrl: './app-layout.component.html',
 })
 
-export class AppLayoutComponent {
+export class AppLayoutComponent implements OnInit {
+  private authService = inject(AuthService);
+
   readonly isExpanded$;
   readonly isHovered$;
   readonly isMobileOpen$;
+
+  showChangePasswordModal = signal(false);
 
   constructor(public sidebarService: SidebarService) {
     this.isExpanded$ = this.sidebarService.isExpanded$;
     this.isHovered$ = this.sidebarService.isHovered$;
     this.isMobileOpen$ = this.sidebarService.isMobileOpen$;
+  }
+
+  ngOnInit(): void {
+    if (this.authService.getMustChangePassword()) {
+      this.showChangePasswordModal.set(true);
+    }
+  }
+
+  onPasswordChanged(): void {
+    this.showChangePasswordModal.set(false);
   }
 
   get containerClasses() {

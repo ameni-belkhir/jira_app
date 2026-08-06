@@ -39,5 +39,10 @@ namespace Domain.Entity
 
         // Couleur d'affichage du ticket (hex)
         public string? Color { get; set; } = "#ffffff";
+
+        // Support des sous-tâches (self-referencing)
+        public int? ParentTicketId { get; set; }
+        public Ticket? ParentTicket { get; set; }
+        public ICollection<Ticket> SubTickets { get; set; } = new List<Ticket>();
     }
 }

@@ -8,8 +8,9 @@ namespace Application.DTO
         public string Nom { get; set; } = string.Empty;
         public string Responsable { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
-        public ICollection<int> MemberIds { get; set; } = new List<int>();
-        // Related entity ids present on Project
+        public int CreatedById { get; set; }
+        public ICollection<ProjectMemberSummaryDto> Members { get; set; } = new List<ProjectMemberSummaryDto>();
+        public ICollection<int> ScrumMasterIds { get; set; } = new List<int>();
         public ICollection<int> TicketIds { get; set; } = new List<int>();
         public ICollection<int> SprintIds { get; set; } = new List<int>();
     }

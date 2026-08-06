@@ -14,6 +14,7 @@ import { BacklogSprint, BacklogTicket } from '../../../services/project.service'
 })
 export class SprintCardComponent {
   @Input({ required: true }) sprint!: BacklogSprint;
+  @Input() canManageTickets: boolean = true;
   @Input() connectedDropLists: string[] = [];
   @Output() ticketDropped = new EventEmitter<{ ticketId: number; sprintId: number | null }>();
   @Output() goalUpdated = new EventEmitter<{ sprintId: number; goal: string }>();

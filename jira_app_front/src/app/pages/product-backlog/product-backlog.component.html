@@ -67,20 +67,24 @@
         </button>
 
         <!-- New Ticket button -->
-        <button (click)="openCreateTicketModal()" class="inline-flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-600 transition-colors">
-          <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
-          </svg>
-          New Ticket
-        </button>
+        @if (canManageTickets) {
+          <button (click)="openCreateTicketModal()" class="inline-flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-600 transition-colors">
+            <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+            </svg>
+            New Ticket
+          </button>
+        }
 
         <!-- Create Sprint button -->
-        <button (click)="openCreateSprintModal()" class="inline-flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-600 transition-colors">
-          <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
-          </svg>
-          Create Sprint
-        </button>
+        @if (canManageTickets) {
+          <button (click)="openCreateSprintModal()" class="inline-flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-600 transition-colors">
+            <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+            </svg>
+            Create Sprint
+          </button>
+        }
 
       </div>
     </div>
@@ -149,14 +153,16 @@
             </div>
 
             <!-- Create Epic -->
-            <div class="px-4 py-3 border-t border-gray-100 dark:border-gray-800">
-              <button (click)="openCreateTicketModal()" class="flex items-center gap-2 text-sm font-medium text-brand-500 hover:text-brand-600 dark:text-brand-400 dark:hover:text-brand-300 transition-colors">
-                <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
-                </svg>
-                Create epic
-              </button>
-            </div>
+            @if (canManageTickets) {
+              <div class="px-4 py-3 border-t border-gray-100 dark:border-gray-800">
+                <button (click)="openCreateTicketModal()" class="flex items-center gap-2 text-sm font-medium text-brand-500 hover:text-brand-600 dark:text-brand-400 dark:hover:text-brand-300 transition-colors">
+                  <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                  </svg>
+                  Create epic
+                </button>
+              </div>
+            }
           </div>
         </div>
       }
@@ -164,71 +170,7 @@
       <!-- ===== RIGHT MAIN AREA ===== -->
       <div class="flex-1 min-w-0 space-y-6">
 
-        <!-- Backlog Section -->
-        <div class="rounded-2xl border border-gray-200 bg-white shadow-theme-sm dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
-          <div class="flex items-center justify-between px-5 py-3 border-b border-gray-100 dark:border-gray-800">
-            <div class="flex items-center gap-3">
-              @if (!epicsOpen()) {
-                <button (click)="epicsOpen.set(true)" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors" title="Show epics sidebar">
-                  <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
-                  </svg>
-                </button>
-              }
-              <h2 class="text-sm font-semibold text-gray-800 dark:text-white">Backlog</h2>
-              <span class="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
-                {{ filteredUnassignedTickets().length }} issues
-              </span>
-            </div>
-          </div>
-
-          <!-- Table Header -->
-          <div class="hidden lg:grid grid-cols-12 gap-3 px-5 py-2 text-xs font-medium text-gray-400 dark:text-gray-500 border-b border-gray-50 dark:border-gray-800/50">
-            <div class="col-span-1"></div>
-            <div class="col-span-2">Key</div>
-            <div class="col-span-4">Summary</div>
-            <div class="col-span-2">Label</div>
-            <div class="col-span-2">Status</div>
-            <div class="col-span-1 text-right">Assignee</div>
-          </div>
-
-          <!-- Backlog Drop List -->
-          <div cdkDropList id="backlog-drop-list" [cdkDropListData]="filteredUnassignedTickets()" 
-               (cdkDropListDropped)="onBacklogDrop($event)" 
-               [cdkDropListConnectedTo]="getConnectedDropListIds()" 
-               class="min-h-[80px]" cdkDropListOrientation="vertical">
-            @for (ticket of filteredUnassignedTickets(); track trackByTicketId($index, ticket)) {
-              <div cdkDrag class="grid grid-cols-12 gap-3 items-center px-5 py-2.5 border-b border-gray-50 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors cursor-pointer">
-                <div class="col-span-1 text-sm" [title]="getTicketType(ticket).label">{{ getTicketType(ticket).icon }}</div>
-                <div class="col-span-2 text-xs font-mono text-brand-500 dark:text-brand-400">{{ getTicketKey(ticket) }}</div>
-                <div class="col-span-4 text-sm font-medium text-gray-800 dark:text-white truncate">{{ ticket.title }}</div>
-                <div class="col-span-2">
-                  <span class="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded" [class]="getLabelClass(ticket.color)">
-                    {{ getTicketLabel(ticket) }}
-                  </span>
-                </div>
-                <div class="col-span-2 text-xs text-gray-500 dark:text-gray-400 capitalize">{{ ticket.status || 'todo' }}</div>
-                <div class="col-span-1 flex justify-end">
-                  @if (ticket.assignedTo) {
-                    <div class="w-7 h-7 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 flex items-center justify-center" title="{{ ticket.assignedTo }}">
-                      @if (ticket.assignedToAvatar) {
-                        <img [src]="ticket.assignedToAvatar" alt="" class="w-full h-full object-cover" />
-                      } @else {
-                        <span class="text-xs font-medium text-gray-500">{{ ticket.assignedTo.charAt(0).toUpperCase() }}</span>
-                      }
-                    </div>
-                  } @else {
-                    <div class="w-7 h-7 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center" title="Unassigned">
-                      <svg class="w-3.5 h-3.5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
-                      </svg>
-                    </div>
-                  }
-                </div>
-              </div>
-            }
-          </div>
-        </div>
+        <!-- Backlog Section removed: static table view no longer used -->
 
         <!-- ===== SPRINTS ===== -->
         @if (data.sprints.length > 0) {
@@ -239,14 +181,17 @@
                 <div class="flex flex-col">
                   <app-sprint-card
                     [sprint]="sprint"
+                    [canManageTickets]="canManageTickets"
                     [connectedDropLists]="getConnectedDropListIds()"
                     (ticketDropped)="onTicketDroppedInSprint($event)"
                     (goalUpdated)="onGoalUpdated($event)"
                     (viewKanban)="goToKanban($event)"
                   />
-                  <button (click)="openCreateTicketModal(sprint.id)" class="w-full py-2 border-t border-dashed text-gray-500 hover:text-blue-600 text-sm flex items-center justify-center gap-1">
-                    + Create issue
-                  </button>
+                  @if (canManageTickets) {
+                    <button (click)="openCreateTicketModal(sprint.id)" class="w-full py-2 border-t border-dashed text-gray-500 hover:text-blue-600 text-sm flex items-center justify-center gap-1">
+                      + Create issue
+                    </button>
+                  }
                 </div>
               }
             </div>
@@ -259,12 +204,14 @@
               </svg>
               <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">No sprints yet</h3>
               <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">Create your first sprint to start organizing tickets.</p>
-              <button (click)="openCreateSprintModal()" class="inline-flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 transition-colors">
-                <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
-                </svg>
-                Create First Sprint
-              </button>
+              @if (canManageTickets) {
+                <button (click)="openCreateSprintModal()" class="inline-flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 transition-colors">
+                  <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                  </svg>
+                  Create First Sprint
+                </button>
+              }
             </div>
           }
         }
@@ -276,5 +223,12 @@
   <!-- Modals -->
   <app-create-sprint-modal [projectId]="projectId" (close)="loadBacklog()" (create)="onCreateSprint($event)" />
   <app-create-ticket-modal [projectId]="projectId" [creatorId]="getCreatorId()" (close)="loadBacklog()" (create)="onCreateTicket($event)" />
+  <app-subticket-modal
+    [projectId]="projectId"
+    [creatorId]="getCreatorId()"
+    [canManageTickets]="canManageTickets"
+    (close)="loadBacklog()"
+    (subticketCreated)="onSubticketCreated()"
+  />
 
 </div>

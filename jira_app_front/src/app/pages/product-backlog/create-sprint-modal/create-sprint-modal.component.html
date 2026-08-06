@@ -83,6 +83,26 @@
             class="block w-full rounded-lg border border-gray-200 bg-transparent px-4 py-2.5 text-sm text-gray-800 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:text-white/90 dark:[color-scheme:dark]"
           />
         </div>
+
+        <!-- Seniors à affecter au projet (Sélection multiple) -->
+        <div>
+          <label class="block mb-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+            Seniors
+          </label>
+          @if (loadingMembers()) {
+            <p class="text-xs text-gray-400">Chargement des seniors disponibles…</p>
+          } @else {
+            <app-user-role-selector
+              [users]="availableSeniors"
+              [role]="'Senior'"
+              [multiple]="true"
+              [selectedUsers]="selectedSeniorIds"
+              [placeholder]="'Rechercher un Senior…'"
+              roleLabel="Senior"
+              (selectionChange)="onSeniorSelectionChange($event)"
+            />
+          }
+        </div>
       </div>
 
       <!-- Footer -->

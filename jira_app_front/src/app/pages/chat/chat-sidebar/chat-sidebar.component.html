@@ -1,0 +1,88 @@
+<section class="flex w-80 flex-col border-r border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+  <!-- Header -->
+  <div class="flex items-center justify-between border-b border-gray-100 p-4 dark:border-gray-800">
+    <h2 class="text-base font-semibold text-gray-800 dark:text-white/90">Messages</h2>
+    <button
+      type="button"
+      title="Nouvelle conversation"
+      aria-label="Nouvelle conversation"
+      class="flex items-center gap-1 text-xs font-medium text-brand-500 transition-colors hover:text-brand-600"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+      Nouveau
+    </button>
+  </div>
+
+  <!-- Search -->
+  <div class="p-3">
+    <label for="search-conv" class="sr-only">Rechercher des conversations</label>
+    <div class="relative">
+      <svg xmlns="http://www.w3.org/2000/svg" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd"/>
+      </svg>
+      <input
+        id="search-conv"
+        type="text"
+        [(ngModel)]="searchTerm"
+        placeholder="Rechercher…"
+        title="Rechercher des conversations"
+        class="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-3 text-sm text-gray-700 placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-800 dark:bg-gray-800 dark:text-gray-200"
+      />
+    </div>
+  </div>
+
+  <!-- Conversation list -->
+  <div class="flex-1 space-y-1 overflow-y-auto px-2 pb-4">
+    @for (conv of filteredConversations; track conv.id) {
+      <button
+        type="button"
+        (click)="select(conv)"
+        class="flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+        [class.bg-brand-50]="conv.id === activeConversationId"
+        [class.dark:bg-brand-500/10]="conv.id === activeConversationId"
+      >
+        <span class="relative shrink-0">
+          <img
+            class="h-11 w-11 rounded-full object-cover"
+            [src]="conv.avatar || '/images/user/user-01.jpg'"
+            [alt]="conv.name"
+            title="{{ conv.name }}"
+          />
+          <!-- Presence dot -->
+          <span
+            class="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white dark:border-gray-900"
+            [class.bg-success-500]="isOnline(conv)"
+            [class.bg-gray-300]="!isOnline(conv)"
+          ></span>
+        </span>
+
+        <span class="min-w-0 flex-1">
+          <span class="flex items-center justify-between gap-2">
+            <span class="truncate text-sm font-medium text-gray-800 dark:text-white/90">{{ conv.name }}</span>
+            <span class="shrink-0 text-[11px] text-gray-400">{{ formatTime(conv.lastMessageAt) }}</span>
+          </span>
+          <span class="flex items-center justify-between gap-2">
+            <span class="truncate text-xs text-gray-500 dark:text-gray-400">
+              @if (conv.isTyping) {
+                <span class="text-brand-500">en train d\u2019écrire…</span>
+              } @else {
+                {{ conv.lastMessage || 'Démarrez la conversation' }}
+              }
+            </span>
+            @if ((conv.unreadCount ?? 0) > 0) {
+              <span class="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-brand-500 px-1.5 text-[10px] font-semibold text-white">
+                {{ conv.unreadCount }}
+              </span>
+            }
+          </span>
+        </span>
+      </button>
+    }
+
+    @if (filteredConversations.length === 0) {
+      <div class="px-4 py-8 text-center">
+        <p class="text-sm text-gray-400 dark:text-gray-500">Aucune conversation trouvée.</p>
+      </div>
+    }
+  </div>
+</section>

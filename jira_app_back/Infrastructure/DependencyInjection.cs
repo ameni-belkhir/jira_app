@@ -44,12 +44,20 @@ namespace Infrastructure
             services.AddScoped<ICommentaireRepository, CommentaireRepository>();
             services.AddScoped<IConversationRepository, ConversationRepository>();
             services.AddScoped<IMessageRepository, MessageRepository>();
+            services.AddScoped<IChatRepository, ChatRepository>();
 
             // Email service
             services.AddScoped<IEmailService, Services.EmailService>();
             // File storage (local)
             services.AddScoped<IFileStorageService, Services.LocalFileStorageService>();
             services.AddScoped<IAuthService, Services.AuthService>();
+            // Notification service (SignalR + BDD)
+            services.AddScoped<INotificationService, Services.NotificationService>();
+            // Gemini service (génération de plans de projet via IA). Clé lue via IConfiguration (Gemini:ApiKey).
+            services.AddHttpClient<IGeminiService, Services.GeminiService>(client =>
+            {
+                client.Timeout = TimeSpan.FromSeconds(60);
+            });
 
             return services;
         }

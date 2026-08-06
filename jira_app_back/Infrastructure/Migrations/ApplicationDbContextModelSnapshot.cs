@@ -22,6 +22,68 @@ namespace Infrastructure.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("Domain.Entity.ChatConversation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsGroup")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("ProjectId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectId");
+
+                    b.ToTable("ChatConversations");
+                });
+
+            modelBuilder.Entity("Domain.Entity.ChatMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AttachmentUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("ConversationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("SenderId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("SentAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SenderId");
+
+                    b.HasIndex("ConversationId", "SentAt");
+
+                    b.HasIndex("ConversationId", "SenderId", "IsRead");
+
+                    b.ToTable("ChatMessages");
+                });
+
             modelBuilder.Entity("Domain.Entity.Commentaire", b =>
                 {
                     b.Property<int>("Id")
@@ -77,6 +139,29 @@ namespace Infrastructure.Migrations
                     b.ToTable("Conversations");
                 });
 
+            modelBuilder.Entity("Domain.Entity.ConversationMember", b =>
+                {
+                    b.Property<Guid>("ConversationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("JoinedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<DateTime?>("LastReadAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("ConversationId", "UserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("ConversationMembers");
+                });
+
             modelBuilder.Entity("Domain.Entity.Invitation", b =>
                 {
                     b.Property<int>("Id")
@@ -91,9 +176,6 @@ namespace Infrastructure.Migrations
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("Expiration")
-                        .HasColumnType("datetime2");
 
                     b.Property<bool>("IsUsed")
                         .HasColumnType("bit");
@@ -150,6 +232,50 @@ namespace Infrastructure.Migrations
                     b.ToTable("Messages");
                 });
 
+            modelBuilder.Entity("Domain.Entity.Notification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("TargetUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Type")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "IsRead");
+
+                    b.ToTable("Notifications");
+                });
+
             modelBuilder.Entity("Domain.Entity.Project", b =>
                 {
                     b.Property<int>("Id")
@@ -157,6 +283,9 @@ namespace Infrastructure.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CreatedById")
+                        .HasColumnType("int");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -172,7 +301,37 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CreatedById");
+
                     b.ToTable("Projects");
+                });
+
+            modelBuilder.Entity("Domain.Entity.ProjectMember", b =>
+                {
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("InvitedById")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("JoinedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("RoleInProject")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("ProjectId", "UserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("ProjectMembers");
                 });
 
             modelBuilder.Entity("Domain.Entity.Role", b =>
@@ -200,12 +359,17 @@ namespace Infrastructure.Migrations
                         new
                         {
                             Id = 2,
-                            Description = "Responsable"
+                            Description = "ScrumMaster"
                         },
                         new
                         {
                             Id = 3,
-                            Description = "Member"
+                            Description = "Senior"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Description = "Developer"
                         });
                 });
 
@@ -243,6 +407,21 @@ namespace Infrastructure.Migrations
                     b.ToTable("Sprints");
                 });
 
+            modelBuilder.Entity("Domain.Entity.SprintMember", b =>
+                {
+                    b.Property<int>("SprintId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("SprintId", "UserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("SprintMembers");
+                });
+
             modelBuilder.Entity("Domain.Entity.Ticket", b =>
                 {
                     b.Property<int>("Id")
@@ -270,6 +449,9 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("ParentTicketId")
+                        .HasColumnType("int");
+
                     b.Property<int>("Priority")
                         .HasColumnType("int");
 
@@ -291,6 +473,8 @@ namespace Infrastructure.Migrations
                     b.HasIndex("AssigneeId");
 
                     b.HasIndex("CreatorId");
+
+                    b.HasIndex("ParentTicketId");
 
                     b.HasIndex("ProjectId");
 
@@ -315,6 +499,9 @@ namespace Infrastructure.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<bool>("IsEmailVerified")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("MustChangePassword")
                         .HasColumnType("bit");
 
                     b.Property<string>("Nom")
@@ -357,19 +544,60 @@ namespace Infrastructure.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("ProjectMember", b =>
+            modelBuilder.Entity("Domain.Entity.UserPermission", b =>
                 {
-                    b.Property<int>("ProjectId")
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("InterfaceKey")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("bit");
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");
 
-                    b.HasKey("ProjectId", "UserId");
+                    b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId", "InterfaceKey")
+                        .IsUnique();
 
-                    b.ToTable("ProjectMember");
+                    b.ToTable("UserPermissions");
+                });
+
+            modelBuilder.Entity("Domain.Entity.ChatConversation", b =>
+                {
+                    b.HasOne("Domain.Entity.Project", "Project")
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Project");
+                });
+
+            modelBuilder.Entity("Domain.Entity.ChatMessage", b =>
+                {
+                    b.HasOne("Domain.Entity.ChatConversation", "Conversation")
+                        .WithMany("Messages")
+                        .HasForeignKey("ConversationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entity.User", "Sender")
+                        .WithMany("ChatMessages")
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Conversation");
+
+                    b.Navigation("Sender");
                 });
 
             modelBuilder.Entity("Domain.Entity.Commentaire", b =>
@@ -400,6 +628,25 @@ namespace Infrastructure.Migrations
                     b.Navigation("Ticket");
                 });
 
+            modelBuilder.Entity("Domain.Entity.ConversationMember", b =>
+                {
+                    b.HasOne("Domain.Entity.ChatConversation", "Conversation")
+                        .WithMany("Members")
+                        .HasForeignKey("ConversationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entity.User", "User")
+                        .WithMany("ChatConversationMembers")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Conversation");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Domain.Entity.Message", b =>
                 {
                     b.HasOne("Domain.Entity.Conversation", "Conversation")
@@ -419,6 +666,47 @@ namespace Infrastructure.Migrations
                     b.Navigation("Sender");
                 });
 
+            modelBuilder.Entity("Domain.Entity.Notification", b =>
+                {
+                    b.HasOne("Domain.Entity.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Domain.Entity.Project", b =>
+                {
+                    b.HasOne("Domain.Entity.User", "Creator")
+                        .WithMany("CreatedProjects")
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Creator");
+                });
+
+            modelBuilder.Entity("Domain.Entity.ProjectMember", b =>
+                {
+                    b.HasOne("Domain.Entity.Project", "Project")
+                        .WithMany("Members")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entity.User", "User")
+                        .WithMany("ProjectMembers")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Project");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Domain.Entity.Sprint", b =>
                 {
                     b.HasOne("Domain.Entity.Project", "Project")
@@ -428,6 +716,25 @@ namespace Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Project");
+                });
+
+            modelBuilder.Entity("Domain.Entity.SprintMember", b =>
+                {
+                    b.HasOne("Domain.Entity.Sprint", "Sprint")
+                        .WithMany("SprintMembers")
+                        .HasForeignKey("SprintId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entity.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Sprint");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Domain.Entity.Ticket", b =>
@@ -443,6 +750,11 @@ namespace Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Domain.Entity.Ticket", "ParentTicket")
+                        .WithMany("SubTickets")
+                        .HasForeignKey("ParentTicketId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Domain.Entity.Project", "Project")
                         .WithMany("Tickets")
                         .HasForeignKey("ProjectId")
@@ -456,6 +768,8 @@ namespace Infrastructure.Migrations
                     b.Navigation("Assignee");
 
                     b.Navigation("Creator");
+
+                    b.Navigation("ParentTicket");
 
                     b.Navigation("Project");
 
@@ -473,19 +787,22 @@ namespace Infrastructure.Migrations
                     b.Navigation("Role");
                 });
 
-            modelBuilder.Entity("ProjectMember", b =>
+            modelBuilder.Entity("Domain.Entity.UserPermission", b =>
                 {
-                    b.HasOne("Domain.Entity.Project", null)
-                        .WithMany()
-                        .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Domain.Entity.User", null)
-                        .WithMany()
+                    b.HasOne("Domain.Entity.User", "User")
+                        .WithMany("UserPermissions")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Domain.Entity.ChatConversation", b =>
+                {
+                    b.Navigation("Members");
+
+                    b.Navigation("Messages");
                 });
 
             modelBuilder.Entity("Domain.Entity.Conversation", b =>
@@ -495,6 +812,8 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entity.Project", b =>
                 {
+                    b.Navigation("Members");
+
                     b.Navigation("Sprints");
 
                     b.Navigation("Tickets");
@@ -507,6 +826,8 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entity.Sprint", b =>
                 {
+                    b.Navigation("SprintMembers");
+
                     b.Navigation("Tickets");
                 });
 
@@ -515,17 +836,29 @@ namespace Infrastructure.Migrations
                     b.Navigation("Commentaires");
 
                     b.Navigation("Conversations");
+
+                    b.Navigation("SubTickets");
                 });
 
             modelBuilder.Entity("Domain.Entity.User", b =>
                 {
                     b.Navigation("AssignedTickets");
 
+                    b.Navigation("ChatConversationMembers");
+
+                    b.Navigation("ChatMessages");
+
                     b.Navigation("Commentaires");
+
+                    b.Navigation("CreatedProjects");
 
                     b.Navigation("CreatedTickets");
 
                     b.Navigation("Messages");
+
+                    b.Navigation("ProjectMembers");
+
+                    b.Navigation("UserPermissions");
                 });
 #pragma warning restore 612, 618
         }

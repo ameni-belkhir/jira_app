@@ -30,7 +30,7 @@ namespace Infrastructure.Repositories
         public async Task<IEnumerable<Project>> GetAllAsync()
         {
             return await _context.Projects
-                .Include(p => p.Members)
+                .Include(p => p.Members).ThenInclude(pm => pm.User)
                 .Include(p => p.Tickets)
                 .ToListAsync();
         }
@@ -38,7 +38,7 @@ namespace Infrastructure.Repositories
         public async Task<Project?> GetByIdAsync(int id)
         {
             return await _context.Projects
-                .Include(p => p.Members)
+                .Include(p => p.Members).ThenInclude(pm => pm.User)
                 .Include(p => p.Tickets)
                 .FirstOrDefaultAsync(p => p.Id == id);
         }

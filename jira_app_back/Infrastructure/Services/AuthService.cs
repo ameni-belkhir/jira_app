@@ -81,6 +81,12 @@ namespace Infrastructure.Services
             var saved = await _db.SaveChangesAsync();
             if (saved <= 0) throw new InvalidOperationException("Impossible de créer l'utilisateur en base de données.");
 
+            var roleDescription = (await _db.Roles.FindAsync(user.RoleId))?.Description;
+            if (!string.IsNullOrEmpty(roleDescription))
+            {
+                await _db.ResetUserPermissionsAsync(user, roleDescription);
+            }
+
             // send verification email and surface errors
             try
             {
@@ -106,7 +112,12 @@ namespace Infrastructure.Services
                 throw new InvalidOperationException("Email not verified. Veuillez vérifier votre adresse e-mail avant de vous connecter.");
             }
             var token = await GenerateTokenAsync(user);
-            return new AuthResponseDto { Token = token, Email = user.Email, Role = (await _db.Roles.FindAsync(user.RoleId))?.Description ?? string.Empty, Expiration = DateTime.UtcNow.AddMinutes(int.Parse(_config["Jwt:ExpiryInMinutes"] ?? "60")), ProfileImageUrl = user.ProfileImageUrl };
+            var permissions = await _db.UserPermissions
+                .AsNoTracking()
+                .Where(p => p.UserId == user.Id && p.IsEnabled)
+                .Select(p => p.InterfaceKey)
+                .ToListAsync();
+            return new AuthResponseDto { Token = token, Email = user.Email, Role = (await _db.Roles.FindAsync(user.RoleId))?.Description ?? string.Empty, Expiration = DateTime.UtcNow.AddMinutes(int.Parse(_config["Jwt:ExpiryInMinutes"] ?? "60")), ProfileImageUrl = user.ProfileImageUrl, MustChangePassword = user.MustChangePassword, Permissions = permissions };
         }
 
         public async Task<bool> VerifyCodeAsync(Application.DTO.Auth.VerifyCodeDto dto)
@@ -154,6 +165,17 @@ namespace Infrastructure.Services
             user.Password = _passwordHasher.HashPassword(user, dto.NewPassword);
             user.ResetPasswordToken = null;
             user.ResetPasswordExpiration = null;
+            _db.Users.Update(user);
+            return await _db.SaveChangesAsync() > 0;
+        }
+
+        public async Task<bool> ChangePasswordAsync(int userId, string newPassword)
+        {
+            var user = await _db.Users.FindAsync(userId);
+            if (user == null) return false;
+
+            user.Password = _passwordHasher.HashPassword(user, newPassword);
+            user.MustChangePassword = false;
             _db.Users.Update(user);
             return await _db.SaveChangesAsync() > 0;
         }

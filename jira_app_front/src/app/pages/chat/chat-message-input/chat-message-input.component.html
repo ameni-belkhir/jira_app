@@ -1,0 +1,82 @@
+<div class="border-t border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
+  <div class="flex items-center gap-2">
+    <!-- File picker (hidden input) -->
+<input
+      #fileInput
+      type="file"
+      class="hidden"
+      title="Choisir un fichier"
+      aria-label="Choisir un fichier"
+      (change)="onFileSelected($event)"
+    />
+
+    <!-- Attach file -->
+    <button
+      type="button"
+      (click)="openFilePicker()"
+      title="Joindre un fichier"
+      aria-label="Joindre un fichier"
+      class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
+      </svg>
+    </button>
+
+    <!-- Emoji picker -->
+    <button
+      type="button"
+      (click)="toggleEmojiPicker()"
+      title="Insérer un émoji"
+      aria-label="Insérer un émoji"
+      class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 100 2 1 1 0 000-2zm5 0a1 1 0 100 2 1 1 0 000-2zm-6.5 5a.75.75 0 011.06-.02c.646.598 1.523.95 2.44.95s1.794-.352 2.44-.95a.75.75 0 111.02 1.1A5.98 5.98 0 0110 15.5a5.98 5.98 0 01-3.46-1.42.75.75 0 01-.04-1.08z" clip-rule="evenodd" />
+      </svg>
+    </button>
+
+    <!-- Text input -->
+    <label for="chat-input" class="sr-only">Tapez un message</label>
+    <input
+      id="chat-input"
+      type="text"
+      [(ngModel)]="text"
+      (ngModelChange)="onInput()"
+      (keydown)="onKeydown($event)"
+      placeholder="Tapez un message…"
+      class="flex-1 rounded-full border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-700 placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-800 dark:bg-gray-800 dark:text-gray-200"
+    />
+
+    <!-- Send button -->
+    <button
+      type="button"
+      (click)="sendMessage()"
+      [disabled]="!text.trim()"
+      title="Envoyer le message"
+      aria-label="Envoyer le message"
+      class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-500 text-white transition-colors hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-40"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <path d="M3.105 2.289a.75.75 0 00-.826.95l1.414 4.925A1.5 1.5 0 005.135 9.25h6.115a.75.75 0 010 1.5H5.135a1.5 1.5 0 00-1.442 1.086l-1.414 4.926a.75.75 0 00.826.95 28.897 28.897 0 0015.293-7.154.75.75 0 000-1.115A28.897 28.897 0 003.105 2.289z" />
+      </svg>
+    </button>
+  </div>
+
+  <!-- Emoji picker popover -->
+  @if (showEmojiPicker()) {
+    <div class="absolute bottom-full left-4 z-20 mb-2 w-64 rounded-2xl border border-gray-200 bg-white p-3 shadow-theme-lg dark:border-gray-700 dark:bg-gray-800">
+      <div class="grid grid-cols-6 gap-1">
+        @for (emoji of emojis; track emoji) {
+          <button
+            type="button"
+            (click)="addEmoji(emoji)"
+            class="flex h-8 w-8 items-center justify-center rounded-lg text-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            {{ emoji }}
+          </button>
+        }
+      </div>
+    </div>
+  }
+</div>

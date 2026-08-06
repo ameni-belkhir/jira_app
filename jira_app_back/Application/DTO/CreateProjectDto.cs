@@ -12,6 +12,15 @@ namespace Application.DTO
 
         public string Description { get; set; } = string.Empty;
 
-        public ICollection<int> MemberIds { get; set; } = new List<int>();
+        /// <summary>
+        /// Liste des IDs des Scrum Masters à assigner au projet dès sa création.
+        /// Tous ces utilisateurs seront enregistrés dans ProjectMembers avec RoleInProject = "ScrumMaster".
+        /// </summary>
+        public List<int> ScrumMasterIds { get; set; } = new List<int>();
+
+        /// <summary>
+        /// ID de l'utilisateur créant le projet (peut être dérivé du JWT côté serveur).
+        /// </summary>
+        public int CreatedById { get; set; }
     }
 }

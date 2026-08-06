@@ -2,15 +2,17 @@ import { Component, OnInit, signal, ViewChild, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
-import { CdkDropList, CdkDrag, CdkDragDrop, transferArrayItem } from '@angular/cdk/drag-drop';
-import { finalize } from 'rxjs';
+import { CdkDragDrop, transferArrayItem } from '@angular/cdk/drag-drop';
+import { finalize, firstValueFrom } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ProjectService, BacklogResponse, BacklogTicket, BacklogSprint, SprintRequest, CreateTicketRequest } from '../../services/project.service';
+import { ProjectMembersService, AvailableUser } from '../../services/project-members.service';
 import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../shared/services/notification.service';
 import { CreateSprintModalComponent } from './create-sprint-modal/create-sprint-modal.component';
 import { CreateTicketModalComponent } from './create-ticket-modal/create-ticket-modal.component';
 import { SprintCardComponent } from './sprint-card/sprint-card.component';
+import { SubticketModalComponent } from '../../shared/components/subticket-modal/subticket-modal.component';
 
 @Component({
   selector: 'app-product-backlog',
@@ -19,11 +21,10 @@ import { SprintCardComponent } from './sprint-card/sprint-card.component';
     CommonModule,
     FormsModule,
     RouterModule,
-    CdkDropList,
-    CdkDrag,
     CreateSprintModalComponent,
     CreateTicketModalComponent,
-    SprintCardComponent
+    SprintCardComponent,
+    SubticketModalComponent
   ],
   templateUrl: './product-backlog.component.html',
   styles: ``
@@ -32,6 +33,7 @@ export class ProductBacklogComponent implements OnInit {
 
   @ViewChild(CreateSprintModalComponent) createSprintModal!: CreateSprintModalComponent;
   @ViewChild(CreateTicketModalComponent) createTicketModal!: CreateTicketModalComponent;
+  @ViewChild(SubticketModalComponent) subticketModal!: SubticketModalComponent;
 
   projectId: number = 0;
   projectName: string = '';
@@ -82,10 +84,19 @@ export class ProductBacklogComponent implements OnInit {
     return members;
   });
 
+userRole = signal<string | null>(null);
+
+  // Assign Senior modal state
+  showAssignSeniorModal = signal(false);
+  availableSeniors = signal<AvailableUser[]>([]);
+  loadingSeniors = signal(false);
+  assigningSenior = signal(false);
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private projectService: ProjectService,
+    private projectMembersService: ProjectMembersService,
     private authService: AuthService,
     private notification: NotificationService
   ) {}
@@ -96,7 +107,83 @@ export class ProductBacklogComponent implements OnInit {
       this.projectId = parseInt(idParam, 10);
       this.projectName = `Project #${this.projectId}`;
       this.loadBacklog();
+      this.loadUserRole();
     }
+  }
+
+  private loadUserRole(): void {
+    this.projectService.getMyRole(this.projectId).subscribe({
+      next: (role) => {
+        this.userRole.set(role.roleInProject);
+      },
+      error: () => {
+        this.userRole.set(null);
+      }
+    });
+  }
+
+  /** Whether the current user is a Scrum Master (can assign seniors) */
+  get isScrumMaster(): boolean {
+    return this.userRole() === 'ScrumMaster';
+  }
+
+  /** Whether the current user can manage tickets (ScrumMaster or Senior) */
+  get canManageTickets(): boolean {
+    const role = this.userRole();
+    return role === 'ScrumMaster' || role === 'Senior';
+  }
+
+  /** Whether the current user is a Developer */
+  get isDeveloper(): boolean {
+    return this.userRole() === 'Developer';
+  }
+
+  /** Open the "Assign Senior" modal */
+  openAssignSeniorModal(): void {
+    this.loadingSeniors.set(true);
+    this.showAssignSeniorModal.set(true);
+    this.notification.loading('Chargement des seniors disponibles…');
+
+    this.projectMembersService.getAvailableSeniors(this.projectId)
+      .pipe(finalize(() => {
+        this.loadingSeniors.set(false);
+        this.notification.dismiss();
+      }))
+      .subscribe({
+        next: (seniors) => {
+          this.availableSeniors.set(seniors);
+        },
+        error: () => {
+          this.availableSeniors.set([]);
+          this.notification.error('Échec du chargement des seniors disponibles.');
+        }
+      });
+  }
+
+  closeAssignSeniorModal(): void {
+    this.showAssignSeniorModal.set(false);
+    this.availableSeniors.set([]);
+  }
+
+  /** Assign a senior to the project */
+  onAssignSenior(userId: number): void {
+    this.assigningSenior.set(true);
+    this.notification.loading('Affectation du senior…');
+
+    this.projectMembersService.addSeniorToProject(this.projectId, userId)
+      .pipe(finalize(() => {
+        this.assigningSenior.set(false);
+        this.notification.dismiss();
+      }))
+      .subscribe({
+        next: () => {
+          this.notification.success('Le senior a été affecté et a reçu un mail de notification.');
+          this.closeAssignSeniorModal();
+        },
+        error: () => {
+          this.notification.error('Échec de l\'affectation du senior.');
+        }
+      });
   }
 
   loadBacklog(): void {
@@ -199,6 +286,7 @@ export class ProductBacklogComponent implements OnInit {
 
   // ==================== CRÉATION TICKET (CORRIGÉ) ====================
   openCreateTicketModal(sprintId?: number): void {
+    this.createTicketModal.sprintId = sprintId ?? null;
     this.createTicketModal.open();
   }
 
@@ -253,17 +341,31 @@ export class ProductBacklogComponent implements OnInit {
   }
 
   onCreateSprint(data: SprintRequest): void {
-    this.notification.loading('Création du sprint…');
-    this.projectService.createSprint(data)
-      .pipe(finalize(() => this.notification.dismiss()))
-      .subscribe({
-        next: () => {
-          this.loadBacklog();
-          this.notification.success('Sprint créé avec succès.');
-        },
-        error: () => {
-          this.notification.error('Échec de la création du sprint.');
-        }
+    // Si des Seniors ont été sélectionnés, on les affecte au projet via l'endpoint
+    // backend réel POST /projects/{id}/members/senior (le CreateSprint ne stocke pas de Seniors).
+    const seniorIds = data.assignedUserIds || [];
+    const assignments: Promise<void>[] = seniorIds.map((userId) =>
+      firstValueFrom(this.projectMembersService.addSeniorToProject(this.projectId, userId))
+    );
+
+    Promise.all(assignments)
+      .catch((err) => {
+        console.error('Erreur affectation des Seniors au projet:', err);
+        this.notification.error('Certains Seniors n\'ont pas pu être affectés au projet.');
+      })
+      .finally(() => {
+        this.notification.loading('Création du sprint…');
+        this.projectService.createSprint(data)
+          .pipe(finalize(() => this.notification.dismiss()))
+          .subscribe({
+            next: () => {
+              this.loadBacklog();
+              this.notification.success('Sprint créé avec succès.');
+            },
+            error: () => {
+              this.notification.error('Échec de la création du sprint.');
+            }
+          });
       });
   }
 
@@ -329,5 +431,14 @@ export class ProductBacklogComponent implements OnInit {
 
   trackByTicketId(index: number, ticket: BacklogTicket): number {
     return ticket.id;
+  }
+
+  // ==================== SOUS-TICKETS ====================
+  openSubticketModal(ticketId: number): void {
+    this.subticketModal.open(ticketId);
+  }
+
+  onSubticketCreated(): void {
+    this.loadBacklog();
   }
 }

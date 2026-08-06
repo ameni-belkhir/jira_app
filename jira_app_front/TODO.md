@@ -1,12 +1,16 @@
-# Auth Refactor Plan — ✅ Completed
+# Task: Restore statistics.component interface + fix SignalR chat signatures
 
-## Steps to Complete
-
-- [x] 1. **auth.service.ts** — Add `verifyRegistrationCode()` method (POST `/api/Auth/verify-registration-code`)
-- [x] 2. **auth-interceptor.service.ts** — Add `verify-registration-code` to auth endpoints whitelist
-- [x] 3. **register.component.ts** — Add 2-step flow (registration → code verification)
-- [x] 4. **register.component.html** — Add code verification template with 6-digit input + expiration message
-- [x] 5. **login.component.ts** — Simplify to single-step (Email + Password only), add "email not verified" error handling
-- [x] 6. **login.component.html** — Remove 2FA verification section, add "verify your email" link
-- [ ] 7. Verify compilation with `ng build` (running...)
-
+## Plan
+- [x] Analyze files and understand data availability
+- [x] Rewrite `statistics.component.html` with full statistics interface (header, error, loading, 4 summary cards, 2 charts)
+- [x] Rewrite `statistics.component.ts` to fetch stats via AdminService.getStats() and render amCharts 5 pie charts
+- [x] Fix `chat.service.ts` SignalR signatures to match backend ChatHub.cs:
+  - [x] sendTyping → StartTyping/StopTyping
+  - [x] UserTyping listener → UserTypingStatus (conversationId, userId, isTyping)
+  - [x] UserOnline listener → UserPresenceChanged
+  - [x] MarkedAsRead listener → MessagesRead
+  - [x] sendMessage → SendMessage(conversationId, content, attachmentUrl)
+  - [x] markAsRead → MarkAsRead(conversationId, messageId)
+  - [x] handleIncomingMessage → normalize backend ChatMessageDto (content/sentAt)
+- [x] Verify Angular build compiles (success)
+</content>

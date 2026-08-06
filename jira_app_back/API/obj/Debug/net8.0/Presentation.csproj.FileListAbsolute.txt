@@ -11,3 +11,9 @@ D:\5ArcTic\stage\Application\jira_app_back\API\obj\Debug\net8.0\refint\Presentat
 D:\5ArcTic\stage\Application\jira_app_back\API\obj\Debug\net8.0\Presentation.pdb
 D:\5ArcTic\stage\Application\jira_app_back\API\obj\Debug\net8.0\ref\Presentation.dll
 D:\5ArcTic\stage\Application\jira_app_back\API\obj\Debug\net8.0\Presentation.sourcelink.json
+C:\Users\ameni\AppData\Local\Temp\opencode\jira_build\Presentation.deps.json
+C:\Users\ameni\AppData\Local\Temp\opencode\jira_build\Presentation.dll
+C:\Users\ameni\AppData\Local\Temp\opencode\jira_build\Presentation.pdb
+C:\Users\ameni\AppData\Local\Temp\opencode\jira_build2\Presentation.deps.json
+C:\Users\ameni\AppData\Local\Temp\opencode\jira_build2\Presentation.dll
+C:\Users\ameni\AppData\Local\Temp\opencode\jira_build2\Presentation.pdb

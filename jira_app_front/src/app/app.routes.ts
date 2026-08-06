@@ -14,6 +14,12 @@ import { ProductBacklogComponent } from './pages/product-backlog/product-backlog
 import { SprintKanbanViewComponent } from './pages/product-backlog/sprint-kanban-view/sprint-kanban-view.component';
 import { ProfileComponent } from './pages/profile/profile.component';
 import { AuthGuard } from './guards/auth.guard';
+import { RoleGuard } from './guards/role.guard';
+import { AdminGuard } from './guards/admin.guard';
+import { PermissionGuard } from './guards/permission.guard';
+import { AdminUsersComponent } from './pages/admin/admin-users.component';
+import { AdminProjectsComponent } from './pages/admin/admin-projects.component';
+import { AdminStatisticsComponent } from './pages/admin/admin-statistics.component';
 
 export const routes: Routes = [
   {
@@ -66,16 +72,17 @@ export const routes: Routes = [
         component: ProjectsComponent,
         title: 'Projects | Jira App',
       },
-{
+      {
         path: 'projects/:id/backlog',
         component: ProductBacklogComponent,
         title: 'Product Backlog | Jira App',
-        // TODO: RÉACTIVER — Ajouter canActivate: [RoleGuard], data: { roles: ['Developer', 'Senior', 'ScrumMaster'] }
+        canActivate: [RoleGuard],
+        data: { roles: ['Developer', 'Senior', 'ScrumMaster'] }
       },
       {
         path: 'projects/:projectId/sprint/:sprintId/kanban',
         component: SprintKanbanViewComponent,
-        title: 'Sprint Kanban | Jira App',
+title: 'Sprint Kanban | Jira App',
       },
       {
         path: 'projects/:id',
@@ -89,16 +96,44 @@ export const routes: Routes = [
         path: 'chat',
         component: ChatComponent,
         title: 'Messages | Jira App',
+        canActivate: [PermissionGuard],
+        data: { pageKey: 'chat' },
       },
       {
         path: 'statistics',
         component: StatisticsComponent,
         title: 'Analytics | Jira App',
+        canActivate: [PermissionGuard],
+        data: { pageKey: 'statistics' },
       },
       {
         path: 'profile',
         component: ProfileComponent,
         title: 'Edit Profile | Jira App',
+        canActivate: [PermissionGuard],
+        data: { pageKey: 'profile' },
+      },
+      {
+        path: 'admin',
+        canActivate: [AdminGuard, PermissionGuard],
+        data: { pageKey: 'admin-users' },
+        children: [
+          {
+            path: 'users',
+            component: AdminUsersComponent,
+            title: 'Admin Users | Jira App',
+          },
+          {
+            path: 'projects',
+            component: AdminProjectsComponent,
+            title: 'Admin Projects | Jira App',
+          },
+          {
+            path: 'statistics',
+            component: AdminStatisticsComponent,
+            title: 'Admin Statistics | Jira App',
+          },
+        ],
       },
       {
         path: 'backlog',

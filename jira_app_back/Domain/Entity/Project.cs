@@ -11,8 +11,14 @@ namespace Domain.Entity
         public string Responsable { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
 
-        // Membres du projet
-        public ICollection<User> Members { get; set; } = new List<User>();
+// Utilisateur qui a créé le projet (FK vers User)
+        public int CreatedById { get; set; }
+
+        // Propriété de navigation vers le créateur du projet
+        public User? Creator { get; set; }
+
+        // Membres du projet (avec rôle) — contient notamment tous les Scrum Masters
+        public ICollection<ProjectMember> Members { get; set; } = new List<ProjectMember>();
 
         // Tickets associés au projet
         public ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();

@@ -45,6 +45,7 @@ namespace Application
             services.AddScoped<ICommentaireService, CommentaireService>();
             services.AddScoped<IConversationService, ConversationService>();
             services.AddScoped<IMessageService, MessageService>();
+            services.AddScoped<IChatService, ChatService>();
 
             return services;
         }

@@ -1,0 +1,129 @@
+<!-- Floating toggle button -->
+<button
+  type="button"
+  (click)="toggle()"
+  [attr.aria-label]="isOpen() ? 'Fermer le chatbot' : 'Ouvrir le chatbot'"
+  class="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-brand-500 text-white shadow-theme-lg hover:bg-brand-600 transition-colors"
+>
+  @if (!isOpen()) {
+    <!-- Chat icon -->
+    <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path fill-rule="evenodd" clip-rule="evenodd" d="M4 3h16a2 2 0 012 2v10a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2zm0 2v10h6v2l3-2h7V5H4z" fill="currentColor"/>
+    </svg>
+  } @else {
+    <!-- Close icon -->
+    <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path fill-rule="evenodd" clip-rule="evenodd" d="M5.293 5.293a1 1 0 011.414 0L12 10.586l5.293-5.293a1 1 0 111.414 1.414L13.414 12l5.293 5.293a1 1 0 01-1.414 1.414L12 13.414l-5.293 5.293a1 1 0 01-1.414-1.414L10.586 12 5.293 6.707a1 1 0 010-1.414z" clip-rule="evenodd" fill="currentColor"/>
+    </svg>
+  }
+  <!-- Notification dot when closed -->
+  @if (!isOpen()) {
+    <span class="absolute top-0 right-0 h-3 w-3 rounded-full bg-warning-500 border-2 border-white dark:border-gray-900"></span>
+  }
+</button>
+
+<!-- Chat window -->
+@if (isOpen()) {
+  <div
+    class="fixed bottom-24 right-6 z-50 flex w-[calc(100vw-3rem)] max-w-sm flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-theme-xl dark:border-gray-800 dark:bg-gray-900"
+    style="height: 480px;"
+  >
+    <!-- Header -->
+    <div class="flex items-center justify-between border-b border-gray-100 bg-brand-500 px-4 py-3 dark:border-gray-800">
+      <div class="flex items-center gap-3">
+        <div class="flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2a2 2 0 011.995 1.85L14 4v.5a5.5 5.5 0 014.5 5.4V13a6 6 0 01-5 5.917V20h2a1 1 0 110 2H8.5a1 1 0 110-2h2v-1.083A6 6 0 015.5 13V9.9a5.5 5.5 0 014.5-5.4V4a2 2 0 012-2zm0 6a1 1 0 011 1v3a1 1 0 11-2 0V9a1 1 0 011-1z" fill="currentColor"/>
+          </svg>
+        </div>
+        <div>
+          <h3 class="text-sm font-semibold text-white">Assistant IA</h3>
+          <p class="text-xs text-white/70">Génération de plans projet</p>
+        </div>
+      </div>
+      <button
+        type="button"
+        (click)="close()"
+        aria-label="Fermer"
+        class="rounded-lg p-1.5 text-white/80 hover:bg-white/10 hover:text-white transition-colors"
+      >
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path fill-rule="evenodd" clip-rule="evenodd" d="M5.293 5.293a1 1 0 011.414 0L12 10.586l5.293-5.293a1 1 0 111.414 1.414L13.414 12l5.293 5.293a1 1 0 01-1.414 1.414L12 13.414l-5.293 5.293a1 1 0 01-1.414-1.414L10.586 12 5.293 6.707a1 1 0 010-1.414z" clip-rule="evenodd" fill="currentColor"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Messages -->
+    <div #messagesContainer class="flex-1 space-y-4 overflow-y-auto px-4 py-4">
+      @for (msg of messages(); track msg.id) {
+        <div class="flex" [ngClass]="{ 'justify-end': msg.sender === 'user', 'justify-start': msg.sender === 'bot' }">
+          <div class="max-w-[85%]">
+            <div
+              class="whitespace-pre-line rounded-2xl px-3.5 py-2.5 text-sm leading-5"
+              [ngClass]="{
+                'bg-brand-500 text-white rounded-br-md': msg.sender === 'user',
+                'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-white/90 rounded-bl-md': msg.sender === 'bot'
+              }"
+            >
+              {{ msg.text }}
+            </div>
+            <p class="mt-1 text-[11px] text-gray-400">{{ formatTime(msg.timestamp) }}</p>
+          </div>
+        </div>
+      }
+
+      @if (loading()) {
+        <div class="flex justify-start">
+          <div class="flex items-center gap-2 rounded-2xl rounded-bl-md bg-gray-100 px-4 py-3 dark:bg-gray-800">
+            <span class="h-2 w-2 animate-bounce rounded-full bg-gray-400 dark:bg-gray-500"></span>
+            <span class="h-2 w-2 animate-bounce rounded-full bg-gray-400 dark:bg-gray-500" style="animation-delay: 0.1s"></span>
+            <span class="h-2 w-2 animate-bounce rounded-full bg-gray-400 dark:bg-gray-500" style="animation-delay: 0.2s"></span>
+          </div>
+        </div>
+      }
+    </div>
+
+<!-- Apply plan action -->
+    @if (currentPlan() && !loading()) {
+      <div class="border-t border-gray-100 px-4 py-3 dark:border-gray-800">
+        <button
+          type="button"
+          (click)="applyPlan()"
+          class="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-600 transition-colors"
+        >
+          <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/>
+          </svg>
+          Appliquer au formulaire
+        </button>
+      </div>
+    }
+
+    <!-- Composer -->
+    <div class="border-t border-gray-100 p-3 dark:border-gray-800">
+      @if (error()) {
+        <p class="mb-2 text-xs text-error-500">{{ error() }}</p>
+      }
+      <div class="flex items-center gap-2">
+        <input
+          type="text"
+          [(ngModel)]="input"
+          (keydown)="onKeydown($event)"
+          placeholder="Décrivez votre projet…"
+          class="flex-1 rounded-full border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-800 dark:text-white/90 dark:placeholder:text-white/30"
+        />
+        <button
+          type="button"
+          (click)="send()"
+          [disabled]="loading() || !input.trim()"
+          aria-label="Envoyer"
+          class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-500 text-white hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3.105 2.289a.75.75 0 00-.826.95l1.414 4.925A1.5 1.5 0 005.135 9.25h6.115a.75.75 0 010 1.5H5.135a1.5 1.5 0 00-1.442 1.086l-1.414 4.926a.75.75 0 00.826.95 28.897 28.897 0 0015.293-7.154.75.75 0 000-1.115A28.897 28.897 0 003.105 2.289z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+}

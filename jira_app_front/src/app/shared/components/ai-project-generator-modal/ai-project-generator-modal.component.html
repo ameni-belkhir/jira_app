@@ -1,0 +1,256 @@
+@if (isOpen()) {
+<div class="fixed inset-0 z-50 flex items-center justify-center modal-backdrop" (click)="onBackdropClick($event)">
+  <div class="fixed inset-0 bg-black/40 dark:bg-black/60 transition-opacity"></div>
+  <div class="relative z-10 w-full max-w-2xl mx-4 max-h-[90vh] flex flex-col bg-white dark:bg-gray-900 rounded-2xl shadow-theme-xl border border-gray-200 dark:border-gray-800 animate-fadeIn">
+    <!-- Header -->
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800">
+      <div class="flex items-center gap-3">
+        <span class="flex items-center justify-center w-9 h-9 rounded-lg bg-brand-500/10 text-brand-600 dark:text-brand-400">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 00-1 1v15a1 1 0 001 1h16a1 1 0 001-1V5a1 1 0 00-1-1h-3.382l-.724-1.447A1 1 0 0015 2H9zm1 5h4a1 1 0 100-2h-4a1 1 0 100 2zm-3 3a1 1 0 100 2h10a1 1 0 100-2H7zm0 4a1 1 0 100 2h10a1 1 0 100-2H7z" fill="currentColor"/>
+          </svg>
+        </span>
+        <div>
+          <h2 class="text-lg font-semibold text-gray-800 dark:text-white">Générer un projet avec l'IA</h2>
+          <p class="text-xs text-gray-500 dark:text-gray-400">Gémeaux (Gemini) génère un plan projet complet : nom, description, sprints et tickets.</p>
+        </div>
+      </div>
+      <button type="button" (click)="closeModal()" title="Fermer" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+        <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div class="flex-1 overflow-y-auto px-6 py-5">
+      @if (step() === 'loading') {
+        <div class="flex flex-col items-center justify-center py-16">
+          <svg class="w-10 h-10 text-brand-500 animate-spin" viewBox="0 0 24 24" fill="none">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+          </svg>
+          <p class="mt-4 text-sm text-gray-600 dark:text-gray-300">L'IA génère votre plan de projet…</p>
+          <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Cela peut prendre quelques secondes.</p>
+        </div>
+      }
+
+      @if (step() === 'prompt') {
+        <form (ngSubmit)="onSubmit()">
+          @if (error()) {
+            <div class="p-3 rounded-lg bg-error-50 border border-error-200 text-xs text-error-700 dark:bg-error-500/10 dark:border-error-500/20 dark:text-error-400">
+              {{ error() }}
+            </div>
+          }
+          <div>
+            <label for="project-prompt" class="block mb-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+              Décrivez votre projet <span class="text-error-500">*</span>
+            </label>
+            <textarea
+              id="project-prompt"
+              title="Décrivez votre projet"
+              [(ngModel)]="prompt"
+              name="prompt"
+              rows="5"
+              placeholder="Ex : Un site e-commerce avec panier, paiement et gestion des stocks, sur 3 sprints"
+              class="block w-full rounded-lg border border-gray-200 bg-transparent px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:text-white/90 dark:placeholder:text-white/30 resize-none"
+            ></textarea>
+            @if (submitted && !prompt.trim()) {
+              <p class="mt-1 text-xs text-error-500">Veuillez décrire votre projet.</p>
+            }
+          </div>
+          <div class="mt-4 p-3 rounded-lg bg-brand-50 dark:bg-brand-500/10 border border-brand-100 dark:border-brand-500/20 text-xs text-brand-700 dark:text-brand-300">
+            💡 Astuce : précisez le nombre de sprints souhaité, les fonctionnalités clés et le type d'utilisateurs pour de meilleurs résultats.
+          </div>
+        </form>
+      }
+
+      @if (step() === 'preview' || step() === 'confirming') {
+        @if (plan(); as p) {
+          <!-- Nom & description du projet -->
+          <div class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label for="project-name" class="block mb-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">Nom du projet</label>
+                <input
+                  id="project-name"
+                  type="text"
+                  title="Nom du projet"
+                  [value]="p.projectName"
+                  (input)="updateProjectName($any($event.target).value)"
+                  class="block w-full rounded-lg border border-gray-200 bg-transparent px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:text-white/90 dark:placeholder:text-white/30"
+                />
+              </div>
+              <div>
+                <label for="sprint-count" class="block mb-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">Nb de sprints</label>
+                <input
+                  id="sprint-count"
+                  type="number"
+                  title="Nombre de sprints"
+                  [value]="p.sprints.length"
+                  readonly
+                  class="block w-full rounded-lg border border-gray-200 bg-gray-50 dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-500 dark:text-gray-400"
+                />
+              </div>
+            </div>
+            <div>
+              <label for="project-description" class="block mb-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">Description du projet</label>
+              <textarea
+                id="project-description"
+                title="Description du projet"
+                [value]="p.projectDescription"
+                (input)="updateProjectDescription($any($event.target).value)"
+                rows="3"
+                class="block w-full rounded-lg border border-gray-200 bg-transparent px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:text-white/90 dark:placeholder:text-white/30 resize-none"
+              ></textarea>
+            </div>
+          </div>
+
+          <!-- Sprints -->
+          <div class="mt-6 space-y-4">
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-semibold text-gray-800 dark:text-white uppercase tracking-wide">Sprints & Tickets</h3>
+              <button
+                type="button"
+                (click)="addSprint()"
+                class="inline-flex items-center gap-1.5 rounded-lg bg-brand-500/10 text-brand-600 dark:text-brand-400 px-3 py-1.5 text-xs font-medium hover:bg-brand-500/20 transition-colors"
+              >
+                <svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+                Ajouter un sprint
+              </button>
+            </div>
+
+            @for (sprint of p.sprints; track $index; let si = $index) {
+              <div class="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div class="flex items-center justify-between gap-3 px-4 py-3 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700">
+                  <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <input
+                      type="text"
+                      title="Nom du sprint"
+                      [value]="sprint.name"
+                      (input)="updateSprintName(si, $any($event.target).value)"
+                      placeholder="Nom du sprint"
+                      class="block w-full rounded-lg border border-gray-200 bg-transparent px-3 py-1.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-2 focus:ring-brand-500/10 dark:border-gray-700 dark:text-white/90 dark:placeholder:text-white/30"
+                    />
+                    <input
+                      type="text"
+                      title="Objectif du sprint"
+                      [value]="sprint.goal"
+                      (input)="updateSprintGoal(si, $any($event.target).value)"
+                      placeholder="Objectif du sprint"
+                      class="block w-full rounded-lg border border-gray-200 bg-transparent px-3 py-1.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-2 focus:ring-brand-500/10 dark:border-gray-700 dark:text-white/90 dark:placeholder:text-white/30"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    (click)="removeSprint(si)"
+                    title="Supprimer le sprint"
+                    class="text-gray-400 hover:text-error-500 transition-colors"
+                  >
+                    <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                  </button>
+                </div>
+
+                <div class="p-3 space-y-2">
+                  @for (ticket of sprint.tickets; track $index; let ti = $index) {
+                    <div class="flex items-start gap-2 p-2.5 rounded-lg border border-gray-100 dark:border-gray-700">
+                      <div class="flex-1 grid grid-cols-1 sm:grid-cols-[1fr_140px_auto] gap-2">
+                        <input
+                          type="text"
+                          [value]="ticket.titre"
+                          (input)="updateTicket(si, ti, 'titre', $any($event.target).value)"
+                          placeholder="Intitulé du ticket"
+                          class="block w-full rounded-lg border border-gray-200 bg-transparent px-3 py-1.5 text-xs text-gray-800 placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-2 focus:ring-brand-500/10 dark:border-gray-700 dark:text-white/90 dark:placeholder:text-white/30"
+                        />
+                        <select
+                          title="Priorité du ticket"
+                          [value]="ticket.priority"
+                          (change)="updateTicket(si, ti, 'priority', $any($event.target).value)"
+                          class="block w-full rounded-lg border border-gray-200 bg-transparent px-2 py-1.5 text-xs text-gray-800 focus:border-brand-300 focus:outline-hidden focus:ring-2 focus:ring-brand-500/10 dark:border-gray-700 dark:text-white/90"
+                        >
+                          @for (prio of priorities; track prio) {
+                            <option [value]="prio">{{ prio }}</option>
+                          }
+                        </select>
+                        <button
+                          type="button"
+                          (click)="removeTicket(si, ti)"
+                          title="Supprimer le ticket"
+                          class="text-gray-400 hover:text-error-500 transition-colors self-center"
+                        >
+                          <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
+                        </button>
+                      </div>
+                    </div>
+                  }
+                  @if (sprint.tickets.length === 0) {
+                    <p class="text-xs text-gray-400 dark:text-gray-500 italic px-2">Aucun ticket dans ce sprint.</p>
+                  }
+                  <button
+                    type="button"
+                    (click)="addTicket(si)"
+                    class="inline-flex items-center gap-1 text-xs font-medium text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 transition-colors px-2"
+                  >
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+                    Ajouter un ticket
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      }
+    </div>
+
+    <!-- Footer -->
+    <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 dark:border-gray-800">
+      @if (step() === 'prompt') {
+        <button
+          type="button"
+          (click)="closeModal()"
+          class="inline-flex items-center justify-center rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors"
+        >
+          Annuler
+        </button>
+        <button
+          type="button"
+          (click)="onSubmit()"
+          class="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-600 transition-colors"
+        >
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" fill="currentColor"/></svg>
+          Générer le plan
+        </button>
+      }
+
+      @if (step() === 'preview') {
+        <button
+          type="button"
+          (click)="closeModal()"
+          class="inline-flex items-center justify-center rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors"
+        >
+          Annuler
+        </button>
+        <button
+          type="button"
+          (click)="onConfirm()"
+          class="inline-flex items-center justify-center gap-2 rounded-lg bg-success-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-success-600 transition-colors"
+        >
+          <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+          Confirmer et créer le projet
+        </button>
+      }
+
+      @if (step() === 'confirming') {
+        <button
+          type="button"
+          disabled
+          class="inline-flex items-center justify-center gap-2 rounded-lg bg-success-500 px-4 py-2.5 text-sm font-medium text-white opacity-70 cursor-not-allowed transition-colors"
+        >
+          <svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" /></svg>
+          Création en cours…
+        </button>
+      }
+</div>
+  </div>
+</div>
+}

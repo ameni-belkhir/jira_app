@@ -6,5 +6,6 @@ namespace Application.Interfaces
     public interface IFileStorageService
     {
         Task<string> SaveProfileImageAsync(IFormFile file);
+        Task<string> SaveChatAttachmentAsync(IFormFile file);
     }
 }

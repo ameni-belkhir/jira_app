@@ -62,7 +62,7 @@ export class LoginComponent {
     this.loading = true;
     this.notification.loading('Connexion en cours…');
 
-    this.authService.login(this.loginForm.value)
+this.authService.login(this.loginForm.value)
       .pipe(finalize(() => {
         this.loading = false;
         this.notification.dismiss();
@@ -72,6 +72,11 @@ export class LoginComponent {
           // If the backend returns a LoginSuccessResponse directly, save the token
           if (response.token) {
             this.authService.saveAuthSession(response as LoginSuccessResponse);
+            // Rafraîchit SILENCIEUSEMENT les permissions depuis le backend juste
+            // après le login (en complément de `response.permissions`) pour garantir
+            // que localStorage['permissions'] est à jour même si le DTO de login ne
+            // l'était pas.
+            this.authService.refreshPermissionsSilently();
             this.notification.success('Connexion réussie !');
             this.router.navigate(['/dashboard']);
           }

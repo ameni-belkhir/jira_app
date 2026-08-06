@@ -6,12 +6,14 @@
     aria-label="Toggle notifications"
     title="Toggle notifications"
   >
-    <span
-      class="absolute right-0 top-0.5 z-10 h-2 w-2 rounded-full bg-orange-400"
-      [ngClass]="{ 'hidden': !notifying, 'flex': notifying }"
-    >
-      <span class="absolute inline-flex w-full h-full bg-orange-400 rounded-full opacity-75 animate-ping"></span>
-    </span>
+    <!-- Unread badge -->
+    @if (unreadCount > 0) {
+      <span
+        class="absolute right-0 top-0 z-10 inline-flex items-center justify-center h-5 min-w-5 px-1 rounded-full bg-error-500 text-white text-[10px] font-semibold leading-none"
+      >
+        {{ unreadCount > 99 ? '99+' : unreadCount }}
+      </span>
+    }
     <svg
       class="fill-current"
       width="20"
@@ -34,7 +36,7 @@
     >
       <div class="flex items-center justify-between pb-3 mb-3 border-b border-gray-100 dark:border-gray-700">
         <h5 class="text-lg font-semibold text-gray-800 dark:text-gray-200">
-          Notification
+          Notifications
         </h5>
         <button
           type="button"
@@ -59,74 +61,70 @@
           </svg>
         </button>
       </div>
-      <ul class="flex flex-col h-auto overflow-y-auto custom-scrollbar">
-        <li>
-          <a class="flex gap-3 rounded-lg border-b border-gray-100 p-3 px-4.5 py-3 hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-white/5 cursor-pointer">
-            <span class="relative block w-full h-10 rounded-full z-1 max-w-10">
-              <img
-                width="40"
-                height="40"
-                src="/images/user/user-02.jpg"
-                alt="User"
-                class="w-full overflow-hidden rounded-full"
-              />
-              <span class="absolute bottom-0 right-0 z-10 h-2.5 w-full max-w-2.5 rounded-full border-[1.5px] border-white bg-success-500 dark:border-gray-900"></span>
-            </span>
-            <span class="block">
-              <span class="mb-1.5 block text-theme-sm text-gray-500 dark:text-gray-400 space-x-1">
-                <span class="font-medium text-gray-800 dark:text-white/90">
-                  Terry Franci
+
+      <!-- Notifications list -->
+      @if (notifications.length > 0) {
+        <ul class="flex flex-col h-auto overflow-y-auto custom-scrollbar">
+          @for (notification of notifications; track trackById($index, notification)) {
+            <li>
+              <a
+                class="flex gap-3 rounded-lg border-b border-gray-100 p-3 px-4.5 py-3 hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-white/5 cursor-pointer"
+                [ngClass]="{
+                  'bg-gray-50 dark:bg-white/[0.02]': !notification.isRead
+                }"
+                (click)="onNotificationClick(notification)"
+              >
+                <span class="relative block w-full h-10 rounded-full z-1 max-w-10">
+                  <span
+                    class="flex items-center justify-center w-full h-full overflow-hidden rounded-full text-white"
+                    [ngClass]="typeClass(notification.type)"
+                  >
+                    @if (notification.type === 'success') {
+                      ✅
+                    } @else if (notification.type === 'warning') {
+                      ⚠️
+                    } @else if (notification.type === 'error') {
+                      ❌
+                    } @else {
+                      🔔
+                    }
+                  </span>
                 </span>
-                <span> requests permission to change</span>
-                <span class="font-medium text-gray-800 dark:text-white/90">
-                  Project - Nganter App
+                <span class="block min-w-0">
+                  <span class="mb-1.5 block text-theme-sm text-gray-500 dark:text-gray-400">
+                    <span class="font-medium text-gray-800 dark:text-white/90">
+                      {{ notification.title }}
+                    </span>
+                    @if (notification.message) {
+                      <span class="block truncate">{{ notification.message }}</span>
+                    }
+                  </span>
+                  <span class="flex items-center gap-2 text-gray-500 text-theme-xs dark:text-gray-400">
+                    <span>{{ timeAgo(notification.createdAt) }}</span>
+                    @if (!notification.isRead) {
+                      <span class="w-1 h-1 bg-gray-400 rounded-full"></span>
+                      <span class="font-medium text-brand-500">Non lue</span>
+                    }
+                  </span>
                 </span>
-              </span>
-              <span class="flex items-center gap-2 text-gray-500 text-theme-xs dark:text-gray-400">
-                <span>Project</span>
-                <span class="w-1 h-1 bg-gray-400 rounded-full"></span>
-                <span>5 min ago</span>
-              </span>
-            </span>
-          </a>
-        </li>
-        <li>
-          <a class="flex gap-3 rounded-lg border-b border-gray-100 p-3 px-4.5 py-3 hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-white/5 cursor-pointer">
-            <span class="relative block w-full h-10 rounded-full z-1 max-w-10">
-              <img
-                width="40"
-                height="40"
-                src="/images/user/user-03.jpg"
-                alt="User"
-                class="w-full overflow-hidden rounded-full"
-              />
-              <span class="absolute bottom-0 right-0 z-10 h-2.5 w-full max-w-2.5 rounded-full border-[1.5px] border-white bg-success-500 dark:border-gray-900"></span>
-            </span>
-            <span class="block">
-              <span class="mb-1.5 block text-theme-sm text-gray-500 dark:text-gray-400 space-x-1">
-                <span class="font-medium text-gray-800 dark:text-white/90">
-                  Alena Franci
-                </span>
-                <span>requests permission to change</span>
-                <span class="font-medium text-gray-800 dark:text-white/90">
-                  Project - Nganter App
-                </span>
-              </span>
-              <span class="flex items-center gap-2 text-gray-500 text-theme-xs dark:text-gray-400">
-                <span>Project</span>
-                <span class="w-1 h-1 bg-gray-400 rounded-full"></span>
-                <span>8 min ago</span>
-              </span>
-            </span>
-          </a>
-        </li>
-      </ul>
+              </a>
+            </li>
+          }
+        </ul>
+      } @else {
+        <div class="flex flex-col items-center justify-center flex-1 py-10 text-center">
+          <span class="text-3xl mb-3">🔕</span>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Aucune notification</p>
+        </div>
+      }
+
       <a
-        routerLink="/"
-        class="block px-4 py-2 mt-3 text-sm font-medium text-center text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
+        (click)="onViewAll()"
+        class="block px-4 py-2 mt-3 text-sm font-medium text-center text-gray-700 bg-white border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
       >
         View All Notifications
       </a>
     </div>
   }
 </div>
+

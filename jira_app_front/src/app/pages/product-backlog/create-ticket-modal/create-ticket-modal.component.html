@@ -99,6 +99,26 @@
               }
             </div>
           </div>
+
+<!-- Developer assigné (sélection unique) -->
+          <div>
+            <label class="block mb-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+              Developer assigné
+            </label>
+            @if (loadingMembers()) {
+              <p class="text-xs text-gray-400">Chargement des développeurs…</p>
+            } @else {
+              <app-user-role-selector
+                [users]="availableDevelopers"
+                [role]="'Developer'"
+                [multiple]="false"
+                [selectedUsers]="selectedAssigneeId ? [selectedAssigneeId] : []"
+                [placeholder]="'Rechercher un Developer…'"
+                roleLabel="Developer"
+                (selectionChange)="onAssigneeSelectionChange($event)"
+              />
+            }
+          </div>
         </div>
 
         <!-- Footer -->

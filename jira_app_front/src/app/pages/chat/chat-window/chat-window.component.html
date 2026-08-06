@@ -1,0 +1,152 @@
+@if (conversation) {
+  <!-- Chat header -->
+  <div class="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4 dark:border-gray-800 dark:bg-gray-900">
+    <div class="flex items-center gap-3">
+      <div class="relative">
+        <img
+          class="h-10 w-10 rounded-full object-cover"
+          [src]="conversation.avatar || '/images/user/user-01.jpg'"
+          [alt]="conversation.name"
+          title="{{ conversation.name }}"
+        />
+        <!-- Presence dot -->
+        <span
+          class="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-white dark:border-gray-900"
+          [class.bg-success-500]="online"
+          [class.bg-gray-300]="!online"
+        ></span>
+      </div>
+      <div>
+        <h3 class="text-sm font-semibold text-gray-800 dark:text-white/90">{{ conversation.name }}</h3>
+        <p
+          class="flex items-center gap-1 text-xs"
+          [class.text-success-500]="online"
+          [class.text-gray-400]="!online"
+        >
+          <span
+            class="h-1.5 w-1.5 rounded-full"
+            [class.bg-success-500]="online"
+            [class.bg-gray-300]="!online"
+          ></span>
+          {{ online ? 'En ligne' : 'Hors ligne' }}
+        </p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <button type="button" title="Appel vidéo" aria-label="Appel vidéo" class="rounded-full p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M2 6a2 2 0 012-2h7a2 2 0 012 2v2.5l3.4-2.2a.6.6 0 01.9.5v7.4a.6.6 0 01-.9.5L13 12.5V15a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/></svg>
+      </button>
+      <button type="button" title="Appel vocal" aria-label="Appel vocal" class="rounded-full p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M2 3.5A1.5 1.5 0 013.5 2h1.148a1.5 1.5 0 011.465 1.175l.716 3.223a1.5 1.5 0 01-.464 1.42l-.923.831a11 11 0 006.31 6.31l.83-.923a1.5 1.5 0 011.421-.464l3.223.716A1.5 1.5 0 0118 15.352V16.5a1.5 1.5 0 01-1.5 1.5H15C7.82 18 2 12.18 2 5V3.5z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div
+    #scrollContainer
+    (click)="onContainerClick()"
+    class="flex-1 space-y-4 overflow-y-auto px-6 py-6 bg-gray-50 dark:bg-gray-950"
+  >
+    @for (msg of messages; track msg.id) {
+      @if (isOwn(msg)) {
+        <!-- Outgoing (sender => right / blue) -->
+        <div class="flex justify-end">
+          <div class="flex max-w-[75%] flex-col items-end gap-1">
+            @if (msg.type === 'image') {
+              <div class="rounded-2xl rounded-tr-none bg-brand-600 px-3 py-2 text-white">
+                <div class="flex items-center gap-2 px-1 py-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/></svg>
+                  <div>
+                    <p class="text-sm font-medium">{{ msg.text }}</p>
+                    <p class="text-xs text-white/70">{{ formatFileSize(msg.fileSize) }}</p>
+                  </div>
+                </div>
+              </div>
+            } @else if (msg.type === 'file') {
+              <div class="rounded-2xl rounded-tr-none bg-brand-600 px-4 py-3 text-white">
+                <div class="flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V7.914a2 2 0 00-.586-1.414l-3.914-3.914A2 2 0 0012.086 2H4z" clip-rule="evenodd"/></svg>
+                  <div>
+                    <p class="text-sm font-medium">{{ msg.text }}</p>
+                    <p class="text-xs text-white/70">{{ formatFileSize(msg.fileSize) }}</p>
+                  </div>
+                </div>
+              </div>
+            } @else {
+              <div class="rounded-2xl rounded-tr-none bg-brand-500 px-4 py-2.5 text-sm leading-5 text-white">
+                {{ msg.text }}
+              </div>
+            }
+            <p class="px-1 text-[11px] text-gray-400">{{ formatTime(msg.timestamp) }}</p>
+          </div>
+        </div>
+      } @else {
+        <!-- Incoming (recipient => left / gray) -->
+        <div class="flex items-start gap-3">
+          <img
+            class="h-8 w-8 rounded-full object-cover"
+            [src]="conversation.avatar || '/images/user/user-01.jpg'"
+            [alt]="conversation.name"
+            title="{{ conversation.name }}"
+          />
+          <div class="max-w-[75%]">
+            @if (msg.type === 'image') {
+              <div class="rounded-2xl rounded-bl-none bg-white px-3 py-2 shadow-theme-xs dark:bg-gray-900">
+                <div class="flex items-center gap-2 rounded-lg bg-gray-100 px-2 py-2 dark:bg-gray-800">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/></svg>
+                  <div>
+                    <p class="text-sm font-medium text-gray-800 dark:text-white/90">{{ msg.text }}</p>
+                    <p class="text-xs text-gray-400">{{ formatFileSize(msg.fileSize) }}</p>
+                  </div>
+                </div>
+              </div>
+            } @else if (msg.type === 'file') {
+              <div class="rounded-2xl rounded-bl-none bg-white px-4 py-3 shadow-theme-xs dark:bg-gray-900">
+                <div class="flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 text-gray-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V7.914a2 2 0 00-.586-1.414l-3.914-3.914A2 2 0 0012.086 2H4z" clip-rule="evenodd"/></svg>
+                  <div>
+                    <p class="text-sm font-medium text-gray-800 dark:text-white/90">{{ msg.text }}</p>
+                    <p class="text-xs text-gray-400">{{ formatFileSize(msg.fileSize) }}</p>
+                  </div>
+                </div>
+              </div>
+            } @else {
+              <div class="rounded-2xl rounded-bl-none bg-white px-4 py-2.5 text-sm leading-5 text-gray-700 shadow-theme-xs dark:bg-gray-900 dark:text-gray-300">
+                {{ msg.text }}
+              </div>
+            }
+            <p class="mt-1 px-1 text-[11px] text-gray-400">{{ formatTime(msg.timestamp) }}</p>
+          </div>
+        </div>
+      }
+    }
+
+    <!-- Typing indicator -->
+    @if (typingText) {
+      <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1.5 rounded-2xl rounded-bl-md bg-white px-4 py-3 shadow-theme-xs dark:bg-gray-900">
+          <span class="h-2 w-2 animate-bounce rounded-full bg-gray-400"></span>
+          <span class="h-2 w-2 animate-bounce rounded-full bg-gray-400" style="animation-delay: 0.1s"></span>
+          <span class="h-2 w-2 animate-bounce rounded-full bg-gray-400" style="animation-delay: 0.2s"></span>
+        </div>
+        <p class="text-xs text-gray-400">{{ typingText }}</p>
+      </div>
+    }
+  </div>
+
+  <!-- Message input -->
+  <app-chat-message-input
+    (send)="onSend($event)"
+    (typing)="onTyping($event)"
+  />
+} @else {
+  <!-- Empty state -->
+  <div class="flex flex-1 flex-col items-center justify-center bg-gray-50 px-6 dark:bg-gray-950">
+    <div class="flex h-16 w-16 items-center justify-center rounded-full bg-brand-500/10 text-brand-500">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.84 8.84 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd"/></svg>
+    </div>
+    <h3 class="mt-4 text-sm font-medium text-gray-700 dark:text-gray-300">Sélectionnez une conversation</h3>
+    <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">Choisissez une conversation pour commencer à discuter.</p>
+  </div>
+}

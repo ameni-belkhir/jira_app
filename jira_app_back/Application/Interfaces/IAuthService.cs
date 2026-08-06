@@ -10,5 +10,6 @@ namespace Application.Interfaces
         Task<bool> VerifyCodeAsync(Application.DTO.Auth.VerifyCodeDto dto);
         Task<bool> ForgotPasswordAsync(Application.DTO.Auth.ForgotPasswordDto dto);
         Task<bool> ResetPasswordAsync(Application.DTO.Auth.ResetPasswordDto dto);
+        Task<bool> ChangePasswordAsync(int userId, string newPassword);
     }
 }

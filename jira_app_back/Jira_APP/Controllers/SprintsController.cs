@@ -1,9 +1,13 @@
 using System.Collections.Generic;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Application.DTO;
 using Application.Interfaces;
+using Infrastructure.Persistence;
+using Jira_APP.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Jira_APP.Controllers
 {
@@ -13,15 +17,32 @@ namespace Jira_APP.Controllers
     public class SprintsController : ControllerBase
     {
         private readonly ISprintService _sprintService;
+        private readonly ApplicationDbContext _db;
 
-        public SprintsController(ISprintService sprintService)
+        public SprintsController(ISprintService sprintService, ApplicationDbContext db)
         {
             _sprintService = sprintService;
+            _db = db;
+        }
+
+        private async Task<int?> GetUserIdAsync()
+        {
+            var claim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(claim) || !int.TryParse(claim, out var id))
+                return null;
+            return id;
         }
 
         [HttpGet("projects/{projectId}/sprints")]
         public async Task<ActionResult<IEnumerable<SprintDto>>> GetSprints(int projectId)
         {
+            var userId = await GetUserIdAsync();
+            if (userId == null) return Unauthorized();
+
+            var role = await ProjectAuthorizationHelper.GetUserRoleInProjectAsync(_db, userId.Value, projectId);
+            if (role == null)
+                return Forbid();
+
             var items = await _sprintService.GetByProjectIdAsync(projectId);
             return Ok(items);
         }
@@ -29,6 +50,13 @@ namespace Jira_APP.Controllers
         [HttpGet("projects/{projectId}/backlog")]
         public async Task<ActionResult<ProjectBacklogDto>> GetProjectBacklog(int projectId)
         {
+            var userId = await GetUserIdAsync();
+            if (userId == null) return Unauthorized();
+
+            var role = await ProjectAuthorizationHelper.GetUserRoleInProjectAsync(_db, userId.Value, projectId);
+            if (role == null)
+                return Forbid();
+
             var backlog = await _sprintService.GetProjectBacklogAsync(projectId);
             return Ok(backlog);
         }
@@ -37,6 +65,14 @@ namespace Jira_APP.Controllers
         public async Task<ActionResult<SprintDto>> Create([FromBody] CreateSprintDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var userId = await GetUserIdAsync();
+            if (userId == null) return Unauthorized();
+
+            var role = await ProjectAuthorizationHelper.GetUserRoleInProjectAsync(_db, userId.Value, dto.ProjectId);
+            if (role != "ScrumMaster" && role != "Senior")
+                return Forbid();
+
             var result = await _sprintService.CreateAsync(dto);
             return CreatedAtAction(nameof(GetSprints), new { projectId = result.ProjectId }, result);
         }
@@ -46,7 +82,36 @@ namespace Jira_APP.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
             if (id != dto.Id) return BadRequest();
+
+            var sprint = await _db.Sprints.AsNoTracking().FirstOrDefaultAsync(s => s.Id == id);
+            if (sprint == null) return NotFound();
+
+            var userId = await GetUserIdAsync();
+            if (userId == null) return Unauthorized();
+
+            var role = await ProjectAuthorizationHelper.GetUserRoleInProjectAsync(_db, userId.Value, sprint.ProjectId);
+            if (role != "ScrumMaster" && role != "Senior")
+                return Forbid();
+
             var ok = await _sprintService.UpdateAsync(dto);
+            if (!ok) return NotFound();
+            return NoContent();
+        }
+
+        [HttpDelete("sprints/{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var sprint = await _db.Sprints.AsNoTracking().FirstOrDefaultAsync(s => s.Id == id);
+            if (sprint == null) return NotFound();
+
+            var userId = await GetUserIdAsync();
+            if (userId == null) return Unauthorized();
+
+            var role = await ProjectAuthorizationHelper.GetUserRoleInProjectAsync(_db, userId.Value, sprint.ProjectId);
+            if (role != "ScrumMaster" && role != "Senior")
+                return Forbid();
+
+            var ok = await _sprintService.DeleteAsync(id);
             if (!ok) return NotFound();
             return NoContent();
         }
@@ -55,6 +120,20 @@ namespace Jira_APP.Controllers
         public async Task<IActionResult> MoveTicketToSprint(int ticketId, [FromBody] MoveTicketToSprintDto dto)
         {
             if (ticketId != dto.TicketId) return BadRequest();
+
+            var ticket = await _db.Tickets.AsNoTracking().FirstOrDefaultAsync(t => t.Id == ticketId);
+            if (ticket == null) return NotFound();
+
+            var userId = await GetUserIdAsync();
+            if (userId == null) return Unauthorized();
+
+            if (ticket.ProjectId == null)
+                return BadRequest(new { message = "Ce ticket n'est associé à aucun projet." });
+
+            var role = await ProjectAuthorizationHelper.GetUserRoleInProjectAsync(_db, userId.Value, ticket.ProjectId.Value);
+            if (role != "ScrumMaster" && role != "Senior")
+                return Forbid();
+
             var ok = await _sprintService.MoveTicketToSprintAsync(dto.TicketId, dto.SprintId);
             if (!ok) return NotFound();
             return NoContent();

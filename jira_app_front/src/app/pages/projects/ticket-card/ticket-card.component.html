@@ -1,4 +1,4 @@
-<div
+ <div
   class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 shadow-theme-sm hover:shadow-theme-md transition-all duration-200 cursor-grab active:cursor-grabbing"
   [ngStyle]="{'border-left': '4px solid ' + (ticket.color || '#3b82f6')}"
 >
@@ -33,7 +33,19 @@
       />
       <span class="text-xs text-gray-500 dark:text-gray-400">{{ ticket.assignedUser.name }}</span>
     </div>
-    <div class="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500">
+    <div class="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
+      @if (showSubticketButton) {
+        <button
+          (click)="onViewSubtickets($event)"
+          title="Voir les sous-tickets"
+          class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-400 hover:text-brand-500"
+        >
+          <svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM3 7a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 11a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" />
+          </svg>
+          <span class="text-[10px]">Sous-tickets</span>
+        </button>
+      }
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path fill-rule="evenodd" clip-rule="evenodd" d="M8 2C8.41421 2 8.75 2.33579 8.75 2.75V3.75H15.25V2.75C15.25 2.33579 15.5858 2 16 2C16.4142 2 16.75 2.33579 16.75 2.75V3.75H18.5C19.7426 3.75 20.75 4.75736 20.75 6V9V19C20.75 20.2426 19.7426 21.25 18.5 21.25H5.5C4.25736 21.25 3.25 20.2426 3.25 19V9V6C3.25 4.75736 4.25736 3.75 5.5 3.75H7.25V2.75C7.25 2.33579 7.58579 2 8 2Z" fill="currentColor"/>
       </svg>

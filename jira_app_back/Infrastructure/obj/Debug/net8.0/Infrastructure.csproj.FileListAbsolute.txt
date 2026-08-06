@@ -18,3 +18,11 @@ D:\5ArcTic\stage\Application\jira_app_back\Infrastructure\obj\Debug\net8.0\ref\I
 D:\5ArcTic\stage\Application\jira_app_back\Infrastructure\obj\Debug\net8.0\Infrastructure.sourcelink.json
 D:\5ArcTic\stage\Application\jira_app_back\Infrastructure\bin\Debug\net8.0\Application.dll
 D:\5ArcTic\stage\Application\jira_app_back\Infrastructure\bin\Debug\net8.0\Application.pdb
+C:\Users\ameni\AppData\Local\Temp\opencode\jira_build\Infrastructure.deps.json
+C:\Users\ameni\AppData\Local\Temp\opencode\jira_build\Infrastructure.runtimeconfig.json
+C:\Users\ameni\AppData\Local\Temp\opencode\jira_build\Infrastructure.dll
+C:\Users\ameni\AppData\Local\Temp\opencode\jira_build\Infrastructure.pdb
+C:\Users\ameni\AppData\Local\Temp\opencode\jira_build2\Infrastructure.deps.json
+C:\Users\ameni\AppData\Local\Temp\opencode\jira_build2\Infrastructure.runtimeconfig.json
+C:\Users\ameni\AppData\Local\Temp\opencode\jira_build2\Infrastructure.dll
+C:\Users\ameni\AppData\Local\Temp\opencode\jira_build2\Infrastructure.pdb

@@ -1,0 +1,155 @@
+@if (isOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center" (click)="onBackdropClick($event)">
+    <div class="fixed inset-0 bg-black/40 dark:bg-black/60 transition-opacity"></div>
+    <div class="relative z-10 w-full max-w-lg mx-4 bg-white dark:bg-gray-900 rounded-2xl shadow-theme-xl border border-gray-200 dark:border-gray-800 animate-fadeIn">
+      <!-- Header -->
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800">
+        <h2 class="text-lg font-semibold text-gray-800 dark:text-white">Sous-tickets</h2>
+        <button (click)="closeModal()" title="Fermer" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+          <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Body -->
+      <div class="px-6 py-5 max-h-[60vh] overflow-y-auto custom-scrollbar">
+        <!-- Error -->
+        @if (error()) {
+          <div class="p-3 mb-4 rounded-lg bg-error-50 border border-error-200 text-xs text-error-700 dark:bg-error-500/10 dark:border-error-500/20 dark:text-error-400">
+            {{ error() }}
+          </div>
+        }
+
+        <!-- Loading -->
+        @if (loading()) {
+          <div class="flex items-center justify-center py-8">
+            <svg class="w-6 h-6 text-brand-500 animate-spin" viewBox="0 0 24 24" fill="none">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            </svg>
+          </div>
+        }
+
+        @if (!loading()) {
+          <!-- Sub-ticket List -->
+          @if (subtickets().length === 0) {
+            <p class="text-sm text-gray-500 dark:text-gray-400 text-center py-8">Aucun sous-ticket.</p>
+          } @else {
+            <div class="space-y-2 mb-4">
+              @for (st of subtickets(); track st.id) {
+                <div class="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800">
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-gray-800 dark:text-white truncate">{{ st.title }}</p>
+                    @if (st.assignedTo) {
+                      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ st.assignedTo }}</p>
+                    }
+                  </div>
+                  <div class="flex items-center gap-2 ml-3">
+                    <span class="text-xs font-medium px-2 py-0.5 rounded-full" [ngClass]="getStatusClass(st.status)">{{ getStatusLabel(st.status) }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+
+          <!-- Create Sub-ticket button -->
+          @if (canManageTickets && !showCreateForm()) {
+            <button (click)="toggleCreateForm()" class="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-400 hover:border-brand-500 hover:text-brand-500 transition-colors">
+              <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+              </svg>
+              Ajouter un sous-ticket
+            </button>
+          }
+
+          <!-- Create Sub-ticket Form -->
+          @if (showCreateForm()) {
+            <form #subTicketForm="ngForm" (ngSubmit)="onCreateSubTicket()" class="mt-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800/30 border border-gray-200 dark:border-gray-700 space-y-3">
+              <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300">Nouveau sous-ticket</h4>
+
+              <!-- Title -->
+              <div>
+                <label class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-400">Titre <span class="text-error-500">*</span></label>
+                <input
+                  type="text"
+                  name="title"
+                  [(ngModel)]="newTitle"
+                  #titleInput="ngModel"
+                  required
+                  placeholder="Titre du sous-ticket"
+                  class="block w-full rounded-lg border border-gray-200 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:text-white/90 dark:placeholder:text-white/30"
+                  [class.border-error-500]="submitted && titleInput.invalid"
+                />
+                @if (submitted && titleInput.invalid) {
+                  <p class="mt-1 text-xs text-error-500">Le titre est requis.</p>
+                }
+              </div>
+
+              <!-- Description -->
+              <div>
+                <label class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-400">Description</label>
+                <textarea
+                  name="description"
+                  [(ngModel)]="newDescription"
+                  placeholder="Description (optionnelle)"
+                  rows="2"
+                  class="block w-full rounded-lg border border-gray-200 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:text-white/90 dark:placeholder:text-white/30 resize-none"
+                ></textarea>
+              </div>
+
+              <!-- Priority -->
+              <div>
+                <label class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-400">Priorité</label>
+                <select
+                  name="priority"
+                  [(ngModel)]="newPriority"
+                  title="Priorité du sous-ticket"
+                  aria-label="Priorité"
+                  class="block w-full rounded-lg border border-gray-200 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-800 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:text-white/90"
+                >
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
+                  <option value="Critical">Critical</option>
+                </select>
+              </div>
+
+              <!-- Form actions -->
+              <div class="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  (click)="toggleCreateForm()"
+                  class="inline-flex items-center justify-center rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  [disabled]="creating()"
+                  class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-brand-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  @if (creating()) {
+                    <svg class="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                  }
+                  Créer
+                </button>
+              </div>
+            </form>
+          }
+        }
+      </div>
+
+      <!-- Footer -->
+      <div class="flex items-center justify-end px-6 py-4 border-t border-gray-100 dark:border-gray-800">
+        <button (click)="closeModal()" class="inline-flex items-center justify-center rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors">
+          Fermer
+        </button>
+      </div>
+    </div>
+  </div>
+}
+

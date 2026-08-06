@@ -25,5 +25,8 @@ namespace Domain.Entity
 
         // Tickets du sprint
         public ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();
+
+        // Développeurs assignés à ce sprint
+        public ICollection<SprintMember> SprintMembers { get; set; } = new List<SprintMember>();
     }
 }

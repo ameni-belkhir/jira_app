@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Application.DTO.Auth
 {
@@ -9,5 +10,7 @@ namespace Application.DTO.Auth
         public string Role { get; set; } = string.Empty;
         public DateTime Expiration { get; set; }
         public string? ProfileImageUrl { get; set; }
+        public bool MustChangePassword { get; set; }
+        public List<string> Permissions { get; set; } = new List<string>();
     }
 }

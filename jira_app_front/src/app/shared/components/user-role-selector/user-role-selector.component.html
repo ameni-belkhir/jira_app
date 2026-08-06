@@ -1,0 +1,118 @@
+<div class="user-role-selector relative">
+  <!-- Bouton déclencheur -->
+  @if (selectedUsers().length === 0) {
+    <button
+      type="button"
+      (click)="toggleOpen()"
+      [disabled]="disabled()"
+      class="w-full inline-flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-transparent px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+    >
+      <span class="truncate">{{ placeholder() }}</span>
+      <svg class="w-4 h-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+      </svg>
+    </button>
+  } @else {
+    <button
+      type="button"
+      (click)="toggleOpen()"
+      [disabled]="disabled()"
+      class="w-full inline-flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-transparent px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-white/90 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+    >
+      <span class="truncate">{{ selectedUsers().length }} sélectionné@if (selectedUsers().length > 1) {s} — {{ roleLabel() }}</span>
+      <svg class="w-4 h-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+      </svg>
+    </button>
+  }
+
+  <!-- Chips des utilisateurs sélectionnés -->
+  @if (getSelectedUsers().length > 0) {
+    <div class="mt-2 flex flex-wrap items-center gap-2">
+      @for (user of getSelectedUsers(); track user.id) {
+        <span
+          class="inline-flex items-center gap-1.5 rounded-lg bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-300 py-1 pl-2.5 pr-1.5 text-xs font-medium"
+        >
+          <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+          </svg>
+          <span class="truncate">{{ user.prenom }} {{ user.nom }}</span>
+          @if (!disabled()) {
+            <button
+              type="button"
+              (click)="remove(user.id)"
+              title="Retirer {{ user.prenom }} {{ user.nom }}"
+              class="inline-flex items-center justify-center w-4 h-4 rounded-full hover:bg-brand-100 dark:hover:bg-brand-500/25 transition-colors"
+            >
+              <svg class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+            </button>
+          }
+        </span>
+      }
+    </div>
+  }
+
+  <!-- Dropdown -->
+  @if (isOpen()) {
+    <div class="absolute z-20 mt-2 w-full rounded-xl border border-gray-200 bg-white shadow-theme-xl dark:border-gray-700 dark:bg-gray-900 overflow-hidden">
+      <!-- Recherche -->
+      <div class="relative p-2 border-b border-gray-100 dark:border-gray-800">
+        <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+        </svg>
+        <label for="user-role-search" class="sr-only">
+          {{ 'Rechercher un ' + roleLabel() }}
+        </label>
+        <input
+          id="user-role-search"
+          type="text"
+          [ngModel]="search()"
+          (ngModelChange)="onSearch($event)"
+          [placeholder]="'Rechercher un ' + roleLabel() + '…'"
+          [attr.aria-label]="'Rechercher un ' + roleLabel()"
+          [attr.title]="'Rechercher un ' + roleLabel()"
+          class="w-full rounded-lg border border-gray-200 bg-transparent py-2 pl-9 pr-3 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:text-white/90 dark:placeholder:text-white/30"
+        />
+      </div>
+
+      <!-- Résultats -->
+      <div class="max-h-56 overflow-y-auto p-1.5">
+        @if (filteredUsers().length === 0) {
+          <p class="px-3 py-4 text-xs text-gray-400 dark:text-gray-500 text-center">Aucun {{ roleLabel() }} trouvé.</p>
+        } @else {
+          @for (user of filteredUsers(); track user.id) {
+            <button
+              type="button"
+              (click)="toggle(user)"
+              class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
+            >
+              @if (multiple()) {
+                <span
+                  class="w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors"
+                  [class.border-brand-500]="isSelected(user.id)"
+                  [class.bg-brand-500]="isSelected(user.id)"
+                  [class.border-gray-300]="!isSelected(user.id)"
+                  [class.dark:border-gray-600]="!isSelected(user.id)"
+                >
+                  @if (isSelected(user.id)) {
+                    <svg class="w-3 h-3 text-white" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                  }
+                </span>
+              }
+              <span class="flex-1 min-w-0">
+                <span class="block text-sm text-gray-800 dark:text-white/90 truncate">
+                  {{ user.prenom }} {{ user.nom }}
+                </span>
+                <span class="block text-xs text-gray-400 truncate">{{ user.email }}</span>
+              </span>
+            </button>
+          }
+        }
+      </div>
+    </div>
+  }
+</div>
