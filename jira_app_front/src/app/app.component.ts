@@ -30,11 +30,27 @@ ngOnInit(): void {
       // retour sur l'app sans re-login) pour garantir que localStorage['permissions']
       // reflète toujours la table UserPermissions en base.
       this.authService.refreshPermissionsSilently();
-    } else {
+    } else if (!this.isPublicRoute()) {
       const token = this.authService.getToken();
       if (!token) {
         this.router.navigate(['/login'], { replaceUrl: true });
       }
     }
+  }
+
+  /** Pages publiques : aucun redirection vers /login au démarrage. */
+  private isPublicRoute(): boolean {
+    const path = this.router.url.split('?')[0];
+    return [
+      '',
+      '/',
+      '/landing',
+      '/login',
+      '/register',
+      '/signup',
+      '/verify-email',
+      '/forgot-password',
+      '/reset-password',
+    ].includes(path);
   }
 }

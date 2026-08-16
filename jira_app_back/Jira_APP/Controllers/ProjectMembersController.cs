@@ -7,7 +7,6 @@ using Application.DTO;
 using Application.Interfaces;
 using Domain.Entity;
 using Infrastructure.Persistence;
-using Jira_APP.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -21,17 +20,20 @@ namespace Jira_APP.Controllers
     public class ProjectMembersController : ControllerBase
     {
         private readonly ApplicationDbContext _db;
+        private readonly IProjectAuthorizationService _projectAuthService;
         private readonly IEmailService _emailService;
         private readonly INotificationService _notificationService;
         private readonly ILogger<ProjectMembersController> _logger;
 
         public ProjectMembersController(
             ApplicationDbContext db,
+            IProjectAuthorizationService projectAuthService,
             IEmailService emailService,
             INotificationService notificationService,
             ILogger<ProjectMembersController> logger)
         {
             _db = db;
+            _projectAuthService = projectAuthService;
             _emailService = emailService;
             _notificationService = notificationService;
             _logger = logger;
@@ -292,6 +294,122 @@ namespace Jira_APP.Controllers
             });
         }
 
+        [HttpGet("{projectId}/available-scrummasters")]
+        public async Task<ActionResult<IEnumerable<AvailableUserDto>>> GetAvailableScrumMastersForProject(int projectId)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var callerId))
+                return Unauthorized();
+
+            if (!User.IsInRole("Admin"))
+                return Forbid();
+
+            var existingIds = await _db.ProjectMembers
+                .Where(pm => pm.ProjectId == projectId)
+                .Select(pm => pm.UserId)
+                .ToListAsync();
+
+            var available = await _db.Users
+                .AsNoTracking()
+                .Include(u => u.Role)
+                .Where(u => u.Role.Description == "ScrumMaster" && !existingIds.Contains(u.Id))
+                .Select(u => new AvailableUserDto
+                {
+                    Id = u.Id,
+                    Nom = u.Nom,
+                    Prenom = u.Prenom,
+                    Email = u.Email
+                })
+                .ToListAsync();
+
+            return Ok(available);
+        }
+
+        [HttpPost("{projectId}/members/scrummaster")]
+        public async Task<ActionResult<ProjectMemberResultDto>> AssignScrumMaster(int projectId, [FromBody] AssignMemberDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var callerId))
+                return Unauthorized();
+
+            if (!User.IsInRole("Admin"))
+                return Forbid();
+
+            var user = await _db.Users
+                .Include(u => u.Role)
+                .FirstOrDefaultAsync(u => u.Id == dto.UserId);
+
+            if (user == null)
+                return BadRequest("Utilisateur introuvable.");
+
+            if (user.Role.Description != "ScrumMaster")
+                return BadRequest("Cet utilisateur n'a pas le rôle ScrumMaster.");
+
+            var alreadyMember = await _db.ProjectMembers
+                .AnyAsync(pm => pm.ProjectId == projectId && pm.UserId == dto.UserId);
+
+            if (alreadyMember)
+                return BadRequest("Cet utilisateur est déjà membre de ce projet.");
+
+            var project = await _db.Projects
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.Id == projectId);
+
+            if (project == null)
+                return NotFound("Projet introuvable.");
+
+            var projectMember = new ProjectMember
+            {
+                ProjectId = projectId,
+                UserId = dto.UserId,
+                RoleInProject = "ScrumMaster",
+                InvitedById = callerId,
+                JoinedAt = DateTime.UtcNow
+            };
+
+            _db.ProjectMembers.Add(projectMember);
+            await _db.SaveChangesAsync();
+
+            var emailSent = false;
+            try
+            {
+                var subject = "Vous avez été affecté à un nouveau projet";
+                var body = $"Bonjour {user.Prenom} {user.Nom},\n\n"
+                         + $"Vous avez été ajouté au projet « {project.Nom} » en tant que ScrumMaster.\n"
+                         + "Connectez-vous à l'application Jira pour commencer à gérer ce projet.\n\n"
+                         + "Cordialement,\nL'équipe Jira";
+                _ = _emailService.SendEmailAsync(user.Email, subject, body);
+                emailSent = true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Échec de l'envoi d'email à {Email} pour l'assignation ScrumMaster au projet {ProjectId}", user.Email, projectId);
+            }
+
+            try
+            {
+                _ = _notificationService.SendNotificationAsync(
+                    user.Id,
+                    "Affectation à un projet",
+                    $"Vous avez été ajouté au projet « {project.Nom} » en tant que ScrumMaster.",
+                    $"/projects/{projectId}",
+                    "project");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Échec de l'envoi de notification à {UserId} pour l'assignation ScrumMaster au projet {ProjectId}", user.Id, projectId);
+            }
+
+            return Created(string.Empty, new ProjectMemberResultDto
+            {
+                UserId = dto.UserId,
+                RoleInProject = "ScrumMaster",
+                EmailSent = emailSent
+            });
+        }
+
         /// <summary>
         /// Retourne tous les utilisateurs ayant le rôle global "ScrumMaster" (hors Admin).
         /// Accessible aux Admin et aux Scrum Masters (rôle global) pour la sélection multiple
@@ -330,7 +448,7 @@ namespace Jira_APP.Controllers
             // Admin global bypass; otherwise the caller must be a member of the project
             if (!User.IsInRole("Admin"))
             {
-                var callerRole = await ProjectAuthorizationHelper.GetUserRoleInProjectAsync(_db, callerId, projectId);
+                var callerRole = await _projectAuthService.GetUserRoleInProjectAsync(callerId, projectId);
                 if (callerRole == null)
                     return Forbid();
             }
@@ -360,7 +478,7 @@ namespace Jira_APP.Controllers
             if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var callerId))
                 return Unauthorized();
 
-            var role = await ProjectAuthorizationHelper.GetUserRoleInProjectAsync(_db, callerId, projectId);
+            var role = await _projectAuthService.GetUserRoleInProjectAsync(callerId, projectId);
 
             return Ok(new MyRoleDto { RoleInProject = role });
         }
@@ -375,7 +493,7 @@ namespace Jira_APP.Controllers
             if (User.IsInRole("Admin"))
                 return true;
 
-            var callerRole = await ProjectAuthorizationHelper.GetUserRoleInProjectAsync(_db, userId, projectId);
+            var callerRole = await _projectAuthService.GetUserRoleInProjectAsync(userId, projectId);
             return callerRole != null && allowedProjectRoles.Contains(callerRole);
         }
     }

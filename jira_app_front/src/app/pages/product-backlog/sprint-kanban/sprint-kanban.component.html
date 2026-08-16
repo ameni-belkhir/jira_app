@@ -1,165 +1,284 @@
-@if (error()) {
-  <div class="p-4 mb-4 rounded-lg bg-error-50 border border-error-200 text-sm text-error-700 dark:bg-error-500/10 dark:border-error-500/20 dark:text-error-400">
-    {{ error() }}
-  </div>
-}
-@if (loading()) {
-  <div class="flex items-center justify-center py-12">
-    <div class="flex flex-col items-center gap-3">
-      <svg class="w-8 h-8 text-brand-500 animate-spin" viewBox="0 0 24 24" fill="none">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-      </svg>
-      <span class="text-sm text-gray-500 dark:text-gray-400">Chargement du Kanban...</span>
-    </div>
-  </div>
-}
-@if (!loading()) {
-  <div class="flex items-center justify-between mb-4">
-    <h2 class="text-lg font-semibold text-gray-800 dark:text-white">Sprint Kanban</h2>
-    <div class="flex items-center gap-2">
-      @if (canManageTickets) {
-        <button (click)="openAssignDeveloperModal()" class="inline-flex items-center gap-2 rounded-lg bg-green-500 px-4 py-2 text-sm font-medium text-white hover:bg-green-600 transition-colors">
-          <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
-          </svg>
-          Affecter un Développeur
-        </button>
-        <button (click)="openCreateTicketModal()" class="inline-flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 transition-colors">
-          <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"></path>
-          </svg>
-          Create Issue
-        </button>
-      }
-    </div>
-  </div>
-  <div class="flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
-    <div class="flex-shrink-0 w-72">
-      <div class="flex items-center justify-between mb-3 px-1">
-        <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">A FAIRE</h3>
-        <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">{{ aFaire().length }}</span>
-      </div>
-      <div cdkDropList id="a-faire" [cdkDropListData]="aFaire()" (cdkDropListDropped)="onDrop($event)" [cdkDropListConnectedTo]="['en-cours', 'fait']" class="min-h-[200px] space-y-3 p-2 rounded-xl bg-gray-50 dark:bg-gray-900/50 border-2 border-dashed border-gray-200 dark:border-gray-800 transition-colors" cdkDropListOrientation="vertical">
-        @for (ticket of aFaire(); track trackByTicketId($index, ticket)) {
-          <div cdkDrag>
-            <app-ticket-card [ticket]="mapToTicket(ticket)"></app-ticket-card>
-          </div>
-        }
-        @if (aFaire().length === 0) {
-          <div class="flex items-center justify-center h-24 text-xs text-gray-400 dark:text-gray-500">Deposer les tickets ici</div>
-        }
-      </div>
-    </div>
-    <div class="flex-shrink-0 w-72">
-      <div class="flex items-center justify-between mb-3 px-1">
-        <h3 class="text-sm font-semibold text-blue-600 dark:text-blue-400">EN COURS</h3>
-        <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">{{ enCours().length }}</span>
-      </div>
-      <div cdkDropList id="en-cours" [cdkDropListData]="enCours()" (cdkDropListDropped)="onDrop($event)" [cdkDropListConnectedTo]="['a-faire', 'fait']" class="min-h-[200px] space-y-3 p-2 rounded-xl bg-blue-50 dark:bg-blue-900/10 border-2 border-dashed border-blue-200 dark:border-blue-800 transition-colors" cdkDropListOrientation="vertical">
-        @for (ticket of enCours(); track trackByTicketId($index, ticket)) {
-          <div cdkDrag>
-            <app-ticket-card [ticket]="mapToTicket(ticket)"></app-ticket-card>
-          </div>
-        }
-        @if (enCours().length === 0) {
-          <div class="flex items-center justify-center h-24 text-xs text-gray-400 dark:text-gray-500">Deposer les tickets ici</div>
-        }
-      </div>
-    </div>
-    <div class="flex-shrink-0 w-72">
-      <div class="flex items-center justify-between mb-3 px-1">
-        <h3 class="text-sm font-semibold text-success-600 dark:text-success-400">FAIT</h3>
-        <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-400">{{ fait().length }}</span>
-      </div>
-      <div cdkDropList id="fait" [cdkDropListData]="fait()" (cdkDropListDropped)="onDrop($event)" [cdkDropListConnectedTo]="['a-faire', 'en-cours']" class="min-h-[200px] space-y-3 p-2 rounded-xl bg-success-50 dark:bg-success-900/10 border-2 border-dashed border-success-200 dark:border-success-800 transition-colors" cdkDropListOrientation="vertical">
-        @for (ticket of fait(); track trackByTicketId($index, ticket)) {
-          <div cdkDrag>
-            <app-ticket-card [ticket]="mapToTicket(ticket)"></app-ticket-card>
-          </div>
-        }
-        @if (fait().length === 0) {
-          <div class="flex items-center justify-center h-24 text-xs text-gray-400 dark:text-gray-500">Deposer les tickets ici</div>
-        }
-      </div>
-    </div>
-  </div>
-}
-<app-create-ticket-modal
-  [projectId]="projectId"
-  [creatorId]="getCreatorId()"
-  (close)="createTicketModal.closeModal()"
-  (create)="onCreateTicket($event)">
-</app-create-ticket-modal>
+<div class="kanban-board" [ngStyle]="boardStyle()">
 
-<!-- Assign Developer Modal -->
-@if (showAssignDeveloperModal()) {
-  <div class="fixed inset-0 z-50 flex items-center justify-center modal-backdrop" (click)="closeAssignDeveloperModal()">
-    <div class="fixed inset-0 bg-black/40 dark:bg-black/60 transition-opacity"></div>
-    <div class="relative z-10 w-full max-w-md mx-4 bg-white dark:bg-gray-900 rounded-2xl shadow-theme-xl border border-gray-200 dark:border-gray-800">
-      <!-- Header -->
-      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800">
-        <h2 class="text-lg font-semibold text-gray-800 dark:text-white">Affecter un Développeur</h2>
-        <button (click)="closeAssignDeveloperModal()" title="Fermer" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
-          <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-          </svg>
-        </button>
+  <!-- Backdrop du panneau de thème -->
+  @if (showThemePanel()) {
+    <div class="fixed inset-0 z-50 bg-black/40 dark:bg-black/60" (click)="showThemePanel.set(false)"></div>
+  }
+
+  <!-- Panneau latéral : fond du tableau -->
+  <div class="theme-panel" [class.open]="showThemePanel()">
+    <div class="theme-panel-header">
+      <h2 class="text-sm font-semibold text-gray-800 dark:text-white">Fond du tableau</h2>
+      <button
+        type="button"
+        (click)="showThemePanel.set(false)"
+        title="Fermer"
+        class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+      >
+        <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+        </svg>
+      </button>
+    </div>
+    <div class="theme-panel-body custom-scrollbar">
+      <p class="theme-section-title">Dégradés</p>
+      <div class="grid grid-cols-3 gap-2">
+        @for (t of themesByCategory('gradient'); track t.name) {
+          <button type="button" (click)="changeTheme(t)" class="theme-swatch" [class.selected]="isSelected(t)" [ngStyle]="{ 'background': t.bg }">
+            <span class="theme-swatch-label">{{ t.name }}</span>
+          </button>
+        }
       </div>
-      <!-- Body -->
-      <div class="px-6 py-5 max-h-[60vh] overflow-y-auto">
-        @if (loadingDevelopers()) {
-          <div class="flex items-center justify-center py-8">
-            <svg class="w-6 h-6 text-brand-500 animate-spin" viewBox="0 0 24 24" fill="none">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+      <p class="theme-section-title">Images</p>
+      <div class="grid grid-cols-3 gap-2">
+        @for (t of themesByCategory('image'); track t.name) {
+          <button type="button" (click)="changeTheme(t)" class="theme-swatch" [class.selected]="isSelected(t)" [ngStyle]="{ 'background': t.bg }">
+            <span class="theme-swatch-label">{{ t.name }}</span>
+          </button>
+        }
+      </div>
+      <p class="theme-section-title">Couleurs</p>
+      <div class="grid grid-cols-3 gap-2">
+        @for (t of themesByCategory('color'); track t.name) {
+          <button type="button" (click)="changeTheme(t)" class="theme-swatch" [class.selected]="isSelected(t)" [ngStyle]="{ 'background': t.bg }">
+            <span class="theme-swatch-label">{{ t.name }}</span>
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Erreur -->
+  @if (error()) {
+    <div class="mx-6 mt-4 p-4 rounded-lg bg-error-50 border border-error-200 text-sm text-error-700 dark:bg-error-500/10 dark:border-error-500/20 dark:text-error-400">
+      {{ error() }}
+    </div>
+  }
+
+  <!-- No project access -->
+  @if (noProjectAccess()) {
+    <div class="flex flex-col items-center justify-center py-16 text-center">
+      <svg class="w-12 h-12 text-white/30 mb-3" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+      </svg>
+      <h3 class="text-sm font-medium text-white/80 mb-1">Accès refusé</h3>
+      <p class="text-xs text-white/50 max-w-sm">
+        Aucun projet ne vous a été assigné pour le moment. Contactez un administrateur pour y être ajouté.
+      </p>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="flex items-center justify-center py-16">
+      <div class="flex flex-col items-center gap-3">
+        <svg class="w-8 h-8 text-white/80 animate-spin" viewBox="0 0 24 24" fill="none">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span class="text-sm text-white/80">Chargement du Kanban...</span>
+      </div>
+    </div>
+  }
+
+  @if (!loading()) {
+    <!-- Barre d'outils -->
+    <header class="kanban-header">
+      <div class="flex items-center gap-3 min-w-0">
+        <h1 class="text-lg font-bold text-white truncate">Sprint Kanban</h1>
+        <span class="inline-flex items-center gap-1.5 rounded-full bg-white/20 backdrop-blur px-2.5 py-0.5 text-xs font-semibold text-white">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M4 5a1 1 0 000 2h12a1 1 0 100-2H4zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM4 14a1 1 0 100 2h12a1 1 0 100-2H4z" />
+          </svg>
+          {{ aFaire().length + enCours().length + fait().length }}
+        </span>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <button
+          type="button"
+          (click)="showThemePanel.set(true)"
+          class="inline-flex items-center gap-2 rounded-lg bg-white/15 hover:bg-white/25 backdrop-blur px-3.5 py-2 text-sm font-medium text-white transition-colors"
+        >
+          <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M10 2a8 8 0 107.083 11.938A1.75 1.75 0 0015.5 11.5h-1.084a.416.416 0 01-.416-.416 2.584 2.584 0 01-.584-1.67 2.416 2.416 0 012.416-2.414h1.04A8.02 8.02 0 0011 2.06V1.5a.5.5 0 00-1 0V2zM6.5 9a1.25 1.25 0 110-2.5 1.25 1.25 0 010 2.5zm7 0a1.25 1.25 0 110-2.5 1.25 1.25 0 010 2.5zM5.5 12.5a1.25 1.25 0 100 2.5 1.25 1.25 0 000-2.5z" />
+          </svg>
+          Changer le fond
+        </button>
+        @if (canAssignTickets) {
+          <button
+            type="button"
+            (click)="openAssignDeveloperModal()"
+            class="inline-flex items-center gap-2 rounded-lg bg-white/15 hover:bg-white/25 backdrop-blur px-3.5 py-2 text-sm font-medium text-white transition-colors"
+          >
+            <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
             </svg>
-            <span class="ml-2 text-sm text-gray-500">Chargement des développeurs disponibles…</span>
-          </div>
-        } @else if (availableDevelopers().length === 0) {
-          <div class="flex flex-col items-center justify-center py-8 text-center">
-            <svg class="w-10 h-10 text-gray-300 dark:text-gray-600 mb-2" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+            Affecter un Développeur
+          </button>
+        }
+        @if (canEditTickets) {
+          <button
+            type="button"
+            (click)="openCreateTicketModal()"
+            class="inline-flex items-center gap-2 rounded-lg bg-brand-500 hover:bg-brand-600 px-3.5 py-2 text-sm font-medium text-white transition-colors"
+          >
+            <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"></path>
             </svg>
-            <p class="text-sm text-gray-500 dark:text-gray-400">Aucun développeur disponible à affecter.</p>
+            Create Issue
+          </button>
+        }
+      </div>
+    </header>
+
+    <!-- Colonnes Trello -->
+    <div class="kanban-lists custom-scrollbar" cdkDropListGroup>
+      @for (column of columns(); track column.id) {
+        <div class="kanban-list">
+          <div class="kanban-list-header">
+            <h3 class="text-sm font-bold text-gray-700 dark:text-gray-200 truncate">{{ column.name }}</h3>
+            <span class="kanban-list-count">{{ column.tickets.length }}</span>
           </div>
-        } @else {
-          <div class="space-y-2">
-            @for (dev of availableDevelopers(); track dev.id) {
-              <div class="flex items-center justify-between p-3 rounded-lg border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                <div class="flex items-center gap-3">
-                  <div class="w-9 h-9 rounded-full bg-green-100 dark:bg-green-500/10 flex items-center justify-center">
-                    <span class="text-sm font-semibold text-green-700 dark:text-green-400">{{ dev.prenom.charAt(0) }}{{ dev.nom.charAt(0) }}</span>
-                  </div>
-                  <div>
-                    <p class="text-sm font-medium text-gray-800 dark:text-white">{{ dev.prenom }} {{ dev.nom }}</p>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ dev.email }}</p>
-                  </div>
-                </div>
-                <button
-                  (click)="onAssignDeveloper(dev.id)"
-                  [disabled]="assigningDeveloper()"
-                  class="inline-flex items-center gap-1.5 rounded-lg bg-green-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  @if (assigningDeveloper()) {
-                    <svg class="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none">
-                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                  }
-                  Affecter
-                </button>
+          <div
+            cdkDropList
+            [id]="column.id"
+            [cdkDropListData]="column.tickets"
+            (cdkDropListDropped)="onTicketDrop($event, column.id)"
+            cdkDropListOrientation="vertical"
+            class="kanban-list-body custom-scrollbar"
+          >
+            @for (ticket of column.tickets; track trackByTicketId($index, ticket)) {
+              <div cdkDrag cdkDragHandle [cdkDragDisabled]="!canChangeStatus" class="kanban-card">
+                <app-ticket-card
+                  [ticket]="mapToTicket(ticket)"
+                  [showSubticketButton]="true"
+                  [showDeleteButton]="isAdmin"
+                  [canAssignTicket]="canAssignTickets"
+                  (viewDetails)="openTicketDetail($event)"
+                  (viewSubtickets)="openSubticketModal($event)"
+                  (createSubticketRequested)="onCreateSubticketRequested($event)"
+                  (deleteRequested)="onDeleteTicket($event)"
+                  (assignRequested)="openAssignTicketModal($event)">
+                </app-ticket-card>
+              </div>
+            }
+            @if (column.tickets.length === 0) {
+              <div class="flex items-center justify-center h-16 rounded-lg border-2 border-dashed border-gray-300/70 dark:border-gray-600/60 text-xs text-gray-400 dark:text-gray-500">
+                Deposer les tickets ici
               </div>
             }
           </div>
-        }
-      </div>
-      <!-- Footer -->
-      <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 dark:border-gray-800">
-        <button (click)="closeAssignDeveloperModal()" class="inline-flex items-center justify-center rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors">
-          Fermer
-        </button>
+          @if (canEditTickets) {
+            <button type="button" (click)="openCreateTicketModal(column.id)" class="kanban-add-card">
+              <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"></path>
+              </svg>
+              Ajouter une carte
+            </button>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <app-create-ticket-modal
+    [projectId]="projectId"
+    [creatorId]="getCreatorId()"
+    (close)="createTicketModal.closeModal()"
+    (create)="onCreateTicket($event)">
+  </app-create-ticket-modal>
+
+  <app-subticket-modal
+    [canCreateSubtickets]="canEditTickets"
+    (close)="loadTickets()"
+    (subticketCreated)="loadTickets()">
+  </app-subticket-modal>
+
+  <app-ticket-detail-modal
+    [projectId]="projectId"
+    [sprintId]="sprintId"
+    [canEditTicket]="canEditTickets"
+    [canAssignTicket]="canAssignTickets"
+    [isAdmin]="isAdmin"
+    (close)="loadTickets()"
+    (changed)="loadTickets()"
+    (deleted)="loadTickets()">
+  </app-ticket-detail-modal>
+
+  <app-assign-ticket-modal
+    [projectId]="projectId"
+    [callerRole]="assignCallerRole"
+    (assigned)="onTicketAssigned()">
+  </app-assign-ticket-modal>
+
+  <!-- Assign Developer Modal -->
+  @if (showAssignDeveloperModal()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center modal-backdrop" (click)="closeAssignDeveloperModal()">
+      <div class="fixed inset-0 bg-black/40 dark:bg-black/60 transition-opacity"></div>
+      <div class="relative z-10 w-full max-w-md mx-4 bg-white dark:bg-gray-900 rounded-2xl shadow-theme-xl border border-gray-200 dark:border-gray-800">
+        <!-- Header -->
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800">
+          <h2 class="text-lg font-semibold text-gray-800 dark:text-white">Affecter un Développeur</h2>
+          <button (click)="closeAssignDeveloperModal()" title="Fermer" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+            <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+          </button>
+        </div>
+        <!-- Body -->
+        <div class="px-6 py-5 max-h-[60vh] overflow-y-auto">
+          @if (loadingDevelopers()) {
+            <div class="flex items-center justify-center py-8">
+              <svg class="w-6 h-6 text-brand-500 animate-spin" viewBox="0 0 24 24" fill="none">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+              <span class="ml-2 text-sm text-gray-500">Chargement des développeurs disponibles…</span>
+            </div>
+          } @else if (availableDevelopers().length === 0) {
+            <div class="flex flex-col items-center justify-center py-8 text-center">
+              <svg class="w-10 h-10 text-gray-300 dark:text-gray-600 mb-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+              </svg>
+              <p class="text-sm text-gray-500 dark:text-gray-400">Aucun développeur disponible à affecter.</p>
+            </div>
+          } @else {
+            <div class="space-y-2">
+              @for (dev of availableDevelopers(); track dev.id) {
+                <div class="flex items-center justify-between p-3 rounded-lg border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                  <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-full bg-green-100 dark:bg-green-500/10 flex items-center justify-center">
+                      <span class="text-sm font-semibold text-green-700 dark:text-green-400">{{ dev.prenom.charAt(0) }}{{ dev.nom.charAt(0) }}</span>
+                    </div>
+                    <div>
+                      <p class="text-sm font-medium text-gray-800 dark:text-white">{{ dev.prenom }} {{ dev.nom }}</p>
+                      <p class="text-xs text-gray-500 dark:text-gray-400">{{ dev.email }}</p>
+                    </div>
+                  </div>
+                  <button
+                    (click)="onAssignDeveloper(dev.id)"
+                    [disabled]="assigningDeveloper()"
+                    class="inline-flex items-center gap-1.5 rounded-lg bg-green-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    @if (assigningDeveloper()) {
+                      <svg class="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                    }
+                    Affecter
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </div>
+        <!-- Footer -->
+        <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 dark:border-gray-800">
+          <button (click)="closeAssignDeveloperModal()" class="inline-flex items-center justify-center rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors">
+            Fermer
+          </button>
+        </div>
       </div>
     </div>
-  </div>
-}
+  }
+</div>

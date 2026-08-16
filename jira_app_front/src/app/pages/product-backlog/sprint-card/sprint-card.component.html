@@ -22,9 +22,48 @@
           {{ sprint.status || 'Planning' }}
         </span>
       </div>
-      <span class="text-xs font-medium text-gray-500 dark:text-gray-400">
-        {{ sprint.tickets.length }} tickets
-      </span>
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-medium text-gray-500 dark:text-gray-400">
+          {{ sprint.tickets.length }} tickets
+        </span>
+        @if (canManageSprints) {
+          <button
+            (click)="onEditSprint()"
+            title="Modifier le sprint"
+            class="inline-flex items-center justify-center rounded-lg border border-gray-200 p-1.5 text-gray-400 hover:text-brand-500 hover:border-brand-300 dark:border-gray-700 dark:text-gray-400 dark:hover:text-brand-400 transition-colors"
+          >
+            <svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+            </svg>
+          </button>
+        }
+        @if (canManageSprints) {
+          @if ((sprint.status || '').toLowerCase() !== 'active' && (sprint.status || '').toLowerCase() !== 'completed') {
+            <button
+              (click)="onStartSprint()"
+              title="Démarrer le sprint"
+              class="inline-flex items-center gap-1 rounded-lg bg-success-500 px-2 py-1 text-xs font-medium text-white hover:bg-success-600 transition-colors"
+            >
+              <svg class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.268l9.344-5.89a1.5 1.5 0 000-2.536L6.3 2.84z" />
+              </svg>
+              Démarrer le Sprint
+            </button>
+          }
+          @if ((sprint.status || '').toLowerCase() === 'active') {
+            <button
+              (click)="onCompleteSprint()"
+              title="Terminer le sprint"
+              class="inline-flex items-center gap-1 rounded-lg bg-brand-500 px-2 py-1 text-xs font-medium text-white hover:bg-brand-600 transition-colors"
+            >
+              <svg class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
+              </svg>
+              Terminer le Sprint
+            </button>
+          }
+        }
+      </div>
     </div>
 
     <!-- Goal -->
@@ -88,8 +127,8 @@
       cdkDropListOrientation="vertical"
     >
       @for (ticket of sprint.tickets; track trackByTicketId($index, ticket)) {
-        <div cdkDrag [cdkDragDisabled]="!canManageTickets">
-          <app-ticket-card [ticket]="mapToTicket(ticket)" />
+        <div cdkDrag [cdkDragDisabled]="!canManageSprints">
+          <app-ticket-card [ticket]="mapToTicket(ticket)" [showSubticketButton]="true" [showDeleteButton]="showDeleteButton" [canAssignTicket]="canAssignTicket" (viewSubtickets)="onViewSubtickets($event)" (createSubticketRequested)="onCreateSubticketRequested($event)" (deleteRequested)="onDeleteRequested($event)" (viewDetails)="onViewTicketDetails($event)" (assignRequested)="onAssignRequested($event)" />
         </div>
       } @empty {
         <div class="flex items-center justify-center h-20 text-xs text-gray-400 dark:text-gray-500 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl">
@@ -103,7 +142,7 @@
   @if (!isCollapsed()) {
     <div class="px-5 py-3 border-t border-gray-100 dark:border-gray-800 flex flex-wrap items-center justify-between gap-2">
       <div class="flex items-center gap-2">
-        @if (sprint.goal && !isEditingGoal) {
+        @if (sprint.goal && !isEditingGoal && canManageSprints) {
           <button
             (click)="startEditGoal()"
             class="inline-flex items-center gap-1.5 text-xs font-medium text-brand-500 hover:text-brand-600 dark:text-brand-400 dark:hover:text-brand-300 transition-colors"
@@ -117,9 +156,9 @@
       </div>
       @if (sprint.startDate || sprint.endDate) {
         <span class="text-xs text-gray-400 dark:text-gray-500">
-          {{ sprint.startDate ? (sprint.startDate | date:'shortDate') : '' }}
-          {{ sprint.startDate && sprint.endDate ? ' - ' : '' }}
-          {{ sprint.endDate ? (sprint.endDate | date:'shortDate') : '' }}
+          {{ sprint.startDate ? (sprint.startDate | date:'dd/MM/yyyy HH:mm') : '' }}
+          {{ sprint.startDate && sprint.endDate ? ' → ' : '' }}
+          {{ sprint.endDate ? (sprint.endDate | date:'dd/MM/yyyy HH:mm') : '' }}
         </span>
       }
     </div>

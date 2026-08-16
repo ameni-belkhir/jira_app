@@ -20,6 +20,13 @@ export interface CreateCommentRequest {
   auteur?: string;
 }
 
+export interface UpdateCommentRequest {
+  id: number | string;
+  ticketId: number;
+  message: string;
+  auteur?: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -38,6 +45,11 @@ export class CommentService {
   /** POST /api/Commentaires — create a new comment. */
   addComment(data: CreateCommentRequest): Observable<TicketComment> {
     return this.http.post<TicketComment>(`${this.apiUrl}/Commentaires`, data);
+  }
+
+  /** PUT /api/Commentaires/{id} — edit a comment. */
+  updateComment(id: number | string, data: UpdateCommentRequest): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/Commentaires/${id}`, data);
   }
 
   /** DELETE /api/Commentaires/{id} — remove a comment. */

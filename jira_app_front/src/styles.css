@@ -138,6 +138,37 @@ layer(base);
 
   --color-theme-purple-500: #7a5af8;
 
+  /* ===== Design System Trello ===== */
+  --color-trello-app: #0079bf; /* Bleu de fond de tableau */
+  --color-trello-list: #f1f2f4; /* Fond gris clair des colonnes */
+  --color-trello-card: #ffffff; /* Blanc pur des cartes */
+  --color-trello-primary: #0065ff; /* Bleu d'action principal */
+  --color-trello-primary-hover: #0052cc;
+  --color-trello-primary-soft: #e9f2ff;
+  --color-trello-text-main: #172b4d; /* Texte sombre à fort contraste */
+  --color-trello-text-muted: #44546f; /* Texte secondaire */
+
+  /* Badges de priorité / Étiquettes Trello (pastels) */
+  --color-label-green: #baf3db;
+  --color-label-green-text: #185239;
+  --color-label-yellow: #fef08a;
+  --color-label-yellow-text: #713f12;
+  --color-label-orange: #fed7aa;
+  --color-label-orange-text: #7c2d12;
+  --color-label-red: #ffd6a5;
+  --color-label-red-text: #7f1d1d;
+  --color-label-blue: #cce0ff;
+  --color-label-blue-text: #09326c;
+  --color-label-purple: #dfd5fe;
+  --color-label-purple-text: #352c63;
+
+  --radius-trello: 8px;
+
+  --shadow-trello-card: 0px 1px 1px rgba(9, 30, 66, 0.25),
+    0px 0px 1px rgba(9, 30, 66, 0.31);
+  --shadow-trello-card-hover: 0px 4px 12px rgba(9, 30, 66, 0.25);
+  --shadow-trello-list: 0px 1px 1px rgba(9, 30, 66, 0.25);
+
   --shadow-theme-md: 0px 4px 8px -2px rgba(16, 24, 40, 0.1),
     0px 2px 4px -2px rgba(16, 24, 40, 0.06);
   --shadow-theme-lg: 0px 12px 16px -4px rgba(16, 24, 40, 0.08),
@@ -189,6 +220,35 @@ layer(base);
   body {
     @apply relative font-normal font-outfit z-1 bg-gray-50;
   }
+}
+
+/*
+  Variables Design System Trello (utilisables en CSS / SCSS via var()).
+  La même palette est exposée dans @theme ci-dessus pour les utilitaires
+  Tailwind (bg-trello-app, text-trello-primary, bg-label-green, ...).
+*/
+:root {
+  --trello-bg-app: #0079bf;
+  --trello-bg-list: #f1f2f4;
+  --trello-bg-card: #ffffff;
+  --trello-primary: #0065ff;
+  --trello-primary-hover: #0052cc;
+  --trello-text-main: #172b4d;
+  --trello-text-muted: #44546f;
+  --trello-border-radius: 8px;
+
+  --label-green: #baf3db;
+  --label-green-text: #185239;
+  --label-yellow: #fef08a;
+  --label-yellow-text: #713f12;
+  --label-orange: #fed7aa;
+  --label-orange-text: #7c2d12;
+  --label-red: #ffd6a5;
+  --label-red-text: #7f1d1d;
+  --label-blue: #cce0ff;
+  --label-blue-text: #09326c;
+  --label-purple: #dfd5fe;
+  --label-purple-text: #352c63;
 }
 
 @utility menu-item {
@@ -900,3 +960,100 @@ pre[class*="language-"] {
 pre[class*="language-"].line-numbers {
   padding-left: 2.8em !important;
 }
+
+/* ===== Effets lumineux (Landing Page) ===== */
+
+/* Halo lumineux en arrière-plan (Glow Blobs) */
+.glow-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.35;
+  pointer-events: none;
+  animation: pulse-glow 6s ease-in-out infinite alternate;
+}
+
+.glow-blue {
+  background: radial-gradient(circle, #3b82f6 0%, rgba(59, 130, 246, 0) 70%);
+}
+
+.glow-purple {
+  background: radial-gradient(circle, #8b5cf6 0%, rgba(139, 92, 246, 0) 70%);
+}
+
+@keyframes pulse-glow {
+  0% {
+    transform: scale(1) translate(0, 0);
+    opacity: 0.25;
+  }
+  100% {
+    transform: scale(1.15) translate(20px, -20px);
+    opacity: 0.45;
+  }
+}
+
+/* Effet de vitre fumée (Glassmorphism) avec bordure lumineuse au survol */
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+  border-color: rgba(59, 130, 246, 0.5);
+  box-shadow: 0 0 25px -5px rgba(59, 130, 246, 0.3);
+  transform: translateY(-4px);
+}
+
+/* Adaptation Glassmorphism en Mode Sombre */
+.dark .glass-card {
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(51, 65, 85, 0.6);
+}
+
+.dark .glass-card:hover {
+  border-color: rgba(139, 92, 246, 0.6);
+  box-shadow: 0 0 30px -5px rgba(139, 92, 246, 0.4);
+}
+
+/* ===== Thèmes de fond du module de messagerie (ChatThemeService) ===== */
+
+/* Arrière-plan Trello : bleu tableau + léger quadrillage de points. */
+.chat-bg-trello {
+  background-color: #0079bf;
+  background-image: radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.07) 0 2px, transparent 3px),
+    radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.05) 0 2px, transparent 3px);
+  background-size: 24px 24px;
+}
+
+/* Dégradé sombre indigo (permet la lecture des bulles claires). */
+.chat-bg-gradient-dark {
+  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 55%, #0f172a 100%);
+}
+
+/* Nuit étoilée : fond très sombre étoilé + halo lunaire. */
+.chat-bg-starry {
+  background-color: #0b1020;
+  background-image: radial-gradient(1px 1px at 20% 30%, rgba(255, 255, 255, 0.9) 0, transparent 100%),
+    radial-gradient(1px 1px at 40% 70%, rgba(255, 255, 255, 0.7) 0, transparent 100%),
+    radial-gradient(1.5px 1.5px at 60% 20%, rgba(255, 255, 255, 0.8) 0, transparent 100%),
+    radial-gradient(1px 1px at 80% 60%, rgba(255, 255, 255, 0.6) 0, transparent 100%),
+    radial-gradient(1.5px 1.5px at 15% 80%, rgba(255, 255, 255, 0.7) 0, transparent 100%),
+    radial-gradient(1px 1px at 90% 15%, rgba(255, 255, 255, 0.5) 0, transparent 100%),
+    radial-gradient(ellipse at 50% 0%, rgba(99, 102, 241, 0.25) 0%, transparent 60%);
+}
+
+/* Minimaliste slate (s'adapte au mode clair/sombre global). */
+.chat-bg-slate {
+  background-color: #e2e8f0;
+}
+.dark .chat-bg-slate {
+  background-color: #1e293b;
+}
+
+/* Dégradé clair (ambre -> rosé) pour les fonds lumineux. */
+.chat-bg-gradient-light {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 50%, #fca5a5 100%);
+}
+

@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Domain.Entity;
 using Application.DTO;
+using Application.Interfaces;
 
 using Microsoft.AspNetCore.Authorization;
 namespace Jira_APP.Controllers
@@ -19,10 +20,20 @@ namespace Jira_APP.Controllers
     public class ProjectsController : ControllerBase
     {
         private readonly ApplicationDbContext _db;
+        private readonly IProjectAuthorizationService _projectAuthService;
 
-        public ProjectsController(ApplicationDbContext db)
+        public ProjectsController(ApplicationDbContext db, IProjectAuthorizationService projectAuthService)
         {
             _db = db;
+            _projectAuthService = projectAuthService;
+        }
+
+        private async Task<int?> GetUserIdAsync()
+        {
+            var claim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(claim) || !int.TryParse(claim, out var id))
+                return null;
+            return id;
         }
 
         [HttpGet]
@@ -63,6 +74,16 @@ namespace Jira_APP.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<ProjectDto>> GetById(int id)
         {
+            var userId = await GetUserIdAsync();
+            if (userId == null) return Unauthorized();
+
+            // Uniquement les membres du projet (ou l'Admin global).
+            var isMember = await _db.ProjectMembers
+                .AsNoTracking()
+                .AnyAsync(pm => pm.ProjectId == id && pm.UserId == userId.Value);
+            if (!isMember && !User.IsInRole("Admin"))
+                return Forbid();
+
             var item = await _db.Projects
                 .Include(p => p.Members).ThenInclude(pm => pm.User)
                 .FirstOrDefaultAsync(p => p.Id == id);
@@ -76,9 +97,13 @@ namespace Jira_APP.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var creatorId))
-                return Unauthorized("Utilisateur non identifié dans le token.");
+            var userId = await GetUserIdAsync();
+            if (userId == null) return Unauthorized("Utilisateur non identifié dans le token.");
+            var creatorId = userId.Value;
+
+            // Seuls l'Admin global et les Scrum Masters peuvent créer des projets.
+            if (!User.IsInRole("Admin") && !User.IsInRole("ScrumMaster"))
+                return Forbid();
 
             var project = new Project
             {
@@ -127,14 +152,46 @@ namespace Jira_APP.Controllers
             if (!ModelState.IsValid) return BadRequest(ModelState);
             if (id != dto.Id) return BadRequest();
 
-            var project = await _db.Projects.FindAsync(id);
+            if (!await CanManageProjectAsync(id)) return Forbid();
+
+            var project = await _db.Projects
+                .Include(p => p.Members)
+                .FirstOrDefaultAsync(p => p.Id == id);
             if (project == null) return NotFound();
 
             project.Nom = dto.Nom;
             project.Responsable = dto.Responsable;
             project.Description = dto.Description;
 
-            _db.Projects.Update(project);
+            // Synchronisation complète des ScrumMasters dans ProjectMembers.
+            var requestedIds = (dto.ScrumMasterIds ?? new List<int>()).Distinct().ToList();
+
+            var currentSmIds = project.Members
+                .Where(m => m.RoleInProject == "ScrumMaster")
+                .Select(m => m.UserId)
+                .ToHashSet();
+
+            var toAdd = requestedIds.Where(id => !currentSmIds.Contains(id)).ToList();
+            var toRemove = project.Members
+                .Where(m => m.RoleInProject == "ScrumMaster" && !requestedIds.Contains(m.UserId))
+                .ToList();
+
+            foreach (var userId in toAdd)
+            {
+                project.Members.Add(new ProjectMember
+                {
+                    ProjectId = id,
+                    UserId = userId,
+                    RoleInProject = "ScrumMaster",
+                    JoinedAt = DateTime.UtcNow
+                });
+            }
+
+            foreach (var member in toRemove)
+            {
+                _db.ProjectMembers.Remove(member);
+            }
+
             await _db.SaveChangesAsync();
             return NoContent();
         }
@@ -142,6 +199,8 @@ namespace Jira_APP.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
+            if (!await CanManageProjectAsync(id)) return Forbid();
+
             try
             {
                 var project = await _db.Projects
@@ -205,6 +264,20 @@ namespace Jira_APP.Controllers
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, new { message = ex.Message });
             }
+        }
+
+        /// <summary>
+        /// Autorise l'Admin global, ou un Scrum Master qui est membre du projet.
+        /// </summary>
+        private async Task<bool> CanManageProjectAsync(int projectId)
+        {
+            if (User.IsInRole("Admin")) return true;
+
+            var userId = await GetUserIdAsync();
+            if (userId == null) return false;
+
+            var role = await _projectAuthService.GetUserRoleInProjectAsync(userId.Value, projectId);
+            return role == "ScrumMaster";
         }
 
         private static ProjectDto MapToDto(Project project) => new ProjectDto

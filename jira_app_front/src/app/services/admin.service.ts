@@ -12,6 +12,10 @@ export interface AdminUser {
   role: string;
   dateInscription: string;
   isEmailVerified: boolean;
+  /** URL de la photo de profil, si le backend la renvoie */
+  profileImageUrl?: string;
+  /** Indique si le compte est actif, si le backend renvoie la propriété */
+  isActive?: boolean;
 }
 
 export interface UserPermission {
@@ -39,6 +43,19 @@ export interface CreateUserResponse extends AdminUser {
   emailSent?: boolean;
 }
 
+/** Projet où le RoleInProject d'un user diffère du nouveau rôle global proposé */
+export interface RoleChangeImpactItem {
+  projectId: number;
+  projectName: string;
+  currentRoleInProject: string;
+}
+
+/** Décision de l'admin pour un projet : aligner ou non le RoleInProject sur le nouveau rôle global */
+export interface ProjectRoleDecision {
+  projectId: number;
+  alignToNewRole: boolean;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -55,8 +72,19 @@ export class AdminService {
     return this.http.get<UserPermission[]>(`${this.apiUrl}/admin/users/${userId}/permissions`);
   }
 
-  updateUserRole(userId: number, roleId: number): Observable<any> {
-    return this.http.put<any>(`${this.apiUrl}/admin/users/${userId}/role`, { roleId });
+  /** Projets où le RoleInProject de l'utilisateur diffère du rôle global proposé */
+  getRoleChangeImpact(userId: number, roleId: number): Observable<RoleChangeImpactItem[]> {
+    return this.http.get<RoleChangeImpactItem[]>(`${this.apiUrl}/admin/users/${userId}/role-change-impact`, {
+      params: { roleId },
+    });
+  }
+
+  updateUserRole(userId: number, roleId: number, decisions?: ProjectRoleDecision[]): Observable<any> {
+    const body: Record<string, unknown> = { roleId };
+    if (decisions && decisions.length > 0) {
+      body['projectRoleDecisions'] = decisions;
+    }
+    return this.http.put<any>(`${this.apiUrl}/admin/users/${userId}/role`, body);
   }
 
   updateUserPermissions(userId: number, permissions: UserPermission[]): Observable<any> {

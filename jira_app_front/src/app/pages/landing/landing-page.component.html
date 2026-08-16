@@ -1,0 +1,405 @@
+<div class="min-h-screen bg-slate-50 text-slate-900 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100">
+  <!-- ===== Header flottant / Navigation ===== -->
+  <header class="sticky top-0 z-50 border-b border-slate-200/60 bg-white/80 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/80">
+    <nav class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
+      <!-- Logo -->
+      <a routerLink="/" class="group flex items-center gap-2.5" title="Accueil">
+        <svg width="36" height="36" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" class="transition-transform duration-200 group-hover:scale-105">
+          <rect x="6" y="6" width="22" height="22" rx="6" fill="#3B82F6" fill-opacity="0.5"/>
+          <rect x="12" y="12" width="22" height="22" rx="6" fill="#6366F1"/>
+          <rect x="16" y="17" width="14" height="2.5" rx="1.25" fill="white"/>
+          <rect x="16" y="22" width="10" height="2.5" rx="1.25" fill="white" fill-opacity="0.7"/>
+          <circle cx="18" cy="28" r="1.5" fill="#38BDF8"/>
+        </svg>
+        <span class="text-lg font-bold tracking-tight text-slate-900 dark:text-white">Jira App</span>
+      </a>
+
+      <!-- Liens rapides -->
+      <div class="hidden items-center gap-8 text-sm font-medium text-slate-500 md:flex dark:text-slate-300">
+        <a href="#features" class="transition-colors hover:text-indigo-600 dark:hover:text-indigo-400">Fonctionnalités</a>
+        <a href="#solutions" class="transition-colors hover:text-indigo-600 dark:hover:text-indigo-400">Solutions</a>
+        <a href="#pricing" class="transition-colors hover:text-indigo-600 dark:hover:text-indigo-400">Tarifs</a>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <!-- Bouton officiel de bascule clair/sombre (composant global) -->
+        <app-theme-toggle-button />
+        <a
+          routerLink="/login"
+          class="hidden items-center rounded-lg px-3.5 py-2 text-sm font-medium text-slate-700 transition-all duration-200 hover:bg-slate-100 active:scale-95 dark:text-slate-200 dark:hover:bg-slate-800 sm:inline-flex"
+        >
+          Se connecter
+        </a>
+        <a
+          routerLink="/register"
+          class="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-indigo-600/20 transition-all duration-200 hover:bg-indigo-500 active:scale-95"
+        >
+          Commencer gratuitement
+        </a>
+      </div>
+    </nav>
+  </header>
+
+  <!-- ===== Hero ===== -->
+  <section class="relative overflow-hidden">
+    <div class="pointer-events-none absolute inset-0 bg-gradient-to-b from-slate-50 via-indigo-50/30 to-slate-50 dark:from-slate-950 dark:via-indigo-950/20 dark:to-slate-950" aria-hidden="true"></div>
+    <div class="pointer-events-none absolute inset-0" aria-hidden="true">
+      <div class="glow-blob glow-blue -left-24 -top-20 h-80 w-80"></div>
+      <div class="glow-blob glow-purple -right-20 bottom-10 h-96 w-96"></div>
+    </div>
+
+    <div class="relative mx-auto max-w-7xl px-4 pb-16 pt-16 sm:px-6 sm:pt-24">
+      <div class="mx-auto max-w-3xl text-center">
+        <span class="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-600 dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-300">
+          <span class="relative flex h-2 w-2">
+            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-indigo-400 opacity-75"></span>
+            <span class="relative inline-flex h-2 w-2 rounded-full bg-indigo-500"></span>
+          </span>
+          Gestion de projets nouvelle génération
+        </span>
+
+        <h1 class="mt-6 text-title-sm font-bold tracking-tight text-slate-900 dark:text-white sm:text-title-xl">
+          Jira App rassemble toutes vos tâches, votre équipe et vos outils en un seul endroit.
+        </h1>
+        <p class="mx-auto mt-5 max-w-2xl text-theme-xl text-slate-500 dark:text-slate-300">
+          Collaborez, gérez des projets et atteignez de nouveaux sommets de productivité.
+        </p>
+
+        <!-- Zone d'action -->
+        <div class="mx-auto mt-9 flex max-w-xl flex-col gap-3 sm:flex-row">
+          <input
+            type="email"
+            [(ngModel)]="email"
+            name="landing-email"
+            placeholder="Adresse e-mail"
+            (keyup.enter)="onEmailSignup()"
+            class="flex-1 rounded-trello border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm transition-all duration-200 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-hidden focus:ring-3 focus:ring-indigo-500/15 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-400"
+          />
+          <button
+            type="button"
+            (click)="onEmailSignup()"
+            class="inline-flex items-center justify-center rounded-trello bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-sm shadow-indigo-600/25 transition-all duration-200 hover:bg-indigo-500 active:scale-95"
+          >
+            S'inscrire - C'est gratuit !
+          </button>
+        </div>
+        <p class="mt-4 text-xs text-slate-400 dark:text-slate-500">Gratuit pour toujours · Sans carte bancaire · Configurable en quelques minutes</p>
+      </div>
+
+      <!-- Visuel : maquette de tableau Kanban -->
+      <div class="relative mx-auto mt-14 max-w-5xl">
+        <div class="relative rounded-2xl bg-trello-app p-4 shadow-trello-list transition-shadow duration-300 sm:p-6 dark:border dark:border-indigo-500/30 dark:shadow-[0_0_50px_-12px_rgba(99,102,241,0.35)]">
+          <div class="mb-4 flex flex-wrap items-center justify-between gap-2 px-1">
+            <div class="flex items-center gap-2">
+              <span class="h-3 w-3 rounded-full bg-white/70"></span>
+              <span class="text-sm font-semibold text-white">Maquette du tableau</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="rounded-md bg-white/20 px-2 py-0.5 text-xs font-medium text-white">Junior Dev</span>
+              <span class="rounded-md bg-white/20 px-2 py-0.5 text-xs font-medium text-white">Senior Dev</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+            <!-- Colonne À faire -->
+            <div class="rounded-trello bg-trello-list p-2.5 shadow-trello-list">
+              <p class="mb-2.5 px-1 text-xs font-semibold uppercase tracking-wide text-trello-text-muted">À faire</p>
+              <div class="space-y-2.5">
+                <div class="rounded-trello bg-trello-card p-3 shadow-trello-card">
+                  <div class="mb-2 flex flex-wrap gap-1">
+                    <span class="rounded px-1.5 py-0.5 text-[10px] font-semibold text-label-green-text bg-label-green">UAT</span>
+                    <span class="rounded px-1.5 py-0.5 text-[10px] font-semibold text-label-purple-text bg-label-purple">Mobile</span>
+                  </div>
+                  <p class="text-sm font-medium text-trello-text-main">Refonte de l'onboarding</p>
+                </div>
+                <div class="rounded-trello bg-trello-card p-3 shadow-trello-card">
+                  <p class="text-sm font-medium text-trello-text-main">Planifier le sprint 4</p>
+                  <div class="mt-2 flex items-center justify-between">
+                    <span class="rounded px-1.5 py-0.5 text-[10px] font-semibold text-label-yellow-text bg-label-yellow">High</span>
+                    <div class="flex -space-x-1.5">
+                      <span class="flex h-6 w-6 items-center justify-center rounded-full bg-label-orange text-[10px] font-bold text-label-orange-text ring-2 ring-white dark:ring-slate-800">S</span>
+                      <span class="flex h-6 w-6 items-center justify-center rounded-full bg-label-blue text-[10px] font-bold text-label-blue-text ring-2 ring-white dark:ring-slate-800">A</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="rounded-trello bg-trello-card p-3 shadow-trello-card">
+                  <p class="text-sm font-medium text-trello-text-main">Audit de sécurité</p>
+                  <div class="mt-2 flex items-center justify-between">
+                    <span class="rounded px-1.5 py-0.5 text-[10px] font-semibold text-label-red-text bg-label-red">Urgent</span>
+                    <span class="flex h-6 w-6 items-center justify-center rounded-full bg-label-green text-[10px] font-bold text-label-green-text ring-2 ring-white dark:ring-slate-800">J</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Colonne En cours -->
+            <div class="rounded-trello bg-trello-list p-2.5 shadow-trello-list">
+              <p class="mb-2.5 px-1 text-xs font-semibold uppercase tracking-wide text-trello-text-muted">En cours</p>
+              <div class="space-y-2.5">
+                <div class="rounded-trello bg-trello-card p-3 shadow-trello-card">
+                  <p class="text-sm font-medium text-trello-text-main">Dashboard analytics</p>
+                  <div class="mt-2 flex items-center justify-between">
+                    <span class="rounded px-1.5 py-0.5 text-[10px] font-semibold text-label-blue-text bg-label-blue">In Progress</span>
+                    <div class="flex -space-x-1.5">
+                      <span class="flex h-6 w-6 items-center justify-center rounded-full bg-label-orange text-[10px] font-bold text-label-orange-text ring-2 ring-white dark:ring-slate-800">J</span>
+                      <span class="flex h-6 w-6 items-center justify-center rounded-full bg-label-green text-[10px] font-bold text-label-green-text ring-2 ring-white dark:ring-slate-800">A</span>
+                      <span class="flex h-6 w-6 items-center justify-center rounded-full bg-label-purple text-[10px] font-bold text-label-purple-text ring-2 ring-white dark:ring-slate-800">+2</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="rounded-trello bg-trello-card p-3 shadow-trello-card">
+                  <p class="text-sm font-medium text-trello-text-main">Sous-tickets & hiérarchie</p>
+                  <div class="mt-2 flex items-center justify-between">
+                    <span class="rounded px-1.5 py-0.5 text-[10px] font-semibold text-label-green-text bg-label-green">En cours</span>
+                    <span class="flex h-6 w-6 items-center justify-center rounded-full bg-label-blue text-[10px] font-bold text-label-blue-text ring-2 ring-white dark:ring-slate-800">A</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Colonne Fait -->
+            <div class="rounded-trello bg-trello-list p-2.5 shadow-trello-list">
+              <p class="mb-2.5 px-1 text-xs font-semibold uppercase tracking-wide text-trello-text-muted">Fait</p>
+              <div class="space-y-2.5">
+                <div class="rounded-trello bg-trello-card p-3 shadow-trello-card">
+                  <p class="text-sm font-medium text-trello-text-main">Login & auth JWT</p>
+                  <div class="mt-2 flex items-center justify-between">
+                    <span class="rounded px-1.5 py-0.5 text-[10px] font-semibold text-label-green-text bg-label-green">Done</span>
+                    <span class="flex h-6 w-6 items-center justify-center rounded-full bg-label-orange text-[10px] font-bold text-label-orange-text ring-2 ring-white dark:ring-slate-800">S</span>
+                  </div>
+                </div>
+                <div class="rounded-trello bg-trello-card p-3 shadow-trello-card">
+                  <p class="text-sm font-medium text-trello-text-main">Sidebar responsive</p>
+                  <div class="mt-2 flex items-center justify-between">
+                    <span class="rounded px-1.5 py-0.5 text-[10px] font-semibold text-label-purple-text bg-label-purple">Deployé</span>
+                    <div class="flex -space-x-1.5">
+                      <span class="flex h-6 w-6 items-center justify-center rounded-full bg-label-blue text-[10px] font-bold text-label-blue-text ring-2 ring-white dark:ring-slate-800">A</span>
+                      <span class="flex h-6 w-6 items-center justify-center rounded-full bg-label-green text-[10px] font-bold text-label-green-text ring-2 ring-white dark:ring-slate-800">J</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Fonctionnalités / Productivité ===== -->
+  <section id="features" class="border-t border-slate-200/60 bg-white/60 dark:border-slate-800 dark:bg-slate-900/40">
+    <div class="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24">
+      <div class="mx-auto max-w-2xl text-center">
+        <span class="text-sm font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Fonctionnalités</span>
+        <h2 class="mt-3 text-title-md font-bold tracking-tight text-slate-900 dark:text-white">
+          Tout ce qu'il faut pour rester productif
+        </h2>
+        <p class="mt-4 text-lg text-slate-500 dark:text-slate-300">
+          Une interface simple et puissante pour structurer vos projets, vos équipes et vos livraisons.
+        </p>
+      </div>
+
+      <div class="mt-14 grid gap-6 md:grid-cols-3">
+        <!-- Carte : Tableaux -->
+        <div class="glass-card rounded-2xl p-8 transition-all duration-300 hover:border-indigo-500/40 hover:shadow-indigo-500/10">
+          <div class="flex h-14 w-14 items-center justify-center rounded-trello bg-indigo-100 text-3xl dark:bg-indigo-500/20">📋</div>
+          <h3 class="mt-6 text-xl font-semibold text-slate-900 dark:text-white">Les Tableaux</h3>
+          <p class="mt-3 text-sm leading-relaxed text-slate-500 dark:text-slate-300">
+            Visualisez vos projets de la conception à la réalisation.
+          </p>
+        </div>
+
+        <!-- Carte : Listes -->
+        <div class="glass-card rounded-2xl p-8 transition-all duration-300 hover:border-indigo-500/40 hover:shadow-indigo-500/10">
+          <div class="flex h-14 w-14 items-center justify-center rounded-trello bg-indigo-100 text-3xl dark:bg-indigo-500/20">🗂️</div>
+          <h3 class="mt-6 text-xl font-semibold text-slate-900 dark:text-white">Les Listes</h3>
+          <p class="mt-3 text-sm leading-relaxed text-slate-500 dark:text-slate-300">
+            Organisez les différentes étapes de votre flux de travail.
+          </p>
+        </div>
+
+        <!-- Carte : Cartes -->
+        <div class="glass-card rounded-2xl p-8 transition-all duration-300 hover:border-indigo-500/40 hover:shadow-indigo-500/10">
+          <div class="flex h-14 w-14 items-center justify-center rounded-trello bg-indigo-100 text-3xl dark:bg-indigo-500/20">🎫</div>
+          <h3 class="mt-6 text-xl font-semibold text-slate-900 dark:text-white">Les Cartes</h3>
+          <p class="mt-3 text-sm leading-relaxed text-slate-500 dark:text-slate-300">
+            Détaillez les tâches avec des sous-tickets, membres et dates limites.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Solutions ===== -->
+  <section id="solutions" class="border-t border-slate-200/60 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-950/60">
+    <div class="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24">
+      <div class="grid items-center gap-12 lg:grid-cols-2">
+        <div>
+          <span class="text-sm font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Solutions</span>
+          <h2 class="mt-3 text-title-md font-bold tracking-tight text-slate-900 dark:text-white">
+            Une seule vue pour toute l'équipe
+          </h2>
+          <p class="mt-4 text-lg text-slate-500 dark:text-slate-300">
+            Du backlog produit au tableau Kanban du sprint, gardez un œil sur chaque tâche,
+            son responsable et son statut en temps réel.
+          </p>
+          <ul class="mt-8 space-y-4">
+            <li class="flex items-start gap-3">
+              <span class="mt-1 flex h-6 w-6 flex-none items-center justify-center rounded-full bg-label-green">
+                <svg class="h-3.5 w-3.5 text-label-green-text" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+              </span>
+              <p class="text-sm text-slate-500 dark:text-slate-300">Glisser-déposer entre les colonnes À faire, En cours et Fait.</p>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="mt-1 flex h-6 w-6 flex-none items-center justify-center rounded-full bg-label-blue">
+                <svg class="h-3.5 w-3.5 text-label-blue-text" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+              </span>
+              <p class="text-sm text-slate-500 dark:text-slate-300">Sous-tickets imbriqués pour découper les grosses tâches.</p>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="mt-1 flex h-6 w-6 flex-none items-center justify-center rounded-full bg-label-yellow">
+                <svg class="h-3.5 w-3.5 text-label-yellow-text" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+              </span>
+              <p class="text-sm text-slate-500 dark:text-slate-300">Priorités colorées et progression visible en un coup d'œil.</p>
+            </li>
+          </ul>
+        </div>
+
+        <div class="rounded-2xl bg-trello-list p-6 shadow-trello-list dark:bg-slate-800">
+          <div class="mb-3 flex items-center justify-between px-1">
+            <span class="text-sm font-semibold text-trello-text-main dark:text-white">Sprint en cours</span>
+            <span class="rounded-md bg-white px-2 py-0.5 text-xs font-medium text-trello-primary shadow-sm dark:bg-slate-700 dark:text-indigo-300">83 %</span>
+          </div>
+          <div class="space-y-3">
+            <div class="rounded-trello bg-trello-card p-4 shadow-trello-card dark:bg-slate-900">
+              <div class="flex items-center justify-between">
+                <p class="text-sm font-medium text-trello-text-main dark:text-white">Sous-tickets & hiérarchie</p>
+                <span class="rounded px-1.5 py-0.5 text-[10px] font-semibold text-label-blue-text bg-label-blue">En cours</span>
+              </div>
+              <div class="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-slate-700">
+                <div class="h-full w-2/3 rounded-full bg-trello-primary"></div>
+              </div>
+            </div>
+            <div class="rounded-trello bg-trello-card p-4 shadow-trello-card dark:bg-slate-900">
+              <div class="flex items-center justify-between">
+                <p class="text-sm font-medium text-trello-text-main dark:text-white">Dashboard analytics</p>
+                <span class="rounded px-1.5 py-0.5 text-[10px] font-semibold text-label-green-text bg-label-green">Fait</span>
+              </div>
+              <div class="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-slate-700">
+                <div class="h-full w-full rounded-full bg-label-green"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Tarifs ===== -->
+  <section id="pricing" class="border-t border-slate-200/60 bg-white/60 dark:border-slate-800 dark:bg-slate-900/40">
+    <div class="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24">
+      <div class="mx-auto max-w-2xl text-center">
+        <span class="text-sm font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Tarifs</span>
+        <h2 class="mt-3 text-title-md font-bold tracking-tight text-slate-900 dark:text-white">Simple et gratuit pour commencer</h2>
+        <p class="mt-4 text-lg text-slate-500 dark:text-slate-300">Commencez sans carte bancaire et passez à l'échelle quand vous le souhaitez.</p>
+      </div>
+
+      <div class="mx-auto mt-12 max-w-sm rounded-2xl border-2 border-trello-primary bg-white p-8 text-center shadow-trello-card dark:bg-slate-800/60">
+        <span class="inline-flex items-center rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-300">Gratuit</span>
+        <p class="mt-4 text-5xl font-bold tracking-tight text-slate-900 dark:text-white">0 €</p>
+        <p class="mt-2 text-sm text-slate-500 dark:text-slate-300">pour toujours, pour les petites équipes</p>
+        <a
+          routerLink="/register"
+          class="mt-8 inline-flex w-full items-center justify-center rounded-trello bg-trello-primary px-6 py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-trello-primary-hover active:scale-95"
+        >
+          Commencer gratuitement
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CTA final ===== -->
+  <section class="relative overflow-hidden bg-gradient-to-r from-indigo-600 to-violet-700 px-4 py-20 text-center text-white">
+    <div class="pointer-events-none absolute inset-0" aria-hidden="true">
+      <div class="glow-blob glow-blue -left-20 -top-24 h-72 w-72 !opacity-20"></div>
+      <div class="glow-blob glow-purple -bottom-24 -right-20 h-80 w-80 !opacity-20"></div>
+    </div>
+    <div class="relative mx-auto max-w-4xl space-y-6">
+      <h2 class="text-3xl font-bold tracking-tight md:text-4xl">
+        Prêt à transformer la façon dont votre équipe travaille ?
+      </h2>
+      <p class="mx-auto max-w-2xl text-lg text-indigo-100">
+        Rejoignez des milliers d'utilisateurs et commencez à organiser vos projets dès aujourd'hui.
+      </p>
+
+      <div class="flex flex-col items-center justify-center gap-4 pt-4 sm:flex-row">
+        @if (isAuthenticated) {
+          <!-- Bouton principal : Accéder au dashboard -->
+          <a
+            routerLink="/dashboard"
+            class="w-full rounded-lg bg-white px-8 py-3.5 font-semibold text-indigo-600 shadow-md transition-all duration-200 hover:bg-indigo-50 active:scale-95 sm:w-auto"
+          >
+            Accéder à mon Dashboard
+          </a>
+          <!-- Bouton secondaire : Voir les projets -->
+          <a
+            routerLink="/projects"
+            class="w-full rounded-lg border border-white/40 bg-white/10 px-8 py-3.5 font-semibold text-white backdrop-blur-sm transition-all duration-200 hover:bg-white/20 active:scale-95 sm:w-auto"
+          >
+            Voir mes projets
+          </a>
+        } @else {
+          <!-- Bouton principal : Se connecter -->
+          <a
+            routerLink="/login"
+            class="w-full rounded-lg bg-white px-8 py-3.5 font-semibold text-indigo-600 shadow-md transition-all duration-200 hover:bg-indigo-50 active:scale-95 sm:w-auto"
+          >
+            Se connecter à votre compte
+          </a>
+
+          <!-- Bouton secondaire : Créer un compte -->
+          <a
+            routerLink="/register"
+            class="w-full rounded-lg border border-white/40 bg-white/10 px-8 py-3.5 font-semibold text-white backdrop-blur-sm transition-all duration-200 hover:bg-white/20 active:scale-95 sm:w-auto"
+          >
+            Créer un compte gratuitement
+          </a>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Footer ===== -->
+  <footer class="border-t border-slate-200/60 bg-white dark:border-slate-800 dark:bg-slate-950">
+    <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6">
+      <div class="flex flex-col items-center justify-between gap-6 md:flex-row">
+        <a routerLink="/" class="flex items-center gap-2" title="Accueil">
+          <svg width="28" height="28" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" class="transition-transform duration-200 group-hover:scale-105">
+            <rect x="6" y="6" width="22" height="22" rx="6" fill="#3B82F6" fill-opacity="0.5"/>
+            <rect x="12" y="12" width="22" height="22" rx="6" fill="#6366F1"/>
+            <rect x="16" y="17" width="14" height="2.5" rx="1.25" fill="white"/>
+            <rect x="16" y="22" width="10" height="2.5" rx="1.25" fill="white" fill-opacity="0.7"/>
+            <circle cx="18" cy="28" r="1.5" fill="#38BDF8"/>
+          </svg>
+          <span class="text-base font-semibold text-slate-900 dark:text-white">Jira App</span>
+        </a>
+
+        <div class="flex flex-wrap items-center justify-center gap-6 text-sm text-slate-500 dark:text-slate-400">
+          <a href="#features" class="transition-colors hover:text-indigo-600 dark:hover:text-indigo-400">Fonctionnalités</a>
+          <a href="#solutions" class="transition-colors hover:text-indigo-600 dark:hover:text-indigo-400">Solutions</a>
+          <a href="#pricing" class="transition-colors hover:text-indigo-600 dark:hover:text-indigo-400">Tarifs</a>
+          <a routerLink="/login" class="transition-colors hover:text-indigo-600 dark:hover:text-indigo-400">Se connecter</a>
+          <a routerLink="/register" class="transition-colors hover:text-indigo-600 dark:hover:text-indigo-400">S'inscrire</a>
+        </div>
+
+        <!-- Bouton officiel de bascule clair/sombre -->
+        <app-theme-toggle-button />
+      </div>
+
+      <div class="mt-8 border-t border-slate-200/60 pt-6 text-center dark:border-slate-800">
+        <p class="text-xs text-slate-400 dark:text-slate-500">&copy; {{ year }} Jira App. Tous droits réservés.</p>
+      </div>
+    </div>
+  </footer>
+</div>

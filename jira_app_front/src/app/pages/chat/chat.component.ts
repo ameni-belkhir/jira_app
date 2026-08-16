@@ -5,11 +5,15 @@ import { ChatService, Conversation, ChatMessage } from '../../services/chat.serv
 import { AuthService } from '../../services/auth.service';
 import { ChatSidebarComponent } from './chat-sidebar/chat-sidebar.component';
 import { ChatWindowComponent } from './chat-window/chat-window.component';
+import {
+  NewConversationModalComponent,
+  NewConversationData,
+} from './new-conversation-modal/new-conversation-modal.component';
 
 @Component({
   selector: 'app-chat',
   standalone: true,
-  imports: [CommonModule, ChatSidebarComponent, ChatWindowComponent],
+  imports: [CommonModule, ChatSidebarComponent, ChatWindowComponent, NewConversationModalComponent],
   templateUrl: './chat.component.html',
   styles: ``,
 })
@@ -21,13 +25,22 @@ export class ChatComponent implements OnInit, OnDestroy {
   activeConversation = signal<Conversation | null>(null);
   messages = signal<ChatMessage[]>([]);
   typingUsers = signal<Record<string, string>>({});
-  onlineUsers = signal<Record<string, boolean>>({});
-  currentUserId: string | number | null = null;
+onlineUsers = signal<Record<string, boolean>>({});
+currentUserId: string | number | null = null;
+  /** L'Admin global peut modifier/supprimer n'importe quel message. */
+  isAdmin = false;
+  showNewConversation = signal(false);
+  loadError = signal(false);
+  /** Verrou anti-envoi multiple (désactive le bouton pendant l'envoi). */
+  isSending = signal(false);
+  /** Canal prêt uniquement après confirmation du JoinConversation SignalR (évite la course au 1er message). */
+  channelReady = signal(false);
 
   private subs: Subscription[] = [];
 
   ngOnInit(): void {
     this.currentUserId = this.authService.getUserId();
+    this.isAdmin = this.authService.isAdmin();
 
     // Wire up the SignalR-driven observables.
     this.subs.push(
@@ -45,12 +58,23 @@ export class ChatComponent implements OnInit, OnDestroy {
       this.chatService.onlineUsers$.subscribe((o) => this.onlineUsers.set(o)),
     );
 
-    // Seed with demo conversations so the UI is populated while the
-    // SignalR / REST backend delivers real data.
-    this.seedConversations();
-
     // Start the real-time connection (JWT authenticated).
     this.chatService.startConnection();
+
+    // Charge les vraies conversations depuis le backend REST.
+    this.loadRealConversations();
+  }
+
+  private async loadRealConversations(): Promise<void> {
+    try {
+      const convs = await this.chatService.loadConversations();
+      this.loadError.set(false);
+      this.conversations.set(convs);
+    } catch {
+      // Backend injoignable : état vide explicite, aucune donnée simulée.
+      this.loadError.set(true);
+      this.conversations.set([]);
+    }
   }
 
   ngOnDestroy(): void {
@@ -60,28 +84,93 @@ export class ChatComponent implements OnInit, OnDestroy {
     // this.chatService.stopConnection();
   }
 
-  selectConversation(conv: Conversation): void {
+  async selectConversation(conv: Conversation): Promise<void> {
+    // Laisser la conversation précédente : quitter son groupe SignalR.
+    const previous = this.activeConversation();
+    if (previous && previous.id !== conv.id) {
+      this.chatService.leaveConversation(previous.id);
+    }
+
+    // Bloque l'envoi tant que le join SignalR n'est pas confirmé (course au premier message).
+    this.channelReady.set(false);
+
     this.activeConversation.set(conv);
     this.chatService.setActiveConversation(conv.id);
     this.chatService.markAsRead(conv.id);
+
+    // Attend la confirmation de l'inscription au groupe avant d'autoriser l'envoi.
+    await this.chatService.joinConversation(conv.id);
+    this.channelReady.set(true);
+
+    // Charge l'historique réel des messages via l'API REST.
+    this.chatService.loadMessages(conv.id).then((msgs) => this.messages.set(msgs));
   }
 
-  onSend(payload: { text: string; type: 'text' | 'file' | 'image'; fileName?: string; fileSize?: number }): void {
+async onSend(payload: { text: string; type: 'text' | 'file' | 'image'; fileName?: string; fileSize?: number; file?: File }): Promise<void> {
     const conv = this.activeConversation();
     if (!conv) return;
-    this.chatService.sendMessage(conv.id, payload.text, payload.type, payload.fileName, payload.fileSize);
+
+    // Anti double-envoi : ignore toute émission tant que l'envoi précédent n'est pas terminé.
+    if (this.isSending()) return;
+    // Anti course : le canal n'est pas encore inscrit au groupe SignalR.
+    if (!this.channelReady()) return;
+    this.isSending.set(true);
+
+    try {
+      if (payload.type === 'file' || payload.type === 'image') {
+        // Pour une pièce jointe, on monte d'abord le fichier réel via
+        // `uploadAttachment`, puis on envoie le message avec l'URL obtenue.
+        if (!payload.file) return;
+        const url = await this.chatService.uploadAttachment(payload.file);
+        await this.chatService.sendMessage(conv.id, payload.text, payload.type, url ?? undefined, payload.fileName, payload.fileSize);
+        return;
+      }
+
+      await this.chatService.sendMessage(conv.id, payload.text, payload.type);
+    } finally {
+      this.isSending.set(false);
+    }
   }
 
-  onTyping(typing: boolean): void {
+onTyping(typing: boolean): void {
     const conv = this.activeConversation();
     if (!conv) return;
     this.chatService.sendTyping(conv.id, typing);
+  }
+
+  openNewConversation(): void {
+    this.showNewConversation.set(true);
+  }
+
+  closeNewConversation(): void {
+    this.showNewConversation.set(false);
+  }
+
+  async onCreateConversation(data: NewConversationData): Promise<void> {
+    const created = await this.chatService.createConversation(data);
+    if (created) {
+      this.showNewConversation.set(false);
+      // Charge à nouveau la liste pour garder l'ordre / les données à jour.
+      this.loadRealConversations();
+      // Sélectionne la nouvelle conversation et rejoint son groupe.
+      await this.selectConversation(created);
+    }
   }
 
 onMarkAsRead(): void {
     const conv = this.activeConversation();
     if (!conv) return;
     this.chatService.markAsRead(conv.id);
+  }
+
+  /** Modifie un message via le hub SignalR (temps réel). */
+  onEditMessage(payload: { conversationId: string | number; messageId: string | number; text: string }): void {
+    this.chatService.editMessageViaHub(payload.conversationId, payload.messageId, payload.text);
+  }
+
+  /** Supprime un message via le hub SignalR (temps réel). */
+  onDeleteMessage(payload: { conversationId: string | number; messageId: string | number }): void {
+    this.chatService.deleteMessageViaHub(payload.conversationId, payload.messageId);
   }
 
   isConversationOnline(): boolean {
@@ -91,56 +180,6 @@ onMarkAsRead(): void {
     if (conv.otherUserId != null) {
       return !!this.onlineUsers()[String(conv.otherUserId)];
     }
-    return false;
-  }
-
-  private seedConversations(): void {
-    const now = new Date();
-    const demo: Conversation[] = [
-      {
-        id: 1,
-        name: 'Emily Chen',
-        otherUserId: 101,
-        avatar: '/images/user/user-01.jpg',
-        lastMessage: 'J\u2019ai bien reçu ton message.',
-        lastMessageAt: new Date(now.getTime() - 2 * 60000),
-        unreadCount: 2,
-        isOnline: true,
-        messages: [
-          { id: 1, conversationId: 1, senderId: 101, senderName: 'Emily Chen', text: 'Salut ! Tu as vu les maquettes ?', timestamp: new Date(now.getTime() - 10 * 60000), isRead: true },
-          { id: 2, conversationId: 1, senderId: 0, text: 'Pas encore, tu peux m\u2019envoyer le lien ?', timestamp: new Date(now.getTime() - 8 * 60000), isRead: true },
-          { id: 3, conversationId: 1, senderId: 101, senderName: 'Emily Chen', text: 'J\u2019ai bien reçu ton message.', timestamp: new Date(now.getTime() - 2 * 60000), isRead: false },
-        ],
-      },
-      {
-        id: 2,
-        name: 'Alex Rivera',
-        otherUserId: 102,
-        avatar: '/images/user/user-02.jpg',
-        lastMessage: 'Le déploiement est prévu demain.',
-        lastMessageAt: new Date(now.getTime() - 15 * 60000),
-        isOnline: true,
-        messages: [
-          { id: 1, conversationId: 2, senderId: 102, senderName: 'Alex Rivera', text: 'Le pipeline CI est prêt.', timestamp: new Date(now.getTime() - 30 * 60000), isRead: true },
-          { id: 2, conversationId: 2, senderId: 0, text: 'Super, des soucis ?', timestamp: new Date(now.getTime() - 20 * 60000), isRead: true },
-          { id: 3, conversationId: 2, senderId: 102, senderName: 'Alex Rivera', text: 'Le déploiement est prévu demain.', timestamp: new Date(now.getTime() - 15 * 60000), isRead: false },
-        ],
-      },
-      {
-        id: 3,
-        name: 'Sarah Kim',
-        otherUserId: 103,
-        avatar: '/images/user/user-03.jpg',
-        lastMessage: 'La doc API est prête.',
-        lastMessageAt: new Date(now.getTime() - 60 * 60000),
-        isOnline: false,
-        messages: [
-          { id: 1, conversationId: 3, senderId: 103, senderName: 'Sarah Kim', text: 'J\u2019ai terminé la documentation.', timestamp: new Date(now.getTime() - 120 * 60000), isRead: true },
-          { id: 2, conversationId: 3, senderId: 0, text: 'Génial, je vais vérifier.', timestamp: new Date(now.getTime() - 90 * 60000), isRead: true },
-          { id: 3, conversationId: 3, senderId: 103, senderName: 'Sarah Kim', text: 'La doc API est prête.', timestamp: new Date(now.getTime() - 60 * 60000), isRead: true },
-        ],
-      },
-    ];
-    this.chatService.setConversations(demo);
+return false;
   }
 }

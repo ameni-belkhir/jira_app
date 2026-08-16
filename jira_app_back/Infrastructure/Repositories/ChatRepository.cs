@@ -117,6 +117,20 @@ namespace Infrastructure.Repositories
             await _context.ChatConversations.AddAsync(conversation);
         }
 
+        public async Task<ChatConversation?> FindDirectConversationAsync(int userId1, int userId2)
+        {
+            return await _context.ChatConversations
+                .AsNoTracking()
+                .Where(c => !c.IsGroup
+                    && c.Members.Any(m => m.UserId == userId1)
+                    && c.Members.Any(m => m.UserId == userId2))
+                .Include(c => c.Members)
+                    .ThenInclude(m => m.User)
+                .Include(c => c.Messages)
+                    .ThenInclude(m => m.Sender)
+                .FirstOrDefaultAsync();
+        }
+
         public async Task AddMemberAsync(ConversationMember member)
         {
             await _context.ConversationMembers.AddAsync(member);
@@ -125,6 +139,12 @@ namespace Infrastructure.Repositories
         public async Task AddMessageAsync(ChatMessage message)
         {
             await _context.ChatMessages.AddAsync(message);
+        }
+
+        public Task RemoveMessageAsync(ChatMessage message)
+        {
+            _context.ChatMessages.Remove(message);
+            return Task.CompletedTask;
         }
 
         public async Task MarkMessagesReadAsync(Guid conversationId, int userId)

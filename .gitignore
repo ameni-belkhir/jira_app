@@ -1,6 +1,49 @@
-.vs/
-*.vsidx
+# ============================================
+# .gitignore — Jira App (frontend + backend)
+# ============================================
 
-# Secrets locaux - ne JAMAIS commiter
+# ---- Secrets locaux ----
 appsettings.Local.json
 appsettings.Development.json
+*.Local.json
+
+# ---- Visual Studio ----
+.vs/
+*.vsidx
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# ---- Build output ----
+**/bin/
+**/obj/
+**/Debug/
+**/Release/
+
+# ---- Logs ----
+**/logs/
+*.log
+
+# ---- User profile uploads ----
+**/wwwroot/uploads/
+
+# ---- NuGet ----
+*.nupkg
+*.snupkg
+**/packages/
+**/.nuget/
+
+# ---- Rider / JetBrains ----
+.idea/
+*.sln.iml
+
+# ---- OS ----
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- Node (frontend) ----
+jira_app_front/node_modules/
+jira_app_front/dist/
+jira_app_front/.angular/

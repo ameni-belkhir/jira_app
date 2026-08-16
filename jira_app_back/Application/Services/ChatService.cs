@@ -72,6 +72,14 @@ namespace Application.Services
                     throw new InvalidOperationException($"L'utilisateur {memberId} n'existe pas.");
             }
 
+            // Déduplication 1:1 — si une conversation directe existe déjà entre les deux users, la retourner.
+            if (!dto.IsGroup && memberIds.Count == 1)
+            {
+                var existing = await _chatRepository.FindDirectConversationAsync(creatorUserId, memberIds[0]);
+                if (existing != null)
+                    return MapConversation(existing, creatorUserId, 0);
+            }
+
             var conversation = new ChatConversation
             {
                 Name = dto.Name,
@@ -146,6 +154,44 @@ namespace Application.Services
 
             var created = await _chatRepository.GetMessageByIdAsync(message.Id);
             return MapMessage(created!);
+        }
+
+        public async Task<ChatMessageDto?> EditMessageAsync(int requesterUserId, bool isAdmin, Guid conversationId, Guid messageId, string content)
+        {
+            if (string.IsNullOrWhiteSpace(content)) return null;
+
+            var message = await _chatRepository.GetMessageByIdAsync(messageId);
+            if (message == null || message.ConversationId != conversationId) return null;
+
+            // Seul l'expéditeur peut modifier son message, sauf l'Admin global (permission suprême).
+            if (!isAdmin)
+            {
+                if (!await _chatRepository.IsMemberAsync(conversationId, requesterUserId)) return null;
+                if (message.SenderId != requesterUserId) return null;
+            }
+
+            message.Content = content.Trim();
+            await _chatRepository.SaveChangesAsync();
+
+            var updated = await _chatRepository.GetMessageByIdAsync(messageId);
+            return MapMessage(updated!);
+        }
+
+        public async Task<bool> DeleteMessageAsync(int requesterUserId, bool isAdmin, Guid conversationId, Guid messageId)
+        {
+            var message = await _chatRepository.GetMessageByIdAsync(messageId);
+            if (message == null || message.ConversationId != conversationId) return false;
+
+            // Seul l'expéditeur peut supprimer son message, sauf l'Admin global (permission suprême).
+            if (!isAdmin)
+            {
+                if (!await _chatRepository.IsMemberAsync(conversationId, requesterUserId)) return false;
+                if (message.SenderId != requesterUserId) return false;
+            }
+
+            await _chatRepository.RemoveMessageAsync(message);
+            await _chatRepository.SaveChangesAsync();
+            return true;
         }
 
         public async Task<bool> MarkMessagesReadAsync(int userId, Guid conversationId)

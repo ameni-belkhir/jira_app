@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { AppLayoutComponent } from './shared/layout/app-layout/app-layout.component';
+import { LandingPageComponent } from './pages/landing/landing-page.component';
 import { LoginComponent } from './pages/login/login.component';
 import { SignupComponent } from './pages/signup/signup.component';
 import { RegisterComponent } from './pages/register/register.component';
@@ -9,7 +10,6 @@ import { ResetPasswordComponent } from './pages/reset-password/reset-password.co
 import { DashboardComponent } from './pages/dashboard/dashboard.component';
 import { ProjectsComponent } from './pages/projects/projects.component';
 import { ChatComponent } from './pages/chat/chat.component';
-import { StatisticsComponent } from './pages/statistics/statistics.component';
 import { ProductBacklogComponent } from './pages/product-backlog/product-backlog.component';
 import { SprintKanbanViewComponent } from './pages/product-backlog/sprint-kanban-view/sprint-kanban-view.component';
 import { ProfileComponent } from './pages/profile/profile.component';
@@ -24,8 +24,14 @@ import { AdminStatisticsComponent } from './pages/admin/admin-statistics.compone
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: 'register',
+    component: LandingPageComponent,
     pathMatch: 'full',
+    title: 'Jira App | Gestion de projets',
+  },
+  {
+    path: 'landing',
+    component: LandingPageComponent,
+    title: 'Jira App | Gestion de projets',
   },
   {
     path: 'signup',
@@ -66,6 +72,8 @@ export const routes: Routes = [
         path: 'dashboard',
         component: DashboardComponent,
         title: 'Dashboard | Jira App',
+        canActivate: [PermissionGuard],
+        data: { pageKey: 'dashboard' },
       },
       {
         path: 'projects',
@@ -100,11 +108,14 @@ title: 'Sprint Kanban | Jira App',
         data: { pageKey: 'chat' },
       },
       {
-        path: 'statistics',
-        component: StatisticsComponent,
-        title: 'Analytics | Jira App',
-        canActivate: [PermissionGuard],
-        data: { pageKey: 'statistics' },
+        path: 'messages',
+        redirectTo: '/chat',
+        pathMatch: 'full',
+      },
+      {
+        path: 'kanban',
+        redirectTo: '/projects',
+        pathMatch: 'full',
       },
       {
         path: 'profile',
@@ -124,6 +135,11 @@ title: 'Sprint Kanban | Jira App',
             title: 'Admin Users | Jira App',
           },
           {
+            path: 'roles',
+            redirectTo: '/admin/users',
+            pathMatch: 'full',
+          },
+          {
             path: 'projects',
             component: AdminProjectsComponent,
             title: 'Admin Projects | Jira App',
@@ -137,14 +153,14 @@ title: 'Sprint Kanban | Jira App',
       },
       {
         path: 'backlog',
-        redirectTo: '/projects/1/backlog',
+        redirectTo: '/projects',
         pathMatch: 'full',
       },
     ],
   },
   {
     path: '**',
-    redirectTo: 'register',
+    redirectTo: '',
   },
 ];
 

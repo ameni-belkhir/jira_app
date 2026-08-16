@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, DestroyRef } from '@angular/core';
 import { AuthPageLayoutComponent } from '../../shared/layout/auth-page-layout/auth-page-layout.component';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -7,6 +7,7 @@ import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../shared/services/notification.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { finalize } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-reset-password',
@@ -28,6 +29,7 @@ export class ResetPasswordComponent implements OnInit {
   email = '';
 
   private notification = inject(NotificationService);
+  private destroyRef = inject(DestroyRef);
 
   constructor(
     private fb: FormBuilder,
@@ -46,12 +48,14 @@ export class ResetPasswordComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.route.queryParams.subscribe(params => {
-      this.email = params['email'] || '';
-      if (this.email) {
-        this.resetForm.patchValue({ email: this.email });
-      }
-    });
+    this.route.queryParams
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(params => {
+        this.email = params['email'] || '';
+        if (this.email) {
+          this.resetForm.patchValue({ email: this.email });
+        }
+      });
   }
 
   passwordMatchValidator(g: FormGroup) {
@@ -85,10 +89,13 @@ export class ResetPasswordComponent implements OnInit {
       token: this.resetForm.value.token,
       newPassword: this.resetForm.value.newPassword
     })
-      .pipe(finalize(() => {
-        this.loading = false;
-        this.notification.dismiss();
-      }))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          this.loading = false;
+          this.notification.dismiss();
+        })
+      )
       .subscribe({
         next: () => {
           this.notification.success('Mot de passe réinitialisé avec succès ! Vous pouvez vous connecter.');

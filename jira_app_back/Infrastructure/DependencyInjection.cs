@@ -53,6 +53,8 @@ namespace Infrastructure
             services.AddScoped<IAuthService, Services.AuthService>();
             // Notification service (SignalR + BDD)
             services.AddScoped<INotificationService, Services.NotificationService>();
+            // Project authorization service (rôle d'un utilisateur dans un projet)
+            services.AddScoped<IProjectAuthorizationService, Services.ProjectAuthorizationService>();
             // Gemini service (génération de plans de projet via IA). Clé lue via IConfiguration (Gemini:ApiKey).
             services.AddHttpClient<IGeminiService, Services.GeminiService>(client =>
             {

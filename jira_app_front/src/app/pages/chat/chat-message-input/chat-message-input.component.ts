@@ -1,11 +1,39 @@
-import { Component, Output, EventEmitter, ViewChild, ElementRef, signal } from '@angular/core';
+import { Component, Output, EventEmitter, ViewChild, ElementRef, signal, Input, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
-const EMOJIS: string[] = [
-  '😀', '😁', '😂', '🤣', '😊', '😍', '😘', '😎', '🤗', '🤔',
-  '😅', '😉', '🙂', '👍', '👎', '👏', '🙏', '💪', '🔥', '❤️',
-  '🎉', '✨', '🚀', '✅', '❌', '💡', '📌', '📝', '💬', '👌',
+interface EmojiCategory {
+  key: string;
+  label: string;
+  emojis: string[];
+}
+
+const EMOJI_CATEGORIES: EmojiCategory[] = [
+  {
+    key: 'smileys',
+    label: 'Smileys',
+    emojis: ['😀', '😁', '😂', '🤣', '😊', '😍', '😘', '😎', '🤗', '🤔', '😅', '😉', '🙂', '😇', '🥳', '😴'],
+  },
+  {
+    key: 'gestes',
+    label: 'Gestes',
+    emojis: ['👍', '👎', '👏', '🙏', '💪', '👌', '🤝', '✌️', '👋', '💯', '🙌', '🤞', '👀', '🙄', '👐', '🫶'],
+  },
+  {
+    key: 'coeurs',
+    label: 'Cœurs',
+    emojis: ['❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '💖', '💔', '💕', '❤️‍🔥', '💗', '💓'],
+  },
+  {
+    key: 'objets',
+    label: 'Objets',
+    emojis: ['📋', '🗂️', '📌', '📝', '💬', '📅', '⏰', '🔔', '💡', '🚀', '⚙️', '🧩', '🎯', '🏷️', '✅', '❌'],
+  },
+  {
+    key: 'nature',
+    label: 'Nature',
+    emojis: ['🔥', '✨', '⭐', '🌈', '🌸', '🌍', '🌱', '🍀', '⚡', '💫', '🌙', '☀️', '🌊', '🍕', '☕', '🎉'],
+  },
 ];
 
 @Component({
@@ -16,15 +44,28 @@ const EMOJIS: string[] = [
   styles: ``,
 })
 export class ChatMessageInputComponent {
-  @Output() send = new EventEmitter<{ text: string; type: 'text' | 'file' | 'image'; fileName?: string; fileSize?: number }>();
+  @Input() isSending = false;
+
+@Output() send = new EventEmitter<{ text: string; type: 'text' | 'file' | 'image'; fileName?: string; fileSize?: number; file?: File }>();
   @Output() typing = new EventEmitter<boolean>();
 
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('textInput') textInput!: ElementRef<HTMLInputElement>;
 
   text = '';
   showEmojiPicker = signal(false);
+  activeEmojiCategory = 'smileys';
+  emojiSearch = '';
 
-  readonly emojis = EMOJIS;
+  readonly emojiCategories = EMOJI_CATEGORIES;
+
+  readonly filteredEmojis = computed(() => {
+    const query = this.emojiSearch.trim().toLowerCase();
+    if (query) {
+      return EMOJI_CATEGORIES.flatMap((c) => c.emojis).filter((e) => e.includes(query));
+    }
+    return EMOJI_CATEGORIES.find((c) => c.key === this.activeEmojiCategory)?.emojis ?? [];
+  });
 
   onKeydown(event: Event): void {
     const e = event as KeyboardEvent;
@@ -36,12 +77,13 @@ export class ChatMessageInputComponent {
 
   onInput(): void {
     this.typing.emit(true);
-    // Debounce typing-off after 1.2s of inactivity.
+    // Debounce typing-off après 2.5s d'inactivité (stopTyping automatique).
     this.clearTypingTimer();
-    this.typingTimer = window.setTimeout(() => this.typing.emit(false), 1200);
+    this.typingTimer = window.setTimeout(() => this.typing.emit(false), 2500);
   }
 
   sendMessage(): void {
+    if (this.isSending) return;
     const value = this.text.trim();
     if (!value) return;
     this.send.emit({ text: value, type: 'text' });
@@ -50,7 +92,7 @@ export class ChatMessageInputComponent {
     this.typing.emit(false);
   }
 
-  onFileSelected(event: Event): void {
+onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
@@ -61,8 +103,12 @@ export class ChatMessageInputComponent {
       type: isImage ? 'image' : 'file',
       fileName: file.name,
       fileSize: file.size,
+      file, // objet File réel transmis pour l'upload (POST /api/chat/upload)
     });
     input.value = '';
+    // Stop typing immédiat à l'envoi d'une pièce jointe (comme pour un message texte).
+    this.clearTypingTimer();
+    this.typing.emit(false);
   }
 
   openFilePicker(): void {
@@ -73,9 +119,26 @@ export class ChatMessageInputComponent {
     this.showEmojiPicker.update((v) => !v);
   }
 
+  selectEmojiCategory(key: string): void {
+    this.activeEmojiCategory = key;
+  }
+
+  /** Insère l'emoji à la position du curseur dans le champ de saisie. */
   addEmoji(emoji: string): void {
-    this.text += emoji;
-    this.showEmojiPicker.set(false);
+    const input = this.textInput?.nativeElement;
+    const start = input && input.selectionStart != null ? input.selectionStart : this.text.length;
+    const end = input && input.selectionEnd != null ? input.selectionEnd : start;
+
+    this.text = this.text.slice(0, start) + emoji + this.text.slice(end);
+
+    // Restaure le focus + la position du curseur après la mise à jour Angular.
+    requestAnimationFrame(() => {
+      if (!input) return;
+      input.focus();
+      const caret = start + emoji.length;
+      input.setSelectionRange(caret, caret);
+    });
+
     this.onInput();
   }
 

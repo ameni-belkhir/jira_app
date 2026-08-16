@@ -51,5 +51,15 @@ export class ProjectMembersService {
   addDeveloperToProject(projectId: number, userId: number): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/projects/${projectId}/members/developer`, { userId });
   }
+
+  /** GET available scrummasters not yet assigned to a project */
+  getAvailableScrumMasters(projectId: number): Observable<AvailableUser[]> {
+    return this.http.get<AvailableUser[]>(`${this.apiUrl}/projects/${projectId}/available-scrummasters`);
+  }
+
+  /** POST assign a scrummaster to a project */
+  addScrumMasterToProject(projectId: number, userId: number): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/projects/${projectId}/members/scrummaster`, { userId });
+  }
 }
 

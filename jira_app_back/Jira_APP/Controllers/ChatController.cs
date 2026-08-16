@@ -118,6 +118,35 @@ namespace Jira_APP.Controllers
         }
 
         /// <summary>
+        /// Modifie un message (l'expéditeur ou l'Admin global).
+        /// </summary>
+        [HttpPut("conversations/{conversationId:guid}/messages/{messageId:guid}")]
+        public async Task<ActionResult<ChatMessageDto>> EditMessage(Guid conversationId, Guid messageId, [FromBody] UpdateChatMessageDto dto)
+        {
+            var userId = GetUserId();
+            if (userId == null) return Unauthorized();
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var updated = await _chatService.EditMessageAsync(userId.Value, User.IsInRole("Admin"), conversationId, messageId, dto.Content);
+            if (updated == null) return NotFound();
+            return Ok(updated);
+        }
+
+        /// <summary>
+        /// Supprime un message (l'expéditeur ou l'Admin global).
+        /// </summary>
+        [HttpDelete("conversations/{conversationId:guid}/messages/{messageId:guid}")]
+        public async Task<IActionResult> DeleteMessage(Guid conversationId, Guid messageId)
+        {
+            var userId = GetUserId();
+            if (userId == null) return Unauthorized();
+
+            var ok = await _chatService.DeleteMessageAsync(userId.Value, User.IsInRole("Admin"), conversationId, messageId);
+            if (!ok) return NotFound();
+            return NoContent();
+        }
+
+        /// <summary>
         /// Enregistre une pièce jointe (fichier) et retourne son URL servie par wwwroot.
         /// </summary>
         [HttpPost("upload")]

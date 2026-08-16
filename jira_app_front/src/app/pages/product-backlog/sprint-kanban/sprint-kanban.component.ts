@@ -1,29 +1,59 @@
-import { Component, Input, OnInit, signal, inject, ViewChild } from '@angular/core';
+import { Component, Input, OnInit, signal, computed, inject, ViewChild, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { CdkDragDrop, moveItemInArray, transferArrayItem, CdkDropList, CdkDrag } from '@angular/cdk/drag-drop';
+import {
+  CdkDropListGroup,
+  CdkDropList,
+  CdkDrag,
+  CdkDragHandle,
+  CdkDragDrop,
+  moveItemInArray,
+  transferArrayItem,
+} from '@angular/cdk/drag-drop';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TicketService, SprintTicket } from '../../../services/ticket.service';
+import { ProjectStateService } from '../../../services/project-state.service';
 import { ProjectMembersService, AvailableUser } from '../../../services/project-members.service';
 import { TicketCardComponent, Ticket } from '../../projects/ticket-card/ticket-card.component';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { CreateTicketModalComponent } from '../create-ticket-modal/create-ticket-modal.component';
+import { TicketDetailModalComponent } from '../../../shared/components/ticket-detail-modal/ticket-detail-modal.component';
+import { SubticketModalComponent } from '../../../shared/components/subticket-modal/subticket-modal.component';
+import { AssignTicketModalComponent } from '../../../shared/components/assign-ticket-modal/assign-ticket-modal.component';
 import { AuthService } from '../../../services/auth.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { CreateTicketRequest, ProjectService } from '../../../services/project.service';
 import { finalize } from 'rxjs';
 
+/** Colonne du Kanban (structure Trello). */
+export interface KanbanColumn {
+  id: string;
+  name: string;
+  tickets: SprintTicket[];
+}
+
+/** Thème / fond d'écran du tableau. */
+export interface BoardTheme {
+  name: string;
+  category: 'gradient' | 'image' | 'color';
+  bg: string;
+}
+
 @Component({
   selector: 'app-sprint-kanban',
   standalone: true,
-  imports: [CommonModule, FormsModule, CdkDropList, CdkDrag, TicketCardComponent, CreateTicketModalComponent],
+  imports: [CommonModule, FormsModule, CdkDropListGroup, CdkDropList, CdkDrag, CdkDragHandle, TicketCardComponent, CreateTicketModalComponent, SubticketModalComponent, TicketDetailModalComponent, AssignTicketModalComponent],
   templateUrl: './sprint-kanban.component.html',
-  styles: ``
+  styleUrls: ['./sprint-kanban.component.css']
 })
 export class SprintKanbanComponent implements OnInit {
   @Input({ required: true }) sprintId!: number;
   @Input({ required: true }) projectId!: number;
   @ViewChild(CreateTicketModalComponent) createTicketModal!: CreateTicketModalComponent;
+  @ViewChild(SubticketModalComponent) subticketModal!: SubticketModalComponent;
+  @ViewChild(TicketDetailModalComponent) ticketDetailModal!: TicketDetailModalComponent;
+  @ViewChild(AssignTicketModalComponent) assignTicketModal!: AssignTicketModalComponent;
 
   aFaire = signal<SprintTicket[]>([]);
   enCours = signal<SprintTicket[]>([]);
@@ -32,14 +62,79 @@ export class SprintKanbanComponent implements OnInit {
   loading = signal(false);
   error = signal('');
   userRole = signal<string | null>(null);
+  noProjectAccess = signal(false);
 
   private notification = inject(NotificationService);
+  private destroyRef = inject(DestroyRef);
+  private projectState = inject(ProjectStateService);
 
   // Assign Developer modal state
   showAssignDeveloperModal = signal(false);
   availableDevelopers = signal<AvailableUser[]>([]);
   loadingDevelopers = signal(false);
   assigningDeveloper = signal(false);
+
+  /** Colonnes du tableau, construites depuis les trois états de ticket. */
+  columns = computed<KanbanColumn[]>(() => [
+    { id: 'a-faire', name: 'A faire', tickets: this.aFaire() },
+    { id: 'en-cours', name: 'En cours', tickets: this.enCours() },
+    { id: 'fait', name: 'Fait', tickets: this.fait() },
+  ]);
+
+  // ==================== THÈME / FOND DU TABLEAU ====================
+  readonly themes: BoardTheme[] = [
+    // Gradients
+    { name: 'Trello Classic', category: 'gradient', bg: 'linear-gradient(to bottom, #0079bf, #50b0d8)' },
+    { name: 'Océan', category: 'gradient', bg: 'linear-gradient(to right, #0f2027, #203a43, #2c5364)' },
+    { name: 'Midnight Indigo', category: 'gradient', bg: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)' },
+    { name: 'Emerald Dark', category: 'gradient', bg: 'linear-gradient(135deg, #064e3b 0%, #065f46 60%, #0f172a 100%)' },
+    { name: 'Sunset', category: 'gradient', bg: 'linear-gradient(135deg, #7c2d12 0%, #c2410c 50%, #f59e0b 100%)' },
+    // Images Unsplash
+    { name: 'Nature', category: 'image', bg: 'url("https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1920&q=80")' },
+    { name: 'Workspace', category: 'image', bg: 'url("https://images.unsplash.com/photo-1497032628192-86f99bcd76bc?auto=format&fit=crop&w=1920&q=80")' },
+    { name: 'Abstract', category: 'image', bg: 'url("https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1920&q=80")' },
+    { name: 'Minimal', category: 'image', bg: 'url("https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=1920&q=80")' },
+    // Couleurs unies
+    { name: 'Slate', category: 'color', bg: '#475569' },
+    { name: 'Blue', category: 'color', bg: '#1d4ed8' },
+    { name: 'Dark', category: 'color', bg: '#0f172a' },
+  ];
+
+  selectedTheme = signal<string>(this.themes[0].bg);
+  showThemePanel = signal(false);
+
+  boardStyle = computed(() => ({
+    'background': this.selectedTheme(),
+    'background-size': 'cover',
+    'background-position': 'center',
+    'background-attachment': 'fixed',
+  }));
+
+  themesByCategory(category: BoardTheme['category']): BoardTheme[] {
+    return this.themes.filter((t) => t.category === category);
+  }
+
+  themeCategoryLabel(category: BoardTheme['category']): string {
+    switch (category) {
+      case 'gradient': return 'Dégradés';
+      case 'image': return 'Images';
+      case 'color': return 'Couleurs';
+    }
+  }
+
+  toggleThemePanel(): void {
+    this.showThemePanel.set(!this.showThemePanel());
+  }
+
+  isSelected(theme: BoardTheme): boolean {
+    return this.selectedTheme() === theme.bg;
+  }
+
+  changeTheme(theme: BoardTheme): void {
+    this.selectedTheme.set(theme.bg);
+    localStorage.setItem(`kanban_theme_${this.projectId}`, theme.bg);
+    this.showThemePanel.set(false);
+  }
 
   constructor(
     private ticketService: TicketService,
@@ -50,7 +145,18 @@ export class SprintKanbanComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    // Mémorise le contexte projet / sprint dans le state global (liens Sidebar).
+    this.projectState.setContext(this.projectId, this.sprintId);
+    this.loadSavedTheme();
     this.checkAccessAndLoad();
+  }
+
+  /** Restaure le fond choisi pour ce projet (localStorage, clé par projet). */
+  private loadSavedTheme(): void {
+    const saved = localStorage.getItem(`kanban_theme_${this.projectId}`);
+    if (saved) {
+      this.selectedTheme.set(saved);
+    }
   }
 
   /** Open the "Assign Developer" modal */
@@ -110,24 +216,70 @@ export class SprintKanbanComponent implements OnInit {
     this.projectService.getMyRole(this.projectId).subscribe({
       next: (role) => {
         this.userRole.set(role.roleInProject);
-        if (!role.roleInProject) {
-          this.notification.error('Accès non autorisé à ce projet.');
-          this.router.navigate(['/dashboard']);
+        // L'Admin global peut accéder à tous les projets sans être membre.
+        if (!role.roleInProject && !this.authService.isAdmin()) {
+          this.noProjectAccess.set(true);
           return;
         }
         this.loadTickets();
       },
-      error: () => {
+      error: (err) => {
+        if (this.authService.isAdmin()) {
+          this.loadTickets();
+          return;
+        }
+        if (err?.status === 403) {
+          this.noProjectAccess.set(true);
+          return;
+        }
         this.notification.error('Accès non autorisé à ce projet.');
         this.router.navigate(['/dashboard']);
       }
     });
   }
 
-  /** Whether the current user can create/edit/delete tickets (ScrumMaster or Senior) */
-  get canManageTickets(): boolean {
+  /** Créer / éditer tickets, sous-tickets et sprints : Admin + ScrumMaster. */
+  get canEditTickets(): boolean {
+    return this.authService.isAdmin() || this.userRole() === 'ScrumMaster';
+  }
+
+  /** Assigner un Developer / affecter au projet : Admin + ScrumMaster + Senior. */
+  get canAssignTickets(): boolean {
     const role = this.userRole();
-    return role === 'ScrumMaster' || role === 'Senior';
+    return this.authService.isAdmin() || role === 'ScrumMaster' || role === 'Senior';
+  }
+
+  /** Rôle de l'appelant pour le filtrage du modal d'assignation (Admin global → bypass complet). */
+  get assignCallerRole(): string | null {
+    return this.authService.isAdmin() ? 'Admin' : this.userRole();
+  }
+
+  /** Changer le statut (DnD) : Admin, ScrumMaster, Senior ou Developer (ses tickets — le backend filtre). */
+  get canChangeStatus(): boolean {
+    const role = this.userRole();
+    return this.authService.isAdmin() || role === 'ScrumMaster' || role === 'Senior' || role === 'Developer';
+  }
+
+  /** Bouton de suppression définitive réservé à l'Admin global. */
+  get isAdmin(): boolean {
+    return this.authService.isAdmin();
+  }
+
+  /** Suppression définitive d'un ticket (avec ses sous-tickets) — Admin uniquement. */
+  onDeleteTicket(ticketId: number): void {
+    this.notification.loading('Suppression du ticket…');
+
+    this.ticketService.deleteTicket(ticketId)
+      .pipe(finalize(() => this.notification.dismiss()))
+      .subscribe({
+        next: () => {
+          this.loadTickets();
+          this.notification.success('Ticket supprimé définitivement.');
+        },
+        error: () => {
+          this.notification.error('Échec de la suppression du ticket.');
+        }
+      });
   }
 
   loadTickets(): void {
@@ -147,7 +299,11 @@ export class SprintKanbanComponent implements OnInit {
           this.distributeTickets(tickets);
           this.notification.success('Tickets du sprint chargés.');
         },
-        error: () => {
+        error: (err: HttpErrorResponse) => {
+          if (err.status === 403) {
+            this.noProjectAccess.set(true);
+            return;
+          }
           const msg = 'Impossible de charger les tickets du sprint.';
           this.error.set(msg);
           this.notification.error(msg);
@@ -185,47 +341,98 @@ export class SprintKanbanComponent implements OnInit {
     }
   }
 
-  onDrop(event: CdkDragDrop<SprintTicket[]>): void {
+  /** Force la ré-émission des signaux des colonnes après mutation des tableaux. */
+  private commitColumnSignals(): void {
+    this.aFaire.set([...this.aFaire()]);
+    this.enCours.set([...this.enCours()]);
+    this.fait.set([...this.fait()]);
+  }
+
+  /**
+   * Drag & drop d'une carte (ticket) entre les colonnes du Kanban.
+   * - Même colonne : réorganisation locale via moveItemInArray.
+   * - Changement de colonne : transferArrayItem + mise à jour du statut + persistance
+   *   backend (updateStatus). Optimistic update : en cas d'échec API, la carte est
+   *   réinsérée dans sa colonne d'origine avec une notification d'erreur.
+   */
+  onTicketDrop(event: CdkDragDrop<SprintTicket[]>, targetColumnId: string): void {
     if (event.previousContainer === event.container) {
       moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
+      this.commitColumnSignals();
       return;
     }
 
-    const ticket = event.previousContainer.data[event.previousIndex];
-    const newStatus = this.getStatusForColumn(event.container.id);
+    const movedTicket = event.previousContainer.data[event.previousIndex];
+    const previousStatus = movedTicket.status;
+    const newStatus = this.getStatusForColumn(targetColumnId);
 
-    // Update local state immediately for responsiveness
+    if (!SprintKanbanComponent.isValidTransition(previousStatus, newStatus)) {
+      return;
+    }
+
+    // Optimistic update : déplace la carte localement avant la confirmation backend.
     transferArrayItem(
       event.previousContainer.data,
       event.container.data,
       event.previousIndex,
       event.currentIndex
     );
+    movedTicket.status = newStatus;
+    this.commitColumnSignals();
 
-    this.aFaire.set([...this.aFaire()]);
-    this.enCours.set([...this.enCours()]);
-    this.fait.set([...this.fait()]);
-
-    console.log('[Kanban] Déplacement ticket → ticketId:', ticket.id, 'nouveauStatus:', newStatus);
-    this.notification.loading('Mise à jour du statut…');
-
-    // Call API to persist the status change (optimistic update — never reload)
-    this.ticketService.updateStatus(ticket.id, newStatus)
-      .pipe(finalize(() => this.notification.dismiss()))
+    // Persistance backend (.NET) via PATCH /api/tickets/{id}/status.
+    this.ticketService.updateStatus(movedTicket.id, newStatus)
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => this.notification.success('Statut du ticket mis à jour.'),
         error: () => {
-          const msg = 'Erreur lors de la mise à jour du statut.';
-          this.error.set(msg);
-          this.notification.error(msg);
+          // Rollback : réinsère la carte dans sa colonne d'origine.
+          transferArrayItem(
+            event.container.data,
+            event.previousContainer.data,
+            event.currentIndex,
+            event.previousIndex
+          );
+          movedTicket.status = previousStatus;
+          this.commitColumnSignals();
+          this.notification.error('Impossible de modifier le statut du ticket');
         }
       });
   }
 
   // ==================== CRÉATION TICKET ====================
-  openCreateTicketModal(): void {
+  /** Ouvre le modal de création de ticket (le sprint courant est pré-rempli). */
+  openCreateTicketModal(_columnId?: string): void {
     this.createTicketModal.sprintId = this.sprintId;
     this.createTicketModal.open();
+  }
+
+  // ==================== SOUS-TICKETS ====================
+  openSubticketModal(ticketId: number): void {
+    this.subticketModal.open(ticketId);
+  }
+
+  /** Ouvre la modale de détail / édition du ticket (style Trello & Jira). */
+  openTicketDetail(ticketId: number): void {
+    const all = [...this.aFaire(), ...this.enCours(), ...this.fait()];
+    const ticket = all.find((t) => t.id === ticketId);
+    if (ticket) {
+      this.ticketDetailModal.open(ticket);
+    }
+  }
+
+  // ==================== ASSIGNATION TICKET ====================
+  /** Ouvre le modal d'assignation depuis la zone avatar/nom d'une carte ticket. */
+  openAssignTicketModal(ticket: Ticket): void {
+    this.assignTicketModal.open(ticket.id, ticket.title);
+  }
+
+  onTicketAssigned(): void {
+    this.loadTickets();
+  }
+
+  onCreateSubticketRequested(ticketId: number): void {
+    this.subticketModal.open(ticketId);
   }
 
   onCreateTicket(data: CreateTicketRequest): void {
@@ -264,7 +471,7 @@ export class SprintKanbanComponent implements OnInit {
   mapToTicket(ticket: SprintTicket): Ticket {
     return {
       id: ticket.id,
-      title: ticket.title,
+      title: ticket.title || (ticket as any).titre || '',
       priority: (ticket.priority as Ticket['priority']) || 'Medium',
       assignedUser: {
         name: ticket.assignedTo || 'Unassigned',
@@ -274,7 +481,14 @@ export class SprintKanbanComponent implements OnInit {
       labels: [],
       description: ticket.description || '',
       status: 'todo' as Ticket['status'],
-      color: ticket.color
+      color: ticket.color,
+      subTickets: (ticket.subTickets || []).map(sub => this.mapToTicket(sub)),
+      isExpanded: false
     };
+  }
+
+  private static isValidTransition(from: string, to: string): boolean {
+    return (from === 'A_FAIRE' && to === 'EN_COURS')
+        || (from === 'EN_COURS' && to === 'TERMINE');
   }
 }

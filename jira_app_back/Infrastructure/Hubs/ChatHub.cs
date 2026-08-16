@@ -18,6 +18,8 @@ namespace Infrastructure.Hubs
         private const string UserTypingStatusMethod = "UserTypingStatus";
         private const string MessagesReadMethod = "MessagesRead";
         private const string UserPresenceChangedMethod = "UserPresenceChanged";
+        private const string MessageEditedMethod = "MessageEdited";
+        private const string MessageDeletedMethod = "MessageDeleted";
 
         private static readonly ConcurrentDictionary<int, HashSet<string>> _userConnections = new();
 
@@ -124,9 +126,47 @@ namespace Infrastructure.Hubs
                 return;
             }
 
-            // Diffusion à toute la conversation (y compris autres appareils de l'expéditeur)
+            // Diffusion unique au groupe : l'expéditeur y est déjà inscrit (JoinConversation),
+            // donc aucun écho Clients.Caller n'est nécessaire pour éviter les doublons.
             await Clients.Group(GroupName(conversationId)).SendAsync(ReceiveMessageMethod, message);
-            await Clients.Caller.SendAsync(ReceiveMessageMethod, message);
+        }
+
+        /// <summary>
+        /// Modifie un message (l'expéditeur ou l'Admin global) et diffuse le message mis à jour.
+        /// </summary>
+        public async Task EditMessage(Guid conversationId, Guid messageId, string content)
+        {
+            var userId = GetUserId();
+            if (userId == null) return;
+
+            var isAdmin = Context.User?.IsInRole("Admin") ?? false;
+            var updated = await _chatService.EditMessageAsync(userId.Value, isAdmin, conversationId, messageId, content);
+            if (updated == null)
+            {
+                _logger.LogWarning("Chat : modification refusée pour {UserId} (msg {MessageId}).", userId, messageId);
+                return;
+            }
+
+            await Clients.Group(GroupName(conversationId)).SendAsync(MessageEditedMethod, updated);
+        }
+
+        /// <summary>
+        /// Supprime un message (l'expéditeur ou l'Admin global) et diffuse la suppression.
+        /// </summary>
+        public async Task DeleteMessage(Guid conversationId, Guid messageId)
+        {
+            var userId = GetUserId();
+            if (userId == null) return;
+
+            var isAdmin = Context.User?.IsInRole("Admin") ?? false;
+            var ok = await _chatService.DeleteMessageAsync(userId.Value, isAdmin, conversationId, messageId);
+            if (!ok)
+            {
+                _logger.LogWarning("Chat : suppression refusée pour {UserId} (msg {MessageId}).", userId, messageId);
+                return;
+            }
+
+            await Clients.Group(GroupName(conversationId)).SendAsync(MessageDeletedMethod, conversationId, messageId);
         }
 
         public async Task StartTyping(Guid conversationId)
@@ -145,8 +185,17 @@ namespace Infrastructure.Hubs
             if (userId == null || !await _chatService.IsMemberAsync(userId.Value, conversationId))
                 return;
 
+            var userName = Context.User?.FindFirst("FullName")?.Value ?? string.Empty;
+
+            // Diffusion aux AUTRES membres uniquement : l'expéditeur n'a pas besoin de son propre statut.
             await Clients.OthersInGroup(GroupName(conversationId))
-                .SendAsync(UserTypingStatusMethod, conversationId, userId.Value, isTyping);
+                .SendAsync(UserTypingStatusMethod, new
+                {
+                    ConversationId = conversationId,
+                    UserId = userId.Value,
+                    UserName = userName,
+                    IsTyping = isTyping
+                });
         }
 
         public async Task MarkAsRead(Guid conversationId, Guid messageId)

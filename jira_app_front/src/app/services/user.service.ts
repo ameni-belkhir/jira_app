@@ -8,12 +8,12 @@ export interface UserProfile {
   nom: string;
   prenom: string;
   email: string;
-  profileImage?: string;
+  /** URL de l'image de profil, renvoyée par le backend sous la clé "profileImageUrl" */
+  profileImageUrl?: string;
   role?: string;
 }
 
 export interface UpdateUserRequest {
-  id: string;
   nom: string;
   prenom: string;
 }

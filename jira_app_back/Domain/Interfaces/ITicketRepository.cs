@@ -9,6 +9,7 @@ namespace Domain.Interfaces
         Task<Ticket?> GetByIdAsync(int id);
         Task<IEnumerable<Ticket>> GetAllAsync();
         Task<IEnumerable<Ticket>> GetByProjectIdAsync(int projectId);
+        Task<IEnumerable<Ticket>> GetBySprintIdAsync(int sprintId);
         Task AddAsync(Ticket ticket);
         void Update(Ticket ticket);
         void Delete(Ticket ticket);

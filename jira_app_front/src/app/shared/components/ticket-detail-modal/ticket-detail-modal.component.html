@@ -1,0 +1,539 @@
+@if (isOpen()) {
+  <div class="fixed inset-0 z-50 overflow-y-auto">
+    <!-- Backdrop -->
+    <div
+      class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity duration-200 ticket-modal-backdrop"
+      [class.opacity-0]="closing()"
+      (click)="onBackdropClick($event)"
+    ></div>
+
+    <!-- Panel -->
+    <div class="min-h-full flex items-center justify-center p-4 pointer-events-none">
+      <div
+        class="pointer-events-auto relative w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 shadow-2xl transition-all duration-200"
+        [class.opacity-0]="closing()"
+        [class.scale-95]="closing()"
+      >
+        @if (error()) {
+          <div class="px-6 py-3 bg-error-50 border-b border-error-200 text-sm text-error-700 dark:bg-error-500/10 dark:border-error-500/20 dark:text-error-400">
+            {{ error() }}
+          </div>
+        }
+
+        <!-- ==================== HEADER ==================== -->
+        <header class="shrink-0 px-6 pt-5 pb-4 border-b border-slate-200 dark:border-slate-800">
+          <div class="flex items-start justify-between gap-4">
+            <div class="min-w-0 flex-1">
+              <div class="flex flex-wrap items-center gap-2 mb-3">
+                <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold {{ statusInfo(status()).classes }}">
+                  <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
+                  {{ statusInfo(status()).label }}
+                </span>
+
+                @if (canChangeStatus()) {
+                  <div class="inline-flex rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
+                    @for (opt of statusOptions; track opt.value) {
+                      <button
+                        type="button"
+                        (click)="setStatus(opt.value)"
+                        class="px-2.5 py-1 text-[11px] font-medium transition-colors"
+                        [ngClass]="status() === opt.value
+                          ? 'bg-brand-500 text-white'
+                          : 'text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'"
+                      >
+                        {{ opt.label }}
+                      </button>
+                    }
+                  </div>
+                }
+
+                <span class="text-[11px] font-mono text-slate-400 dark:text-slate-500">#{{ currentTicket()?.id }}</span>
+              </div>
+
+              @if (titleEditing()) {
+                <input
+                  type="text"
+                  [(ngModel)]="title"
+                  name="ticketTitle"
+                  (keydown.enter)="onTitleSave()"
+                  (keydown.escape)="onTitleKeydown($event)"
+                  (blur)="onTitleSave()"
+                  class="w-full rounded-lg border border-brand-400 dark:border-brand-500 bg-white dark:bg-slate-800 px-3 py-2 text-lg font-semibold text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-brand-500/40"
+                />
+              } @else {
+                <div class="group flex items-start gap-2">
+                  <h2 class="text-lg font-semibold leading-6 text-slate-900 dark:text-white break-words">{{ title() }}</h2>
+                  @if (canEditTicket) {
+                    <button
+                      type="button"
+                      (click)="startTitleEdit()"
+                      title="Modifier le titre"
+                      class="opacity-0 group-hover:opacity-100 transition-opacity mt-0.5 text-slate-400 hover:text-brand-500 shrink-0"
+                    >
+                      <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                      </svg>
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+
+            <div class="flex items-center gap-1.5 shrink-0">
+              @if (isAdmin) {
+                <button
+                  type="button"
+                  (click)="confirmingDelete.set(true)"
+                  title="Supprimer le ticket"
+                  class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-slate-400 hover:text-error-600 dark:hover:text-error-400 hover:bg-error-50 dark:hover:bg-error-500/10 transition-colors"
+                >
+                  <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd" />
+                  </svg>
+                </button>
+              }
+              <button
+                type="button"
+                (click)="closeModal()"
+                title="Fermer"
+                class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              >
+                <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <!-- ==================== CORPS (2 COLONNES) ==================== -->
+        <div class="flex-1 min-h-0 flex flex-col md:flex-row">
+          <!-- Colonne gauche : contenu principal -->
+          <div class="flex-[3] min-w-0 md:overflow-y-auto p-6 space-y-7 custom-scrollbar">
+            <!-- Description -->
+            <section>
+              <div class="flex items-center justify-between mb-2">
+                <h3 class="text-sm font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                  <svg class="w-4 h-4 text-brand-500" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+                  </svg>
+                  Description
+                </h3>
+                @if (descriptionEditing()) {
+                  <div class="flex gap-2">
+                    <button
+                      type="button"
+                      (click)="onSaveDescription()"
+                      class="rounded-lg bg-brand-500 px-3 py-1 text-xs font-medium text-white hover:bg-brand-600 transition-colors"
+                    >
+                      Enregistrer
+                    </button>
+                    <button
+                      type="button"
+                      (click)="onCancelDescription()"
+                      class="rounded-lg border border-slate-200 px-3 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors"
+                    >
+                      Annuler
+                    </button>
+                  </div>
+                } @else if (canEditTicket) {
+                  <button
+                    type="button"
+                    (click)="startDescriptionEdit()"
+                    class="text-xs font-medium text-slate-400 hover:text-brand-500 transition-colors"
+                  >
+                    Modifier
+                  </button>
+                }
+              </div>
+
+              @if (descriptionEditing()) {
+                <textarea
+                  [(ngModel)]="description"
+                  name="ticketDescription"
+                  rows="5"
+                  class="block w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-brand-400 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 resize-none"
+                  placeholder="Ajouter une description plus détaillée…"
+                ></textarea>
+              } @else if (description()) {
+                <p class="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap break-words">{{ description() }}</p>
+              } @else {
+                <p class="text-sm italic text-slate-400 dark:text-slate-500">Aucune description pour ce ticket.</p>
+              }
+            </section>
+
+            <!-- Checklist / Sous-tâches -->
+            <section>
+              <div class="flex items-center justify-between mb-2">
+                <h3 class="text-sm font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                  <svg class="w-4 h-4 text-brand-500" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                  </svg>
+                  Checklist
+                </h3>
+                <span class="text-xs font-medium text-slate-400 dark:text-slate-500">
+                  {{ completedSubtasks() }}/{{ subtasks().length }} — {{ progressPercent() }}%
+                </span>
+              </div>
+
+              <div class="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                <div
+                  class="h-full rounded-full bg-brand-500 transition-all duration-300"
+                  [style.width.%]="progressPercent()"
+                ></div>
+              </div>
+
+              <ul class="mt-3 space-y-2">
+                @for (sub of subtasks(); track sub.id) {
+                  <li class="group flex items-center gap-3 rounded-lg px-3 py-2 border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
+                    <button
+                      type="button"
+                      (click)="onToggleSubtask(sub)"
+                      [title]="isSubtaskDone(sub) ? 'Marquer comme à faire' : 'Marquer comme terminée'"
+                      class="shrink-0 transition-colors"
+                      [ngClass]="isSubtaskDone(sub) ? 'text-green-500' : 'text-slate-300 hover:text-brand-500 dark:text-slate-500'"
+                    >
+                      @if (isSubtaskDone(sub)) {
+                        <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                        </svg>
+                      } @else {
+                        <svg class="w-5 h-5" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                          <circle cx="10" cy="10" r="7.25" />
+                        </svg>
+                      }
+                    </button>
+                    <span
+                      class="flex-1 text-sm break-words"
+                      [ngClass]="isSubtaskDone(sub)
+                        ? 'line-through text-slate-400 dark:text-slate-500'
+                        : 'text-slate-800 dark:text-slate-200'"
+                    >
+                      {{ sub.title }}
+                    </span>
+                @if (isAdmin) {
+                      <button
+                        type="button"
+                        (click)="onDeleteSubtask(sub)"
+                        title="Supprimer la sous-tâche"
+                        class="shrink-0 text-slate-300 hover:text-error-500 dark:text-slate-500 dark:hover:text-error-400 transition-colors"
+                      >
+                        <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                          <path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5z" clip-rule="evenodd" />
+                        </svg>
+                      </button>
+                    }
+                  </li>
+                } @empty {
+                  <li class="text-sm text-slate-400 dark:text-slate-500 py-2">Aucune sous-tâche.</li>
+                }
+              </ul>
+
+              @if (canEditTicket) {
+                <div class="mt-3 flex items-center gap-2">
+                  <input
+                    type="text"
+                    [(ngModel)]="newSubtaskTitle"
+                    name="newSubtaskTitle"
+                    placeholder="Ajouter un élément…"
+                    (keydown.enter)="onAddSubtask()"
+                    class="flex-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-transparent px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-400 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 dark:text-white resize-none"
+                  />
+                  <button
+                    type="button"
+                    (click)="onAddSubtask()"
+                    [disabled]="addingSubtask() || !newSubtaskTitle.trim()"
+                    class="inline-flex items-center gap-1.5 rounded-lg bg-brand-500 px-3.5 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shrink-0"
+                  >
+                    @if (addingSubtask()) {
+                      <svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                    }
+                    Ajouter
+                  </button>
+                </div>
+              }
+            </section>
+
+            <!-- Fil d'activité / Commentaires -->
+            <section>
+              <div class="flex items-center gap-2 mb-3">
+                <h3 class="text-sm font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                  <svg class="w-4 h-4 text-brand-500" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-3.727-.797L2 17l1.082-3.58A6.96 6.96 0 012 10c0-3.866 3.582-7 8-7s8 3.134 8 7z" clip-rule="evenodd" />
+                  </svg>
+                  Activité / Commentaires
+                </h3>
+                @if (comments().length > 0) {
+                  <span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                    {{ comments().length }}
+                  </span>
+                }
+              </div>
+
+              <div class="space-y-4">
+                @for (comment of sortedComments(); track comment.id) {
+                  <div class="flex items-start gap-3">
+                    <div class="shrink-0">
+                      @if (comment.auteurPhoto) {
+                        <img
+                          [src]="comment.auteurPhoto | safeImage"
+                          alt="{{ comment.auteur }}"
+                          class="w-8 h-8 rounded-full object-cover"
+                        />
+                      } @else {
+                        <div class="w-8 h-8 rounded-full bg-brand-500 flex items-center justify-center text-xs font-semibold text-white">
+                          {{ initials(comment.auteur) }}
+                        </div>
+                      }
+                    </div>
+
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center gap-2 mb-0.5 flex-wrap">
+                        <span class="text-xs font-semibold text-slate-800 dark:text-white">{{ comment.auteur || 'Membre' }}</span>
+                        <span class="text-[10px] text-slate-400 dark:text-slate-500">{{ formatDate(comment.dateCreation) }}</span>
+                        @if (isAdmin && editingCommentId() !== comment.id) {
+                          <div class="flex items-center gap-0.5 ml-auto">
+                            <button
+                              type="button"
+                              (click)="startEditComment(comment)"
+                              title="Modifier"
+                              class="inline-flex items-center justify-center w-6 h-6 rounded text-slate-300 hover:text-brand-500 hover:bg-slate-100 dark:text-slate-500 dark:hover:bg-slate-800 transition-colors"
+                            >
+                              <svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                              </svg>
+                            </button>
+                            <button
+                              type="button"
+                              (click)="onDeleteComment(comment)"
+                              title="Supprimer"
+                              class="inline-flex items-center justify-center w-6 h-6 rounded text-slate-300 hover:text-error-500 hover:bg-error-50 dark:text-slate-500 dark:hover:text-error-400 dark:hover:bg-error-500/10 transition-colors"
+                            >
+                              <svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5z" clip-rule="evenodd" />
+                              </svg>
+                            </button>
+                          </div>
+                        }
+                      </div>
+
+                      @if (editingCommentId() === comment.id) {
+                        <textarea
+                          [(ngModel)]="editingCommentText"
+                          name="editCommentText"
+                          rows="2"
+                          class="block w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-brand-400 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 resize-none"
+                        ></textarea>
+                        <div class="flex gap-2 mt-1.5">
+                          <button
+                            type="button"
+                            (click)="onSaveComment(comment)"
+                            class="rounded-lg bg-brand-500 px-3 py-1 text-xs font-medium text-white hover:bg-brand-600 transition-colors"
+                          >
+                            Enregistrer
+                          </button>
+                          <button
+                            type="button"
+                            (click)="onCancelCommentEdit()"
+                            class="rounded-lg border border-slate-200 px-3 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors"
+                          >
+                            Annuler
+                          </button>
+                        </div>
+                      } @else {
+                        <div class="rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 px-3 py-2">
+                          <p class="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap break-words">{{ comment.message }}</p>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                } @empty {
+                  <div class="text-center py-6">
+                    <p class="text-sm text-slate-400 dark:text-slate-500">Aucun commentaire pour le moment.</p>
+                  </div>
+                }
+              </div>
+
+              <form (ngSubmit)="onAddComment()" class="mt-4 flex items-end gap-2">
+                <textarea
+                  [(ngModel)]="newComment"
+                  name="newComment"
+                  rows="2"
+                  placeholder="Écrire un commentaire…"
+                  (keydown.enter)="$event.preventDefault(); onAddComment()"
+                  class="flex-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-transparent px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-400 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 dark:text-white resize-none"
+                ></textarea>
+                <button
+                  type="submit"
+                  [disabled]="sendingComment() || !newComment.trim()"
+                  class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shrink-0"
+                >
+                  @if (sendingComment()) {
+                    <svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                  } @else {
+                    <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z" clip-rule="evenodd" />
+                    </svg>
+                  }
+                  <span class="hidden sm:inline">Envoyer</span>
+                </button>
+              </form>
+            </section>
+          </div>
+
+          <!-- Colonne droite : actions & métadonnées -->
+          <aside class="md:w-[35%] shrink-0 md:overflow-y-auto p-6 space-y-6 border-t md:border-t-0 md:border-l border-slate-200 dark:border-slate-800 custom-scrollbar">
+            <!-- Assigné à -->
+            <div>
+              <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                Assigné à
+              </label>
+              <select
+                [ngModel]="assigneeId()"
+                (ngModelChange)="setAssignee($event)"
+                [disabled]="!canAssignTicket"
+                class="block w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-brand-400 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 disabled:opacity-60"
+              >
+                <option [ngValue]="null">Non assigné</option>
+                @for (m of members(); track m.userId) {
+                  <option [ngValue]="m.userId">{{ m.prenom }} {{ m.nom }} — {{ m.roleInProject }}</option>
+                }
+              </select>
+              @if (assigneeMember()) {
+                <div class="mt-2 flex items-center gap-2">
+                  <div class="w-7 h-7 rounded-full bg-brand-500 flex items-center justify-center text-xs font-semibold text-white">
+                    {{ initials(memberFullName(assigneeMember())) }}
+                  </div>
+                  <span class="text-sm text-slate-700 dark:text-slate-300">{{ memberFullName(assigneeMember()) }}</span>
+                </div>
+              }
+            </div>
+
+            <!-- Priorité -->
+            <div>
+              <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                Priorité
+              </label>
+              <div class="grid grid-cols-2 gap-1.5">
+                @for (p of priorityOptions; track p.value) {
+                  <button
+                    type="button"
+                    (click)="setPriority(p.value)"
+                    [disabled]="!canEditTicket"
+                    class="inline-flex items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed"
+                    [ngClass]="priority() === p.value
+                      ? p.classes
+                      : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'"
+                  >
+                    <span>{{ p.emoji }}</span>
+                    {{ p.label }}
+                  </button>
+                }
+              </div>
+            </div>
+
+            <!-- Sprint / Projet -->
+            <div>
+              <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                Sprint / Projet
+              </label>
+              <div class="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 px-3 py-2">
+                <p class="text-sm font-medium text-slate-800 dark:text-slate-100">
+                  {{ sprintName() || (sprintId != null ? ('Sprint #' + sprintId) : 'Aucun sprint') }}
+                </p>
+                <p class="text-xs text-slate-400 dark:text-slate-500">{{ projectName() || 'Projet inconnu' }}</p>
+              </div>
+            </div>
+
+            <!-- Date d'échéance -->
+            <div>
+              <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                Date d'échéance
+              </label>
+              <input
+                type="date"
+                [ngModel]="dueDate()"
+                (ngModelChange)="onDueDateChange($event)"
+                [disabled]="!canEditTicket"
+                class="block w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-brand-400 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 disabled:opacity-60"
+              />
+            </div>
+
+            <!-- Étiquettes -->
+            <div>
+              <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                Étiquettes
+              </label>
+              <div class="flex flex-wrap gap-1.5">
+                @for (label of labelPresets; track label) {
+                  <button
+                    type="button"
+                    (click)="toggleLabel(label)"
+                    class="rounded-md px-2.5 py-1 text-xs font-medium transition-colors"
+                    [ngClass]="labels().includes(label)
+                      ? 'bg-brand-500 text-white'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'"
+                  >
+                    {{ label }}
+                  </button>
+                }
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirmation de suppression (Admin) -->
+    @if (confirmingDelete()) {
+      <div class="fixed inset-0 z-[60] flex items-center justify-center p-4 ticket-modal-backdrop" (click)="confirmingDelete.set(false)">
+        <div class="fixed inset-0 bg-black/40 dark:bg-black/60"></div>
+        <div
+          class="relative z-10 w-full max-w-sm rounded-2xl bg-white dark:bg-slate-900 p-6 shadow-2xl border border-slate-200 dark:border-slate-800"
+          (click)="$event.stopPropagation()"
+        >
+          <div class="flex items-center gap-3 mb-4">
+            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-error-50 text-error-600 dark:bg-error-500/10 dark:text-error-400">
+              <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <h3 class="text-base font-semibold text-slate-900 dark:text-white">Supprimer le ticket</h3>
+          </div>
+          <p class="text-sm text-slate-500 dark:text-slate-400">
+            Cette action est <span class="font-medium text-error-600 dark:text-error-400">définitive</span>. Le ticket et ses sous-tickets seront supprimés.
+          </p>
+          <div class="mt-6 flex justify-end gap-3">
+            <button
+              type="button"
+              (click)="confirmingDelete.set(false)"
+              class="inline-flex items-center justify-center rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors"
+            >
+              Annuler
+            </button>
+            <button
+              type="button"
+              (click)="onDeleteTicket()"
+              [disabled]="deleting()"
+              class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-error-500 px-4 py-2 text-sm font-medium text-white hover:bg-error-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              @if (deleting()) {
+                <svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+              }
+              Supprimer
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+}

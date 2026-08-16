@@ -48,10 +48,12 @@ export class ProfileComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    console.log('[DEBUG] ProfileComponent ngOnInit');
     this.loadProfile();
   }
 
   loadProfile(): void {
+    console.log('[DEBUG] loadProfile start');
     const userId = this.authService.getUserId();
     if (!userId) {
       this.error.set('User not authenticated.');
@@ -66,6 +68,7 @@ export class ProfileComponent implements OnInit {
 
     this.userService.getUser(userId)
       .pipe(finalize(() => {
+        console.log('[DEBUG] loadProfile finalize executed, loading=false');
         this.loading.set(false);
         this.notification.dismiss();
       }))
@@ -74,8 +77,8 @@ export class ProfileComponent implements OnInit {
           this.user.set(user);
           this.nom = user.nom || '';
           this.prenom = user.prenom || '';
-          if (user.profileImage) {
-            this.imagePreview = this.getProfileImageUrl(user.profileImage);
+          if (user.profileImageUrl) {
+            this.imagePreview = this.getProfileImageUrl(user.profileImageUrl);
           }
           this.notification.success('Profil chargé avec succès.');
         },
@@ -166,24 +169,22 @@ export class ProfileComponent implements OnInit {
     this.saving.set(true);
     this.notification.loading('Enregistrement du profil…');
 
+    const payload = {
+      nom: this.nom.trim(),
+      prenom: this.prenom.trim()
+    };
+    console.log('Payload envoyé (PUT /Users/:id):', payload);
+
     const imageUpload$ = this.selectedImage
       ? this.userService.uploadProfilePicture(this.selectedImage).pipe(
           switchMap((response) => {
             this.imagePreview = this.getProfileImageUrl(response.profileImageUrl);
             localStorage.setItem('userAvatar', this.imagePreview);
             window.dispatchEvent(new Event('storage'));
-            return this.userService.updateUser(userId, {
-              id: userId,
-              nom: this.nom.trim(),
-              prenom: this.prenom.trim()
-            });
+            return this.userService.updateUser(userId, payload);
           })
         )
-      : this.userService.updateUser(userId, {
-          id: userId,
-          nom: this.nom.trim(),
-          prenom: this.prenom.trim()
-        });
+      : this.userService.updateUser(userId, payload);
 
     imageUpload$
       .pipe(finalize(() => {
@@ -199,7 +200,7 @@ export class ProfileComponent implements OnInit {
 
           const fullName = `${updatedUser.prenom || ''} ${updatedUser.nom || ''}`.trim();
           if (fullName) localStorage.setItem('userName', fullName);
-          localStorage.setItem('userAvatar', this.getProfileImageUrl(updatedUser.profileImage || ''));
+          localStorage.setItem('userAvatar', this.getProfileImageUrl(updatedUser.profileImageUrl || ''));
           window.dispatchEvent(new Event('storage'));
 
           this.notification.success('Profil mis à jour avec succès.');
@@ -209,10 +210,19 @@ export class ProfileComponent implements OnInit {
   }
 
   private handleSaveError(err: HttpErrorResponse): void {
+    if (err.status === 400) {
+      const errors = (err.error as any)?.errors;
+      if (errors) console.log('[SaveProfile] Validation errors:', errors);
+      if (typeof err.error === 'string' && err.error.trim() !== '') {
+        console.log('[SaveProfile] Backend message:', err.error);
+      }
+    }
     const msg = err.status === 0
       ? 'Impossible de se connecter au serveur.'
       : err.status === 400
-        ? 'Données invalides. Vérifiez vos champs.'
+        ? (typeof err.error === 'string' && err.error.trim() !== ''
+            ? err.error
+            : 'Données invalides. Vérifiez vos champs.')
         : err.status === 401 || err.status === 403
           ? 'Session expirée. Veuillez vous reconnecter.'
           : err.status === 404

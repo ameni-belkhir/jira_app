@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { CdkDropList, CdkDrag, CdkDragDrop, transferArrayItem } from '@angular/cdk/drag-drop';
+import { CdkDropList, CdkDrag, CdkDragDrop } from '@angular/cdk/drag-drop';
 import { TicketCardComponent, Ticket } from '../../projects/ticket-card/ticket-card.component';
 import { BacklogSprint, BacklogTicket } from '../../../services/project.service';
 
@@ -14,18 +14,30 @@ import { BacklogSprint, BacklogTicket } from '../../../services/project.service'
 })
 export class SprintCardComponent {
   @Input({ required: true }) sprint!: BacklogSprint;
-  @Input() canManageTickets: boolean = true;
+  @Input() canManageSprints: boolean = true;
+  @Input() showDeleteButton: boolean = false;
+  @Input() canAssignTicket: boolean = false;
   @Input() connectedDropLists: string[] = [];
-  @Output() ticketDropped = new EventEmitter<{ ticketId: number; sprintId: number | null }>();
+  @Output() ticketDropped = new EventEmitter<{ event: CdkDragDrop<BacklogTicket[]>; sprintId: number }>();
   @Output() goalUpdated = new EventEmitter<{ sprintId: number; goal: string }>();
   @Output() viewKanban = new EventEmitter<number>();
+  @Output() viewSubtickets = new EventEmitter<number>();
+  @Output() createSubticketRequested = new EventEmitter<number>();
+  @Output() deleteRequested = new EventEmitter<number>();
+  @Output() viewTicketDetails = new EventEmitter<number>();
+  @Output() assignRequested = new EventEmitter<Ticket>();
+  @Output() sprintAction = new EventEmitter<{ sprintId: number; action: 'start' | 'complete' }>();
+  @Output() editRequested = new EventEmitter<number>();
 
   isEditingGoal = false;
   editGoalValue = '';
   isCollapsed = signal(false);
 
   get completedTickets(): number {
-    return this.sprint.tickets.filter(t => t.status?.toLowerCase() === 'done' || t.status?.toLowerCase() === 'completed').length;
+    return this.sprint.tickets.filter(t => {
+      const s = (t.status || '').toLowerCase();
+      return s === 'done' || s === 'completed' || s === 'termine' || s === 'terminé' || s === 'fait';
+    }).length;
   }
 
   get progressPercent(): number {
@@ -53,6 +65,38 @@ export class SprintCardComponent {
     this.viewKanban.emit(this.sprint.id);
   }
 
+  onViewSubtickets(ticketId: number): void {
+    this.viewSubtickets.emit(ticketId);
+  }
+
+  onCreateSubticketRequested(ticketId: number): void {
+    this.createSubticketRequested.emit(ticketId);
+  }
+
+  onDeleteRequested(ticketId: number): void {
+    this.deleteRequested.emit(ticketId);
+  }
+
+  onViewTicketDetails(ticketId: number): void {
+    this.viewTicketDetails.emit(ticketId);
+  }
+
+  onAssignRequested(ticket: Ticket): void {
+    this.assignRequested.emit(ticket);
+  }
+
+  onStartSprint(): void {
+    this.sprintAction.emit({ sprintId: this.sprint.id, action: 'start' });
+  }
+
+  onCompleteSprint(): void {
+    this.sprintAction.emit({ sprintId: this.sprint.id, action: 'complete' });
+  }
+
+  onEditSprint(): void {
+    this.editRequested.emit(this.sprint.id);
+  }
+
   startEditGoal(): void {
     this.editGoalValue = this.sprint.goal || '';
     this.isEditingGoal = true;
@@ -72,15 +116,7 @@ export class SprintCardComponent {
   onDrop(event: CdkDragDrop<BacklogTicket[]>): void {
     if (event.previousContainer === event.container) return;
 
-    const ticket = event.previousContainer.data[event.previousIndex];
-    transferArrayItem(
-      event.previousContainer.data,
-      event.container.data,
-      event.previousIndex,
-      event.currentIndex
-    );
-
-    this.ticketDropped.emit({ ticketId: ticket.id, sprintId: this.sprint.id });
+    this.ticketDropped.emit({ event, sprintId: this.sprint.id });
   }
 
   trackByTicketId(index: number, ticket: BacklogTicket): number {
@@ -90,7 +126,7 @@ export class SprintCardComponent {
   mapToTicket(ticket: BacklogTicket): Ticket {
     return {
       id: ticket.id,
-      title: ticket.title,
+      title: ticket.title || (ticket as any).titre || '',
       priority: (ticket.priority as Ticket['priority']) || 'Medium',
       assignedUser: {
         name: ticket.assignedTo || 'Unassigned',
@@ -99,7 +135,10 @@ export class SprintCardComponent {
       dueDate: ticket.creationDate ? new Date(ticket.creationDate).toLocaleDateString() : '',
       labels: [],
       description: ticket.description || '',
-      status: (ticket.status as Ticket['status']) || 'todo'
+      status: (ticket.status as Ticket['status']) || 'todo',
+      color: ticket.color,
+      subTickets: (ticket.subTickets || []).map(sub => this.mapToTicket(sub)),
+      isExpanded: false
     };
   }
 }

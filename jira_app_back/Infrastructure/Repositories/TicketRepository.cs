@@ -51,7 +51,17 @@ namespace Infrastructure.Repositories
             return await _context.Tickets
                 .Where(t => t.ProjectId == projectId)
                 .Include(t => t.Assignee)
+                .Include(t => t.SubTickets)
                 .Include(t => t.Commentaires)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Ticket>> GetBySprintIdAsync(int sprintId)
+        {
+            return await _context.Tickets
+                .Where(t => t.SprintId == sprintId)
+                .Include(t => t.Assignee)
+                .Include(t => t.SubTickets)
                 .ToListAsync();
         }
 

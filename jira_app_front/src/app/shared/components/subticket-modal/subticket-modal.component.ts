@@ -1,8 +1,7 @@
-import { Component, Input, Output, EventEmitter, signal, ViewChild } from '@angular/core';
+import { Component, Input, Output, EventEmitter, signal, ViewChild, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
-import { SubTicket, TicketService } from '../../../services/ticket.service';
-import { ProjectService, CreateTicketRequest } from '../../../services/project.service';
+import { SubTicket, TicketService, CreateSubTicketRequest } from '../../../services/ticket.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { finalize } from 'rxjs';
 import { NotificationService } from '../../../shared/services/notification.service';
@@ -15,9 +14,7 @@ import { NotificationService } from '../../../shared/services/notification.servi
   styles: ``
 })
 export class SubticketModalComponent {
-  @Input() canManageTickets: boolean = false;
-  @Input() projectId: number = 0;
-  @Input() creatorId: string = '';
+  @Input() canCreateSubtickets: boolean = false;
   @Output() close = new EventEmitter<void>();
   @Output() subticketCreated = new EventEmitter<void>();
 
@@ -27,6 +24,11 @@ export class SubticketModalComponent {
   loading = signal(false);
   error = signal('');
   subtickets = signal<SubTicket[]>([]);
+
+  /** Nombre de sous-tickets au statut TERMINE (pour l'indicateur de progression) */
+  completedCount = computed(() =>
+    this.subtickets().filter(st => (st.status || '').toUpperCase() === 'TERMINE').length
+  );
 
   private currentTicketId = 0;
 
@@ -40,7 +42,6 @@ export class SubticketModalComponent {
 
   constructor(
     private ticketService: TicketService,
-    private projectService: ProjectService,
     private notification: NotificationService
   ) {}
 
@@ -115,18 +116,15 @@ export class SubticketModalComponent {
     this.creating.set(true);
     this.notification.loading('Création du sous-ticket…');
 
-    const payload: CreateTicketRequest = {
+    const payload: CreateSubTicketRequest = {
       titre,
       description: this.newDescription.trim() || null,
       priority: this.mapPriorityToBackend(this.newPriority),
-      projectId: this.projectId,
-      creatorId: Number(this.creatorId),
-      parentTicketId: this.currentTicketId,
-      sprintId: null,
+      assigneeId: null,
       color: undefined
     };
 
-    this.projectService.createTicket(payload)
+    this.ticketService.createSubTicket(this.currentTicketId, payload)
       .pipe(finalize(() => {
         this.creating.set(false);
         this.notification.dismiss();

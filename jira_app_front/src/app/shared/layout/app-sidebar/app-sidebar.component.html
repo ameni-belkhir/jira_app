@@ -22,24 +22,18 @@
       'justify-start': (isExpanded$ | async) || (isHovered$ | async)
     }"
   >
-    <a routerLink="/dashboard">
+    <a routerLink="/dashboard" class="flex items-center gap-2.5">
+      <svg width="36" height="36" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" class="shrink-0 hover:scale-105 transition-transform duration-200 cursor-pointer">
+        <rect x="6" y="6" width="22" height="22" rx="6" fill="#3B82F6" fill-opacity="0.5"/>
+        <rect x="12" y="12" width="22" height="22" rx="6" fill="#6366F1"/>
+        <rect x="16" y="17" width="14" height="2.5" rx="1.25" fill="white"/>
+        <rect x="16" y="22" width="10" height="2.5" rx="1.25" fill="white" fill-opacity="0.7"/>
+        <circle cx="18" cy="28" r="1.5" fill="#38BDF8"/>
+      </svg>
       @if ((isExpanded$ | async) || (isHovered$ | async) || (isMobileOpen$ | async)) {
-      <img
-        class="dark:hidden"
-        src="/images/logo/logo.svg"
-        alt="Logo"
-        width="150"
-        height="40"
-      />
-      <img
-        class="hidden dark:block"
-        src="/images/logo/logo-dark.svg"
-        alt="Logo"
-        width="150"
-        height="40"
-      />
-      } @else {
-      <img src="/images/logo/logo-icon.svg" alt="Logo" width="32" height="32" />
+      <span class="text-lg font-bold tracking-tight whitespace-nowrap text-gray-900 dark:text-white">
+        Jira App
+      </span>
       }
     </a>
   </div>
@@ -117,3 +111,37 @@
     </nav>
   </div>
 </aside>
+
+<!-- Logout confirmation modal -->
+@if (showLogoutConfirm) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="fixed inset-0 bg-black/40 dark:bg-black/60 transition-opacity" (click)="cancelLogout()"></div>
+    <div class="relative z-10 w-full max-w-sm rounded-2xl bg-white dark:bg-gray-900 p-6 shadow-theme-xl border border-gray-200 dark:border-gray-800">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="flex h-10 w-10 items-center justify-center rounded-full bg-error-50 text-error-600 dark:bg-error-500/10 dark:text-error-400">
+          <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" d="M3 10a7 7 0 1114 0 7 7 0 01-14 0zm7-6a6 6 0 100 12 6 6 0 000-12zm.75 3a.75.75 0 00-1.5 0v2.5a.75.75 0 001.5 0V7zm-.75 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <h3 class="text-base font-semibold text-gray-800 dark:text-white">Se déconnecter</h3>
+      </div>
+      <p class="text-sm text-gray-500 dark:text-gray-400">
+        Êtes-vous sûr de vouloir vous déconnecter ?
+      </p>
+      <div class="mt-6 flex justify-end gap-3">
+        <button
+          (click)="cancelLogout()"
+          class="inline-flex items-center justify-center rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors"
+        >
+          Annuler
+        </button>
+        <button
+          (click)="confirmLogout()"
+          class="inline-flex items-center justify-center rounded-lg bg-error-500 px-4 py-2 text-sm font-medium text-white hover:bg-error-600 transition-colors"
+        >
+          Se déconnecter
+        </button>
+      </div>
+    </div>
+  </div>
+}

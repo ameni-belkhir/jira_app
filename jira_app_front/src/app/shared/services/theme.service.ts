@@ -1,33 +1,48 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 
 type Theme = 'light' | 'dark';
 
 @Injectable({ providedIn: 'root' })
-
 export class ThemeService {
+  /** État réactif du mode sombre (Signal Angular). */
+  isDarkMode = signal<boolean>(false);
+
   private themeSubject = new BehaviorSubject<Theme>('light');
   theme$ = this.themeSubject.asObservable();
 
   constructor() {
-    const savedTheme = (localStorage.getItem('theme') as Theme) || 'light';
-    this.setTheme(savedTheme);
+    this.initTheme();
   }
 
-  toggleTheme() {
-    const newTheme = this.themeSubject.value === 'light' ? 'dark' : 'light';
-    this.setTheme(newTheme);
+  /**
+   * Détecte le thème au démarrage :
+   * 1. choix explicitement sauvegardé dans localStorage ('theme'),
+   * 2. sinon préférence système (prefers-color-scheme: dark),
+   * 3. sinon mode clair par défaut.
+   */
+  private initTheme(): void {
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const isDark = savedTheme ? savedTheme === 'dark' : prefersDark;
+
+    this.setDarkMode(isDark);
   }
 
-  setTheme(theme: Theme) {
+  toggleTheme(): void {
+    this.setDarkMode(!this.isDarkMode());
+  }
+
+  setDarkMode(isDark: boolean): void {
+    this.isDarkMode.set(isDark);
+    const theme: Theme = isDark ? 'dark' : 'light';
     this.themeSubject.next(theme);
     localStorage.setItem('theme', theme);
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-      document.body.classList.add('dark:bg-gray-900');
-    } else {
-      document.documentElement.classList.remove('dark');
-      document.body.classList.remove('dark:bg-gray-900');
-    }
+    document.documentElement.classList.toggle('dark', isDark);
+    document.body.classList.toggle('dark:bg-gray-900', isDark);
+  }
+
+  setTheme(theme: Theme): void {
+    this.setDarkMode(theme === 'dark');
   }
 }

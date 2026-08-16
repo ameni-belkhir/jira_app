@@ -195,7 +195,8 @@ namespace Infrastructure.Services
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Role, roleDesc)
+                new Claim(ClaimTypes.Role, roleDesc),
+                new Claim("FullName", $"{user.Prenom} {user.Nom}".Trim())
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));

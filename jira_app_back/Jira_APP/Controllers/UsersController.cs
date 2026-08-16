@@ -87,19 +87,15 @@ namespace Jira_APP.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] UpdateUserDto dto)
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateProfileDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
-            if (id != dto.Id) return BadRequest();
 
             var user = await _db.Users.FindAsync(id);
             if (user == null) return NotFound();
 
             user.Nom = dto.Nom;
             user.Prenom = dto.Prenom;
-            user.Email = dto.Email;
-            if (!string.IsNullOrEmpty(dto.Password)) user.Password = dto.Password;
-            user.RoleId = dto.RoleId;
 
             _db.Users.Update(user);
             await _db.SaveChangesAsync();
@@ -113,13 +109,13 @@ namespace Jira_APP.Controllers
             var file = dto?.File;
             if (file == null || file.Length == 0) return BadRequest("Veuillez fournir un fichier valide.");
 
-            // Validate size (max 2 MB)
-            const long maxBytes = 2 * 1024 * 1024;
-            if (file.Length > maxBytes) return BadRequest("Fichier trop volumineux. Max 2MB.");
+            // Validate size (max 5 MB)
+            const long maxBytes = 5 * 1024 * 1024;
+            if (file.Length > maxBytes) return BadRequest($"Fichier trop volumineux ({file.Length / 1024 / 1024} Mo). Max 5 Mo.");
 
             var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-            var allowed = new[] { ".jpg", ".jpeg", ".png" };
-            if (!allowed.Contains(ext)) return BadRequest("Type de fichier invalide. Autorisé : .jpg, .jpeg, .png");
+            var allowed = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+            if (!allowed.Contains(ext)) return BadRequest("Type de fichier invalide. Autorisé : .jpg, .jpeg, .png, .webp");
 
             // Get current user id from claims
             var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;

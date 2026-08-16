@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { SprintKanbanComponent } from '../sprint-kanban/sprint-kanban.component';
+import { ProjectStateService } from '../../../services/project-state.service';
 
 @Component({
   selector: 'app-sprint-kanban-view',
@@ -27,6 +28,7 @@ import { SprintKanbanComponent } from '../sprint-kanban/sprint-kanban.component'
 })
 export class SprintKanbanViewComponent implements OnInit {
   private route = inject(ActivatedRoute);
+  private projectState = inject(ProjectStateService);
 
   projectId: number = 0;
   sprintId: number = 0;
@@ -37,6 +39,8 @@ export class SprintKanbanViewComponent implements OnInit {
     if (projectIdParam && sprintIdParam) {
       this.projectId = parseInt(projectIdParam, 10);
       this.sprintId = parseInt(sprintIdParam, 10);
+      // Mémorise le contexte projet / sprint pour le menu (Tickets / Backlog).
+      this.projectState.setContext(this.projectId, this.sprintId);
     }
   }
 }

@@ -2,11 +2,12 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Conversation } from '../../../services/chat.service';
+import { SafeImagePipe } from '../../../shared/pipe/safe-image.pipe';
 
 @Component({
   selector: 'app-chat-sidebar',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SafeImagePipe],
   templateUrl: './chat-sidebar.component.html',
   styles: ``,
 })
@@ -16,6 +17,7 @@ export class ChatSidebarComponent {
   @Input() onlineUsers: Record<string, boolean> = {};
 
   @Output() selectConversation = new EventEmitter<Conversation>();
+  @Output() newConversation = new EventEmitter<void>();
 
   searchTerm = '';
 

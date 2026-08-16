@@ -18,8 +18,10 @@ namespace Domain.Interfaces
         Task<bool> IsMemberAsync(Guid conversationId, int userId);
         Task<int> GetUnreadCountAsync(Guid conversationId, int userId);
         Task AddConversationAsync(ChatConversation conversation);
+        Task<ChatConversation?> FindDirectConversationAsync(int userId1, int userId2);
         Task AddMemberAsync(ConversationMember member);
         Task AddMessageAsync(ChatMessage message);
+        Task RemoveMessageAsync(ChatMessage message);
         Task MarkMessagesReadAsync(Guid conversationId, int userId);
         Task SaveChangesAsync();
     }

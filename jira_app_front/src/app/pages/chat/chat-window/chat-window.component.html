@@ -1,14 +1,19 @@
 @if (conversation) {
   <!-- Chat header -->
-  <div class="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4 dark:border-gray-800 dark:bg-gray-900">
+  <div class="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900 sm:px-6 sm:py-4">
     <div class="flex items-center gap-3">
       <div class="relative">
-        <img
-          class="h-10 w-10 rounded-full object-cover"
-          [src]="conversation.avatar || '/images/user/user-01.jpg'"
-          [alt]="conversation.name"
-          title="{{ conversation.name }}"
-        />
+        @if (conversationAvatarUrl() && !headerAvatarFailed()) {
+          <img
+            class="h-10 w-10 rounded-full object-cover"
+            [src]="conversationAvatarUrl()"
+            [alt]="headerDisplayName()"
+            title="{{ headerDisplayName() }}"
+            (error)="onHeaderAvatarError()"
+          />
+        } @else {
+          <div class="flex h-10 w-10 items-center justify-center rounded-full bg-brand-500 text-sm font-semibold text-white" title="{{ headerDisplayName() }}">{{ conversationInitials() }}</div>
+        }
         <!-- Presence dot -->
         <span
           class="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-white dark:border-gray-900"
@@ -17,7 +22,7 @@
         ></span>
       </div>
       <div>
-        <h3 class="text-sm font-semibold text-gray-800 dark:text-white/90">{{ conversation.name }}</h3>
+        <h3 class="text-sm font-semibold text-gray-800 dark:text-white/90">{{ headerDisplayName() }}</h3>
         <p
           class="flex items-center gap-1 text-xs"
           [class.text-success-500]="online"
@@ -32,13 +37,85 @@
         </p>
       </div>
     </div>
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-1.5 sm:gap-2">
       <button type="button" title="Appel vidéo" aria-label="Appel vidéo" class="rounded-full p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M2 6a2 2 0 012-2h7a2 2 0 012 2v2.5l3.4-2.2a.6.6 0 01.9.5v7.4a.6.6 0 01-.9.5L13 12.5V15a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/></svg>
       </button>
       <button type="button" title="Appel vocal" aria-label="Appel vocal" class="rounded-full p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M2 3.5A1.5 1.5 0 013.5 2h1.148a1.5 1.5 0 011.465 1.175l.716 3.223a1.5 1.5 0 01-.464 1.42l-.923.831a11 11 0 006.31 6.31l.83-.923a1.5 1.5 0 011.421-.464l3.223.716A1.5 1.5 0 0118 15.352V16.5a1.5 1.5 0 01-1.5 1.5H15C7.82 18 2 12.18 2 5V3.5z"/></svg>
       </button>
+
+      <!-- Sélecteur de la couleur des bulles sortantes -->
+      <div class="relative">
+        <button
+          type="button"
+          (click)="toggleBubblePicker()"
+          [title]="'Couleur des bulles de messages'"
+          aria-label="Changer la couleur des bulles"
+          class="rounded-full p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h4l4 2V3H4zm8 0v13.5a.75.75 0 001.03.688l4-1.715A.75.75 0 0018 14.785V4a1 1 0 00-1-1h-5zM13 5.5h3v8.8l-3 1.285V5.5zM6 7a1 1 0 100 2 1 1 0 000-2zm1.5 4.5a1 1 0 11-2 0 1 1 0 012 0zM7 8.5a.5.5 0 100 1 .5.5 0 000-1z" clip-rule="evenodd"/></svg>
+        </button>
+
+        @if (showBubblePicker()) {
+          <div class="absolute right-0 top-full z-30 mt-2 w-56 rounded-2xl border border-gray-200 bg-white p-2 shadow-theme-lg dark:border-gray-700 dark:bg-gray-800">
+            <p class="px-3 pb-1.5 pt-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+              Couleur des bulles
+            </p>
+            <div class="space-y-0.5">
+              @for (color of chatBubbleColors; track color.id) {
+                <button
+                  type="button"
+                  (click)="setBubbleColor(color.id)"
+                  class="flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-left text-sm transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  <span class="h-6 w-6 shrink-0 rounded-full ring-1 ring-black/5 dark:ring-white/20" [style]="color.swatch"></span>
+                  <span class="flex-1 text-gray-700 dark:text-gray-200">{{ color.label }}</span>
+                  @if (bubbleColorId() === color.id) {
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-brand-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                  }
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Sélecteur de thème du fond de discussion -->
+      <div class="relative">
+        <button
+          type="button"
+          (click)="toggleThemePicker()"
+          [title]="'Thème du fond de discussion'"
+          aria-label="Changer le thème du fond de discussion"
+          class="rounded-full p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M1 4a2 2 0 012-2h14a2 2 0 012 2v12a2 2 0 01-2 2H3a2 2 0 01-2-2V4zm14-1a2 2 0 01-2 2v2h2a2 2 0 100 4h2V3h-2zm-5 9a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>
+        </button>
+
+        @if (showThemePicker()) {
+          <div class="absolute right-0 top-full z-30 mt-2 w-60 rounded-2xl border border-gray-200 bg-white p-2 shadow-theme-lg dark:border-gray-700 dark:bg-gray-800">
+            <p class="px-3 pb-1.5 pt-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+              Fond de discussion
+            </p>
+            <div class="space-y-0.5">
+              @for (theme of chatThemes; track theme.id) {
+                <button
+                  type="button"
+                  (click)="setChatTheme(theme.id)"
+                  class="flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-left text-sm transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  <span class="h-6 w-6 shrink-0 rounded-full ring-1 ring-black/5 dark:ring-white/20" [style]="theme.swatch"></span>
+                  <span class="flex-1 text-gray-700 dark:text-gray-200">{{ theme.label }}</span>
+                  @if (currentTheme() === theme.id) {
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-brand-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                  }
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
     </div>
   </div>
 
@@ -46,97 +123,72 @@
   <div
     #scrollContainer
     (click)="onContainerClick()"
-    class="flex-1 space-y-4 overflow-y-auto px-6 py-6 bg-gray-50 dark:bg-gray-950"
+    [ngClass]="chatBgClass(currentTheme())"
+    class="flex-1 space-y-4 overflow-y-auto px-4 py-6 sm:px-6"
   >
     @for (msg of messages; track msg.id) {
-      @if (isOwn(msg)) {
-        <!-- Outgoing (sender => right / blue) -->
-        <div class="flex justify-end">
-          <div class="flex max-w-[75%] flex-col items-end gap-1">
-            @if (msg.type === 'image') {
-              <div class="rounded-2xl rounded-tr-none bg-brand-600 px-3 py-2 text-white">
-                <div class="flex items-center gap-2 px-1 py-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/></svg>
-                  <div>
-                    <p class="text-sm font-medium">{{ msg.text }}</p>
-                    <p class="text-xs text-white/70">{{ formatFileSize(msg.fileSize) }}</p>
-                  </div>
-                </div>
-              </div>
-            } @else if (msg.type === 'file') {
-              <div class="rounded-2xl rounded-tr-none bg-brand-600 px-4 py-3 text-white">
-                <div class="flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V7.914a2 2 0 00-.586-1.414l-3.914-3.914A2 2 0 0012.086 2H4z" clip-rule="evenodd"/></svg>
-                  <div>
-                    <p class="text-sm font-medium">{{ msg.text }}</p>
-                    <p class="text-xs text-white/70">{{ formatFileSize(msg.fileSize) }}</p>
-                  </div>
-                </div>
-              </div>
-            } @else {
-              <div class="rounded-2xl rounded-tr-none bg-brand-500 px-4 py-2.5 text-sm leading-5 text-white">
-                {{ msg.text }}
-              </div>
-            }
-            <p class="px-1 text-[11px] text-gray-400">{{ formatTime(msg.timestamp) }}</p>
-          </div>
-        </div>
-      } @else {
-        <!-- Incoming (recipient => left / gray) -->
-        <div class="flex items-start gap-3">
-          <img
-            class="h-8 w-8 rounded-full object-cover"
-            [src]="conversation.avatar || '/images/user/user-01.jpg'"
-            [alt]="conversation.name"
-            title="{{ conversation.name }}"
-          />
-          <div class="max-w-[75%]">
-            @if (msg.type === 'image') {
-              <div class="rounded-2xl rounded-bl-none bg-white px-3 py-2 shadow-theme-xs dark:bg-gray-900">
-                <div class="flex items-center gap-2 rounded-lg bg-gray-100 px-2 py-2 dark:bg-gray-800">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/></svg>
-                  <div>
-                    <p class="text-sm font-medium text-gray-800 dark:text-white/90">{{ msg.text }}</p>
-                    <p class="text-xs text-gray-400">{{ formatFileSize(msg.fileSize) }}</p>
-                  </div>
-                </div>
-              </div>
-            } @else if (msg.type === 'file') {
-              <div class="rounded-2xl rounded-bl-none bg-white px-4 py-3 shadow-theme-xs dark:bg-gray-900">
-                <div class="flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 text-gray-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V7.914a2 2 0 00-.586-1.414l-3.914-3.914A2 2 0 0012.086 2H4z" clip-rule="evenodd"/></svg>
-                  <div>
-                    <p class="text-sm font-medium text-gray-800 dark:text-white/90">{{ msg.text }}</p>
-                    <p class="text-xs text-gray-400">{{ formatFileSize(msg.fileSize) }}</p>
-                  </div>
-                </div>
-              </div>
-            } @else {
-              <div class="rounded-2xl rounded-bl-none bg-white px-4 py-2.5 text-sm leading-5 text-gray-700 shadow-theme-xs dark:bg-gray-900 dark:text-gray-300">
-                {{ msg.text }}
-              </div>
-            }
-            <p class="mt-1 px-1 text-[11px] text-gray-400">{{ formatTime(msg.timestamp) }}</p>
-          </div>
-        </div>
-      }
+      <app-chat-message
+        [message]="msg"
+        [isOwn]="isOwn(msg)"
+        [isAdmin]="isAdmin"
+        [conversation]="conversation"
+        [currentUserId]="currentUserId"
+        [bubbleColor]="bubbleClasses()"
+        (edit)="onMessageEdit($event)"
+        (deleteRequest)="onDeleteRequest($event)"
+      />
     }
 
     <!-- Typing indicator -->
     @if (typingText) {
       <div class="flex items-center gap-2">
-        <div class="flex items-center gap-1.5 rounded-2xl rounded-bl-md bg-white px-4 py-3 shadow-theme-xs dark:bg-gray-900">
-          <span class="h-2 w-2 animate-bounce rounded-full bg-gray-400"></span>
-          <span class="h-2 w-2 animate-bounce rounded-full bg-gray-400" style="animation-delay: 0.1s"></span>
-          <span class="h-2 w-2 animate-bounce rounded-full bg-gray-400" style="animation-delay: 0.2s"></span>
+        <div class="flex items-center gap-1.5 rounded-2xl rounded-bl-md bg-slate-200 px-4 py-3 shadow-theme-xs dark:bg-slate-800">
+          <span class="h-2 w-2 animate-bounce rounded-full bg-slate-500 dark:bg-slate-400"></span>
+          <span class="h-2 w-2 animate-bounce rounded-full bg-slate-500 dark:bg-slate-400" style="animation-delay: 0.1s"></span>
+          <span class="h-2 w-2 animate-bounce rounded-full bg-slate-500 dark:bg-slate-400" style="animation-delay: 0.2s"></span>
         </div>
-        <p class="text-xs text-gray-400">{{ typingText }}</p>
+        <p class="text-xs text-slate-500 dark:text-slate-400">{{ typingText }}</p>
       </div>
     }
   </div>
 
+  <!-- Confirmation de suppression de message -->
+  @if (confirmDeleteMessageId != null) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4" (click)="cancelDelete()">
+      <div class="fixed inset-0 bg-black/40 dark:bg-black/60 transition-opacity"></div>
+      <div class="relative z-10 w-full max-w-sm rounded-2xl bg-white dark:bg-gray-900 p-6 shadow-theme-xl border border-gray-200 dark:border-gray-800" (click)="$event.stopPropagation()">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="flex h-10 w-10 items-center justify-center rounded-full bg-error-50 text-error-600 dark:bg-error-500/10 dark:text-error-400">
+            <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd" />
+            </svg>
+          </div>
+          <h3 class="text-base font-semibold text-gray-800 dark:text-white">Supprimer le message</h3>
+        </div>
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+          Cette action est <span class="font-medium text-error-600 dark:text-error-400">définitive</span>. Le message sera supprimé pour tous les membres de la conversation.
+        </p>
+        <div class="mt-6 flex justify-end gap-3">
+          <button
+            (click)="cancelDelete()"
+            class="inline-flex items-center justify-center rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors"
+          >
+            Annuler
+          </button>
+          <button
+            (click)="confirmDelete()"
+            class="inline-flex items-center justify-center rounded-lg bg-error-500 px-4 py-2 text-sm font-medium text-white hover:bg-error-600 transition-colors"
+          >
+            Supprimer
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
   <!-- Message input -->
   <app-chat-message-input
+    [isSending]="isSending"
     (send)="onSend($event)"
     (typing)="onTyping($event)"
   />

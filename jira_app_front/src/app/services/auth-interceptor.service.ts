@@ -85,9 +85,13 @@ export const authInterceptor: HttpInterceptorFn = (
   return next(cloned).pipe(
     catchError((error: HttpErrorResponse) => {
       if (error.status === 401) {
-        // Token invalidé côté serveur → clear session and redirect to login
+        // Token invalidé ou expiré côté serveur → purge de session + redirection login.
         authService.logout();
         router.navigate(['/login'], { replaceUrl: true });
+      } else if (error.status === 403) {
+        // Accès refusé : l'utilisateur existe mais n'a pas les droits pour cette ressource.
+        // Pas de logout — le composant appelant gère l'affichage (toast, état vide, etc.).
+        console.warn('[AUTH] 403 Forbidden:', req.method, req.url);
       }
       return throwError(() => error);
     })

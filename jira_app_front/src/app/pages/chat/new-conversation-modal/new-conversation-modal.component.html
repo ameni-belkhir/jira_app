@@ -1,0 +1,126 @@
+@if (open) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 p-4 modal-backdrop" (click)="onBackdropClick($event)">
+    <div class="w-full max-w-md rounded-2xl bg-white shadow-theme-lg dark:bg-gray-900">
+      <!-- Header -->
+      <div class="flex items-center justify-between border-b border-gray-100 p-5 dark:border-gray-800">
+        <h3 class="text-base font-semibold text-gray-800 dark:text-white/90">Nouvelle conversation</h3>
+        <button
+          type="button"
+          (click)="closeModal()"
+          title="Fermer"
+          class="rounded-full p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 8.586l3.293-3.293a1 1 0 111.414 1.414L11.414 10l3.293 3.293a1 1 0 01-1.414 1.414L10 11.414l-3.293 3.293a1 1 0 01-1.414-1.414L8.586 10 5.293 6.707a1 1 0 011.414-1.414L10 8.586z" clip-rule="evenodd"/></svg>
+        </button>
+      </div>
+
+      <!-- Body -->
+      <div class="max-h-[60vh] space-y-4 overflow-y-auto p-5">
+        <!-- Type: 1:1 vs groupe -->
+        <div class="flex gap-2">
+          <button
+            type="button"
+            (click)="isGroup = false; onGroupChange()"
+            class="flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors"
+            [class.border-brand-500]="!isGroup"
+            [class.border-gray-200]="isGroup"
+            [class.text-brand-600]="!isGroup"
+            [class.text-gray-600]="isGroup"
+          >Direct</button>
+          <button
+            type="button"
+            (click)="isGroup = true"
+            class="flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors"
+            [class.border-brand-500]="isGroup"
+            [class.border-gray-200]="!isGroup"
+            [class.text-brand-600]="isGroup"
+            [class.text-gray-600]="!isGroup"
+          >Groupe</button>
+        </div>
+
+        @if (isGroup) {
+          <div>
+            <label class="sr-only" for="conv-name">Nom du groupe</label>
+            <input
+              id="conv-name"
+              type="text"
+              [(ngModel)]="name"
+              placeholder="Nom du groupe"
+              class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-800 dark:bg-gray-800 dark:text-gray-200"
+            />
+          </div>
+        }
+
+        <!-- Recherche -->
+        <div>
+          <label class="sr-only" for="conv-search">Rechercher un participant</label>
+          <input
+            id="conv-search"
+            type="text"
+            [(ngModel)]="searchTerm"
+            placeholder="Rechercher un participant…"
+            class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-800 dark:bg-gray-800 dark:text-gray-200"
+          />
+        </div>
+
+        <!-- Liste des contacts -->
+        <div class="space-y-1">
+          @if (loading()) {
+            <p class="text-center text-sm text-gray-400 dark:text-gray-500">Chargement…</p>
+          } @else if (filteredContacts.length === 0) {
+            <p class="text-center text-sm text-gray-400 dark:text-gray-500">Aucun participant trouvé.</p>
+          } @else {
+            @for (contact of filteredContacts; track contact.id) {
+              <button
+                type="button"
+                (click)="toggleContact(contact.id)"
+                class="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors"
+                [class.bg-brand-50]="selectedIds.has(contact.id)"
+                [class.hover:bg-gray-50]="!selectedIds.has(contact.id)"
+                [class.dark:bg-brand-500/10]="selectedIds.has(contact.id)"
+                [class.dark:hover:bg-gray-800]="!selectedIds.has(contact.id)"
+              >
+                <img
+                  class="h-9 w-9 rounded-full object-cover"
+                  [src]="contact.avatar | safeImage"
+                  alt="{{ contact.name }}"
+                  title="{{ contact.name }}"
+                />
+                <span class="min-w-0 flex-1">
+                  <span class="block truncate text-sm font-medium text-gray-800 dark:text-white/90">{{ contact.name }}</span>
+                  <span class="block truncate text-xs text-gray-400">{{ contact.email }}</span>
+                </span>
+                <span
+                  class="flex h-5 w-5 items-center justify-center rounded-md border text-xs"
+                  [class.border-brand-500]="selectedIds.has(contact.id)"
+                  [class.bg-brand-500]="selectedIds.has(contact.id)"
+                  [class.text-white]="selectedIds.has(contact.id)"
+                  [class.border-gray-300]="!selectedIds.has(contact.id)"
+                >
+                  @if (selectedIds.has(contact.id)) { ✓ }
+                </span>
+              </button>
+            }
+          }
+        </div>
+
+        @if (error) {
+          <p class="text-sm font-medium text-red-500">{{ error }}</p>
+        }
+      </div>
+
+      <!-- Footer -->
+      <div class="border-t border-gray-100 p-4 dark:border-gray-800">
+        <button
+          type="button"
+          (click)="submit()"
+          [disabled]="submitting()"
+          class="w-full rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {{ submitting() ? 'Création…' : 'Créer la conversation' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+

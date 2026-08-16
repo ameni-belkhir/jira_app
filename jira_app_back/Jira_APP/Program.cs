@@ -105,7 +105,8 @@ builder.Services.AddAuthentication(options =>
         };
 
         // Important pour SignalR : extraire le token JWT depuis la query string
-        // car les connexions WebSocket ne peuvent pas passer de headers HTTP
+        // car les connexions WebSocket ne peuvent pas passer de headers HTTP.
+        // Applique l'extraction pour TOUS les hubs SignalR (notifications ET chat).
         options.Events = new JwtBearerEvents
         {
             OnMessageReceived = context =>
@@ -113,7 +114,9 @@ builder.Services.AddAuthentication(options =>
                 var accessToken = context.Request.Query["access_token"];
                 var path = context.HttpContext.Request.Path;
 
-                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs/notifications"))
+                if (!string.IsNullOrEmpty(accessToken) &&
+                    (path.StartsWithSegments("/hubs/notifications") ||
+                     path.StartsWithSegments("/hubs/chat")))
                 {
                     context.Token = accessToken;
                 }

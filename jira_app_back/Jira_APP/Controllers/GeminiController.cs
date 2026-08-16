@@ -7,7 +7,6 @@ using Application.Exceptions;
 using Application.Interfaces;
 using Domain.Entity;
 using Infrastructure.Persistence;
-using Jira_APP.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -21,15 +20,18 @@ namespace Jira_APP.Controllers
     public class GeminiController : ControllerBase
     {
         private readonly IGeminiService _geminiService;
+        private readonly IProjectAuthorizationService _projectAuthService;
         private readonly ApplicationDbContext _db;
         private readonly ILogger<GeminiController> _logger;
 
         public GeminiController(
             IGeminiService geminiService,
+            IProjectAuthorizationService projectAuthService,
             ApplicationDbContext db,
             ILogger<GeminiController> logger)
         {
             _geminiService = geminiService;
+            _projectAuthService = projectAuthService;
             _db = db;
             _logger = logger;
         }
@@ -85,7 +87,7 @@ namespace Jira_APP.Controllers
             var projectExists = await _db.Projects.AsNoTracking().AnyAsync(p => p.Id == projectId);
             if (!projectExists) return NotFound();
 
-            var role = await ProjectAuthorizationHelper.GetUserRoleInProjectAsync(_db, userId.Value, projectId);
+            var role = await _projectAuthService.GetUserRoleInProjectAsync(userId.Value, projectId);
             if (role != "ScrumMaster" && role != "Senior")
                 return Forbid();
 

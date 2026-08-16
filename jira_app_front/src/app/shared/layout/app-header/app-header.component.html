@@ -25,10 +25,16 @@
           </svg>
         }
       </button>
-      <!-- Logo (placeholder) -->
-      <a routerLink="/" class="xl:hidden">
-        <img class="dark:hidden" src="/images/logo/logo.svg" alt="Logo" />
-        <img class="hidden dark:block" src="/images/logo/logo-dark.svg" alt="Logo" />
+      <!-- Logo -->
+      <a routerLink="/dashboard" class="flex items-center gap-2 xl:hidden">
+        <svg width="36" height="36" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" class="hover:scale-105 transition-transform duration-200 cursor-pointer">
+          <rect x="6" y="6" width="22" height="22" rx="6" fill="#3B82F6" fill-opacity="0.5"/>
+          <rect x="12" y="12" width="22" height="22" rx="6" fill="#6366F1"/>
+          <rect x="16" y="17" width="14" height="2.5" rx="1.25" fill="white"/>
+          <rect x="16" y="22" width="10" height="2.5" rx="1.25" fill="white" fill-opacity="0.7"/>
+          <circle cx="18" cy="28" r="1.5" fill="#38BDF8"/>
+        </svg>
+        <span class="text-lg font-bold tracking-tight text-gray-900 dark:text-white">Jira App</span>
       </a>
       <button (click)="toggleApplicationMenu()"
         class="flex items-center justify-center w-10 h-10 text-gray-700 rounded-lg z-99999 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 xl:hidden">

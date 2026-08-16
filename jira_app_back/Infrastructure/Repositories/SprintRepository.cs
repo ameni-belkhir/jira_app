@@ -46,6 +46,7 @@ namespace Infrastructure.Repositories
             return await _context.Sprints
                 .Where(s => s.ProjectId == projectId)
                 .Include(s => s.Tickets)
+                .ThenInclude(t => t.SubTickets)
                 .ToListAsync();
         }
 

@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, DestroyRef } from '@angular/core';
 import { AuthPageLayoutComponent } from '../../shared/layout/auth-page-layout/auth-page-layout.component';
 import { Router, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -7,6 +7,7 @@ import { AuthService, LoginSuccessResponse } from '../../services/auth.service';
 import { NotificationService } from '../../shared/services/notification.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { finalize } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-login',
@@ -28,6 +29,7 @@ export class LoginComponent {
   emailNotVerified = false;
 
   private notification = inject(NotificationService);
+  private destroyRef = inject(DestroyRef);
 
   constructor(
     private fb: FormBuilder,
@@ -63,10 +65,13 @@ export class LoginComponent {
     this.notification.loading('Connexion en cours…');
 
 this.authService.login(this.loginForm.value)
-      .pipe(finalize(() => {
-        this.loading = false;
-        this.notification.dismiss();
-      }))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          this.loading = false;
+          this.notification.dismiss();
+        })
+      )
       .subscribe({
         next: (response: any) => {
           // If the backend returns a LoginSuccessResponse directly, save the token

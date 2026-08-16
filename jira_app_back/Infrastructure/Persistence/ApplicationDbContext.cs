@@ -33,6 +33,7 @@ namespace Infrastructure.Persistence
         public DbSet<ChatConversation> ChatConversations => Set<ChatConversation>();
         public DbSet<ConversationMember> ConversationMembers => Set<ConversationMember>();
         public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
+        public DbSet<UserChatPreferences> UserChatPreferences => Set<UserChatPreferences>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -261,6 +262,39 @@ namespace Infrastructure.Persistence
             modelBuilder.Entity<ChatMessage>()
                 .HasIndex(m => new { m.ConversationId, m.SenderId, m.IsRead });
 
+            // UserChatPreferences : préférences d'affichage du chat, globale ou par conversation.
+            modelBuilder.Entity<UserChatPreferences>(entity =>
+            {
+                entity.HasKey(p => p.Id);
+
+                entity.HasOne(p => p.User)
+                    .WithMany()
+                    .HasForeignKey(p => p.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(p => p.Conversation)
+                    .WithMany()
+                    .HasForeignKey(p => p.ConversationId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.Property(p => p.BackgroundType).HasMaxLength(20);
+                entity.Property(p => p.BackgroundKey).HasMaxLength(100);
+                entity.Property(p => p.SentBubbleColor).HasMaxLength(20);
+                entity.Property(p => p.ReceivedBubbleColor).HasMaxLength(20);
+
+                // Une seule préférence GLOBALE par utilisateur (ConversationId IS NULL).
+                entity.HasIndex(p => p.UserId)
+                    .IsUnique()
+                    .HasFilter("[ConversationId] IS NULL")
+                    .HasDatabaseName("UX_UserChatPreferences_GlobalPerUser");
+
+                // Une seule préférence PAR conversation (ConversationId IS NOT NULL).
+                entity.HasIndex(p => new { p.UserId, p.ConversationId })
+                    .IsUnique()
+                    .HasFilter("[ConversationId] IS NOT NULL")
+                    .HasDatabaseName("UX_UserChatPreferences_PerConversation");
+            });
+
             // Pré-remplissage des rôles par défaut (Seeding)
             modelBuilder.Entity<Role>().HasData(
                 new Role { Id = 1, Description = "Admin" },
@@ -369,13 +403,19 @@ namespace Infrastructure.Persistence
 
         private static IEnumerable<string> GetDefaultInterfaceKeys(string role) => role switch
         {
+            // Seul l'Admin a accès au Dashboard, aux statistiques globales et au back-office.
             "Admin" => InterfaceKeys.All,
-            "ScrumMaster" => InterfaceKeys.All.Where(key => key is not InterfaceKeys.AdminUsers and not InterfaceKeys.AdminProjects and not InterfaceKeys.AdminStatistics),
+            "ScrumMaster" => new[]
+            {
+                InterfaceKeys.Projects,
+                InterfaceKeys.Chat,
+                InterfaceKeys.Backlog,
+                InterfaceKeys.Kanban,
+                InterfaceKeys.Profile
+            },
             "Senior" => new[]
             {
-                InterfaceKeys.Dashboard,
                 InterfaceKeys.Projects,
-                InterfaceKeys.Statistics,
                 InterfaceKeys.Chat,
                 InterfaceKeys.Backlog,
                 InterfaceKeys.Kanban,
@@ -383,7 +423,8 @@ namespace Infrastructure.Persistence
             },
             "Developer" => new[]
             {
-                InterfaceKeys.Dashboard,
+                InterfaceKeys.Projects,
+                InterfaceKeys.Backlog,
                 InterfaceKeys.Kanban,
                 InterfaceKeys.Chat,
                 InterfaceKeys.Profile

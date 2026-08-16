@@ -1,11 +1,12 @@
 <div class="flex h-[calc(100vh-4rem)] bg-gray-50 dark:bg-gray-950">
   <!-- Conversations sidebar -->
-  <app-chat-sidebar
+<app-chat-sidebar
     [conversations]="conversations()"
     [activeConversationId]="activeConversation()?.id ?? null"
     [onlineUsers]="onlineUsers()"
-    (selectConversation)="selectConversation($event)"
-  />
+  (selectConversation)="selectConversation($event)"
+    (newConversation)="openNewConversation()"
+    />
 
   <!-- Chat window -->
   <section class="flex flex-1 flex-col">
@@ -15,9 +16,26 @@
       [online]="isConversationOnline()"
       [typingUsers]="typingUsers()"
       [currentUserId]="currentUserId"
+      [isAdmin]="isAdmin"
+      [isSending]="isSending()"
       (sendMessage)="onSend($event)"
       (typing)="onTyping($event)"
       (markAsRead)="onMarkAsRead()"
+      (editMessage)="onEditMessage($event)"
+      (deleteMessage)="onDeleteMessage($event)"
     />
   </section>
 </div>
+
+<app-new-conversation-modal
+  [open]="showNewConversation()"
+  (close)="closeNewConversation()"
+  (create)="onCreateConversation($event)"
+>
+</app-new-conversation-modal>
+
+@if (loadError()) {
+  <div class="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-red-500 px-4 py-3 text-sm font-medium text-white shadow-theme-lg">
+    Impossible de charger les conversations. Vérifiez que le serveur est accessible.
+  </div>
+}

@@ -62,6 +62,9 @@ export class AuthService {
   private readonly PERMISSIONS_KEY = 'permissions';
   private readonly MUST_CHANGE_PASSWORD_KEY = 'mustChangePassword';
 
+  /** Préfixe des clés de thème de la zone de discussion (ChatThemeService). */
+  private readonly CHAT_THEME_PREFIX = 'chat-theme';
+
   private apiUrl = environment.apiUrl;
   private isAuthenticatedSubject = new BehaviorSubject<boolean>(this.checkAuth());
   private permissionsSubject = new BehaviorSubject<string[]>(this.getPermissions());
@@ -86,6 +89,32 @@ export class AuthService {
 
   constructor(private http: HttpClient, private injector: Injector) {}
 
+  /**
+   * Lecture d'une clé de session :
+   * sessionStorage en priorité, puis localStorage en secours (migration des
+   * anciennes sessions). Le token n'est donc plus persisté indéfiniment.
+   */
+  private read(key: string): string | null {
+    const value = window.sessionStorage.getItem(key);
+    if (value !== null) return value;
+    return window.localStorage.getItem(key);
+  }
+
+  /**
+   * Écriture d'une clé de session dans sessionStorage uniquement.
+   * Supprime l'ancienne clé localStorage correspondante pour éviter tout doublon.
+   */
+  private write(key: string, value: string): void {
+    window.sessionStorage.setItem(key, value);
+    window.localStorage.removeItem(key);
+  }
+
+  /** Suppression d'une clé de session dans les deux stockages. */
+  private remove(key: string): void {
+    window.sessionStorage.removeItem(key);
+    window.localStorage.removeItem(key);
+  }
+
   /** Lazily start the SignalR connection after a successful login or page refresh. */
   private startSignalR(): void {
     try {
@@ -107,10 +136,18 @@ export class AuthService {
   }
 
   private checkAuth(): boolean {
-    const token = localStorage.getItem(this.TOKEN_KEY);
+    let token = window.sessionStorage.getItem(this.TOKEN_KEY);
+    if (!token) {
+      token = window.localStorage.getItem(this.TOKEN_KEY);
+      if (token) {
+        // Migration d'une ancienne session localStorage vers sessionStorage
+        // (le token n'est plus persisté au-delà de la session de navigation).
+        this.write(this.TOKEN_KEY, token);
+      }
+    }
     if (!token) return false;
 
-    const expiration = localStorage.getItem(this.EXPIRATION_KEY);
+    const expiration = this.read(this.EXPIRATION_KEY);
     if (expiration) {
       const expDate = new Date(expiration);
       if (expDate <= new Date()) {
@@ -152,21 +189,21 @@ export class AuthService {
 
   /**
    * Saves the authentication session from a successful login (or 2FA verification).
-   * Stores token, email, role, expiration, userId, mustChangePassword in localStorage.
+   * Stores token, email, role, expiration, userId, mustChangePassword in sessionStorage.
    * Les permissions viennent directement de la réponse du backend (`response.permissions`).
    */
   saveAuthSession(response: LoginSuccessResponse): void {
-    localStorage.setItem(this.TOKEN_KEY, response.token);
-    localStorage.setItem(this.EMAIL_KEY, response.email);
-    localStorage.setItem(this.ROLE_KEY, response.role);
-    localStorage.setItem(this.EXPIRATION_KEY, response.expiration);
+    this.write(this.TOKEN_KEY, response.token);
+    this.write(this.EMAIL_KEY, response.email);
+    this.write(this.ROLE_KEY, response.role);
+    this.write(this.EXPIRATION_KEY, response.expiration);
     // Store mustChangePassword flag
     if (response.mustChangePassword !== undefined) {
-      localStorage.setItem(this.MUST_CHANGE_PASSWORD_KEY, String(response.mustChangePassword));
+      this.write(this.MUST_CHANGE_PASSWORD_KEY, String(response.mustChangePassword));
     }
     const userId = this.getUserIdFromToken(response.token);
     if (userId) {
-      localStorage.setItem(this.USER_ID_KEY, userId);
+      this.write(this.USER_ID_KEY, userId);
     }
     // Permissions réelles de l'utilisateur, renvoyées par le backend au login.
     this.savePermissions(response.permissions ?? []);
@@ -196,7 +233,7 @@ export class AuthService {
 
   /**
    * Rafraîchit SILENCIEUSEMENT les permissions depuis le backend (GET /Auth/me/permissions)
-   * et écrase `localStorage['permissions']` + l'observable avec le résultat frais.
+   * et écrase `sessionStorage['permissions']` + l'observable avec le résultat frais.
    *
    * Conçu pour être appelé en arrière-plan :
    * - juste après un login réussi (pour rester robuste si `AuthResponseDto.Permissions`
@@ -219,10 +256,10 @@ export class AuthService {
   }
 
 /**
-   * Persist permissions array to localStorage and notify subscribers.
+   * Persist permissions array to sessionStorage and notify subscribers.
    */
   savePermissions(permissions: string[]): void {
-    localStorage.setItem(this.PERMISSIONS_KEY, JSON.stringify(permissions));
+    this.write(this.PERMISSIONS_KEY, JSON.stringify(permissions));
     this.permissionsSubject.next(permissions);
   }
 
@@ -231,7 +268,7 @@ export class AuthService {
    */
   getPermissions(): string[] {
     try {
-      const raw = localStorage.getItem(this.PERMISSIONS_KEY);
+      const raw = this.read(this.PERMISSIONS_KEY);
       if (!raw) return [];
       return JSON.parse(raw) as string[];
     } catch {
@@ -246,6 +283,12 @@ export class AuthService {
     return this.permissionsSubject.value.includes(key);
   }
 
+  /**
+   * Déconnexion centralisée : purge de toute la session en cours.
+   * - vide intégralement le sessionStorage (tokens + données utilisateur) ;
+   * - supprime les clés de session résiduelles du localStorage (anciennes sessions) ;
+   * - nettoie les thèmes locaux temporaires de la discussion (chat-theme-*).
+   */
   logout(): void {
     this.clearStorage();
     this.isAuthenticatedSubject.next(false);
@@ -254,23 +297,38 @@ export class AuthService {
     this.stopSignalR();
   }
 
-private clearStorage(): void {
-    // Préserve la configuration frontend des pages par rôle (global, par rôle).
-    // Seules les informations de session doivent être supprimées au logout.
-    const rolePermissions = localStorage.getItem('rolePagePermissions');
-    localStorage.clear();
-    if (rolePermissions !== null) {
-      localStorage.setItem('rolePagePermissions', rolePermissions);
+  private clearStorage(): void {
+    // Session courante : purge intégrale du sessionStorage.
+    window.sessionStorage.clear();
+
+    // Anciennes clés de session encore présentes dans le localStorage.
+    [this.TOKEN_KEY, this.EMAIL_KEY, this.ROLE_KEY, this.EXPIRATION_KEY,
+     this.USER_ID_KEY, this.PERMISSIONS_KEY, this.MUST_CHANGE_PASSWORD_KEY]
+      .forEach((key) => window.localStorage.removeItem(key));
+
+    // Profil affiché par la topbar (écrit par user-dropdown / edit-profile-modal) :
+    // purge indispensable pour ne pas laisser fuiter le nom/avatar du compte précédent.
+    ['userName', 'userAvatar', 'userEmail', 'userIdProfile']
+      .forEach((key) => window.localStorage.removeItem(key));
+
+    // Thèmes locaux temporaires de la zone de discussion (chat-theme-<userId>).
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const k = window.localStorage.key(i);
+      if (k && k.startsWith(this.CHAT_THEME_PREFIX)) {
+        keysToRemove.push(k);
+      }
     }
+    keysToRemove.forEach((k) => window.localStorage.removeItem(k));
   }
 
   getToken(): string | null {
-    return localStorage.getItem(this.TOKEN_KEY);
+    return this.read(this.TOKEN_KEY);
   }
 
   /** Rôle normalisé (Admin, ScrumMaster, Senior, Developer) ou null. */
   getRole(): string | null {
-    const raw = localStorage.getItem(this.ROLE_KEY);
+    const raw = this.read(this.ROLE_KEY);
     if (!raw) return null;
     return normalizeRole(raw);
   }
@@ -286,11 +344,11 @@ private clearStorage(): void {
   }
 
   getEmail(): string | null {
-    return localStorage.getItem(this.EMAIL_KEY);
+    return this.read(this.EMAIL_KEY);
   }
 
   getUserId(): string | null {
-    return localStorage.getItem(this.USER_ID_KEY);
+    return this.read(this.USER_ID_KEY);
   }
 
   /**
@@ -298,7 +356,7 @@ private clearStorage(): void {
    * Returns false if the key is absent (backward compatibility).
    */
   getMustChangePassword(): boolean {
-    const val = localStorage.getItem(this.MUST_CHANGE_PASSWORD_KEY);
+    const val = this.read(this.MUST_CHANGE_PASSWORD_KEY);
     if (val === null) return false;
     return val === 'true';
   }
@@ -307,7 +365,7 @@ private clearStorage(): void {
    * Clears the mustChangePassword flag after a successful password change.
    */
   clearMustChangePassword(): void {
-    localStorage.setItem(this.MUST_CHANGE_PASSWORD_KEY, 'false');
+    this.write(this.MUST_CHANGE_PASSWORD_KEY, 'false');
   }
 
   /**

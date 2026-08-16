@@ -4,6 +4,7 @@
     <h2 class="text-base font-semibold text-gray-800 dark:text-white/90">Messages</h2>
     <button
       type="button"
+      (click)="newConversation.emit()"
       title="Nouvelle conversation"
       aria-label="Nouvelle conversation"
       class="flex items-center gap-1 text-xs font-medium text-brand-500 transition-colors hover:text-brand-600"
@@ -44,7 +45,7 @@
         <span class="relative shrink-0">
           <img
             class="h-11 w-11 rounded-full object-cover"
-            [src]="conv.avatar || '/images/user/user-01.jpg'"
+            [src]="conv.avatar | safeImage"
             [alt]="conv.name"
             title="{{ conv.name }}"
           />

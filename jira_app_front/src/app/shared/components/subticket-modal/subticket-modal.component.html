@@ -32,6 +32,19 @@
         }
 
         @if (!loading()) {
+          <!-- Sub-ticket Progress -->
+          @if (subtickets().length > 0) {
+            <div class="mb-4">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs text-gray-500 dark:text-gray-400">Progression</span>
+                <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ completedCount() }}/{{ subtickets().length }} sous-tickets terminés</span>
+              </div>
+              <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                <div class="h-1.5 rounded-full bg-success-500 transition-all duration-500" [style.width.%]="(completedCount() / subtickets().length) * 100"></div>
+              </div>
+            </div>
+          }
+
           <!-- Sub-ticket List -->
           @if (subtickets().length === 0) {
             <p class="text-sm text-gray-500 dark:text-gray-400 text-center py-8">Aucun sous-ticket.</p>
@@ -54,7 +67,7 @@
           }
 
           <!-- Create Sub-ticket button -->
-          @if (canManageTickets && !showCreateForm()) {
+          @if (canCreateSubtickets && !showCreateForm()) {
             <button (click)="toggleCreateForm()" class="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-400 hover:border-brand-500 hover:text-brand-500 transition-colors">
               <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />

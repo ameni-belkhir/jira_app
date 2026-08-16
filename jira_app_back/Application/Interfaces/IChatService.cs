@@ -13,6 +13,8 @@ namespace Application.Interfaces
         Task<ChatConversationDto> CreateConversationAsync(int creatorUserId, CreateChatConversationDto dto);
         Task<bool> AddMemberAsync(Guid conversationId, int requesterUserId, int memberUserId);
         Task<ChatMessageDto?> SendMessageAsync(int senderId, Guid conversationId, string content, string? attachmentUrl);
+        Task<ChatMessageDto?> EditMessageAsync(int requesterUserId, bool isAdmin, Guid conversationId, Guid messageId, string content);
+        Task<bool> DeleteMessageAsync(int requesterUserId, bool isAdmin, Guid conversationId, Guid messageId);
         Task<bool> MarkMessagesReadAsync(int userId, Guid conversationId);
         Task<bool> IsMemberAsync(int userId, Guid conversationId);
     }

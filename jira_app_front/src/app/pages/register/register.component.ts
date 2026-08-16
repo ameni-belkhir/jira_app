@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, DestroyRef } from '@angular/core';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -6,6 +6,7 @@ import { AuthService, RegisterRequest } from '../../services/auth.service';
 import { NotificationService } from '../../shared/services/notification.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { finalize } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AuthPageLayoutComponent } from '../../shared/layout/auth-page-layout/auth-page-layout.component';
 
 @Component({
@@ -36,6 +37,7 @@ export class RegisterComponent implements OnInit {
   projectId: number | null = null;
 
   private notification = inject(NotificationService);
+  private destroyRef = inject(DestroyRef);
 
   constructor(
     private fb: FormBuilder,
@@ -65,7 +67,9 @@ export class RegisterComponent implements OnInit {
       return;
     }
 
-    this.route.queryParams.subscribe(params => {
+    this.route.queryParams
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(params => {
       this.token = params['token'] || null;
       this.invitationEmail = params['email'] || null;
       // TODO: RÉACTIVER — Décommenter quand le système d'invitation sera implémenté
@@ -121,10 +125,13 @@ export class RegisterComponent implements OnInit {
     };
 
     this.authService.register(registerData)
-      .pipe(finalize(() => {
-        this.loading = false;
-        this.notification.dismiss();
-      }))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          this.loading = false;
+          this.notification.dismiss();
+        })
+      )
       .subscribe({
         next: () => {
           this.registeredEmail = this.registerForm.value.email;
@@ -161,10 +168,13 @@ export class RegisterComponent implements OnInit {
       email: this.registeredEmail,
       code: this.verifyForm.value.code
     })
-      .pipe(finalize(() => {
-        this.loading = false;
-        this.notification.dismiss();
-      }))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          this.loading = false;
+          this.notification.dismiss();
+        })
+      )
       .subscribe({
         next: () => {
           this.notification.success('E-mail vérifié avec succès.');
@@ -197,10 +207,13 @@ export class RegisterComponent implements OnInit {
     };
 
     this.authService.register(registerData)
-      .pipe(finalize(() => {
-        this.loading = false;
-        this.notification.dismiss();
-      }))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          this.loading = false;
+          this.notification.dismiss();
+        })
+      )
       .subscribe({
         next: () => {
           this.error = '';

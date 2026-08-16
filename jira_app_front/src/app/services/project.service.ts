@@ -16,6 +16,8 @@ export interface BacklogTicket {
   color?: string;
   hasSubTickets?: boolean;
   parentTicketId?: number | null;
+  subTickets?: BacklogTicket[];
+  isExpanded?: boolean;
 }
 
 export interface BacklogSprint {

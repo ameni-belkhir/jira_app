@@ -1,0 +1,114 @@
+@if (isOpen()) {
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center modal-backdrop"
+    (click)="onBackdropClick($event)"
+  >
+    <!-- Backdrop -->
+    <div class="fixed inset-0 bg-black/40 dark:bg-black/60 transition-opacity"></div>
+
+    <!-- Modal -->
+    <div class="relative z-10 w-full max-w-md mx-4 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl p-6 border border-slate-200 dark:border-slate-800">
+      <!-- Header -->
+      <div class="flex items-center justify-between mb-5">
+        <h2 class="text-lg font-semibold text-gray-800 dark:text-white">
+          {{ isEditMode() ? 'Modifier le Sprint' : 'Créer un Sprint' }}
+        </h2>
+        <button
+          (click)="closeModal()"
+          title="Fermer"
+          class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+        >
+          <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+          </svg>
+        </button>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4">
+        <!-- Nom du Sprint -->
+        <div>
+          <label for="sprint-name" class="block mb-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+            Nom du Sprint <span class="text-error-500">*</span>
+          </label>
+          <input
+            id="sprint-name"
+            type="text"
+            formControlName="name"
+            placeholder="Ex : Sprint 1 - Authentification &amp; Layout"
+            class="block w-full rounded-lg border border-gray-200 bg-transparent px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:text-white/90 dark:placeholder:text-white/30"
+            [class.border-error-500]="f['name'].invalid && f['name'].touched"
+          />
+          @if (f['name'].invalid && f['name'].touched) {
+            <p class="mt-1 text-xs text-error-500">Le nom du sprint est requis.</p>
+          }
+        </div>
+
+        <!-- Objectif du Sprint -->
+        <div>
+          <label for="sprint-goal" class="block mb-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+            Objectif du Sprint (Sprint Goal)
+          </label>
+          <textarea
+            id="sprint-goal"
+            formControlName="goal"
+            rows="3"
+            placeholder="Ex : Finaliser les pages de connexion et la navigation"
+            class="block w-full rounded-lg border border-gray-200 bg-transparent px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:text-white/90 dark:placeholder:text-white/30 resize-none"
+          ></textarea>
+        </div>
+
+        <!-- Dates -->
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="sprint-start" class="block mb-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+              Date et heure de début
+            </label>
+            <input
+              #startPicker
+              id="sprint-start"
+              type="text"
+              formControlName="startDate"
+              placeholder="Sélectionner…"
+              title="Date et heure de début"
+              aria-label="Date et heure de début"
+              class="block w-full rounded-lg border border-gray-200 bg-transparent px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:text-white/90 dark:placeholder:text-white/30"
+            />
+          </div>
+          <div>
+            <label for="sprint-end" class="block mb-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+              Date et heure de fin
+            </label>
+            <input
+              #endPicker
+              id="sprint-end"
+              type="text"
+              formControlName="endDate"
+              placeholder="Sélectionner…"
+              title="Date et heure de fin"
+              aria-label="Date et heure de fin"
+              class="block w-full rounded-lg border border-gray-200 bg-transparent px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:text-white/90 dark:placeholder:text-white/30"
+            />
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="flex items-center justify-end gap-3 pt-2">
+          <button
+            type="button"
+            (click)="closeModal()"
+            class="inline-flex items-center justify-center rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors"
+          >
+            Annuler
+          </button>
+          <button
+            type="submit"
+            [disabled]="submitting()"
+            class="inline-flex items-center justify-center rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+          >
+            {{ submitting() ? '…' : (isEditMode() ? 'Enregistrer' : 'Créer le Sprint') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

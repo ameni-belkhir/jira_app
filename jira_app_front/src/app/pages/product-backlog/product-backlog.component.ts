@@ -1,18 +1,25 @@
-import { Component, OnInit, signal, ViewChild, computed } from '@angular/core';
+import { Component, OnInit, signal, ViewChild, computed, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
-import { CdkDragDrop, transferArrayItem } from '@angular/cdk/drag-drop';
-import { finalize, firstValueFrom } from 'rxjs';
+import { CdkDropListGroup, CdkDropList, CdkDrag, CdkDragDrop, transferArrayItem } from '@angular/cdk/drag-drop';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { finalize } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ProjectService, BacklogResponse, BacklogTicket, BacklogSprint, SprintRequest, CreateTicketRequest } from '../../services/project.service';
-import { ProjectMembersService, AvailableUser } from '../../services/project-members.service';
+import { ProjectService, BacklogResponse, BacklogTicket, CreateTicketRequest } from '../../services/project.service';
+import { ProjectStateService } from '../../services/project-state.service';
+import { TicketService } from '../../services/ticket.service';
 import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../shared/services/notification.service';
-import { CreateSprintModalComponent } from './create-sprint-modal/create-sprint-modal.component';
+import { ProjectMembersService, AvailableUser } from '../../services/project-members.service';
+import { SprintModalComponent } from './sprint-modal/sprint-modal.component';
+import { CompleteSprintModalComponent } from './complete-sprint-modal/complete-sprint-modal.component';
 import { CreateTicketModalComponent } from './create-ticket-modal/create-ticket-modal.component';
 import { SprintCardComponent } from './sprint-card/sprint-card.component';
 import { SubticketModalComponent } from '../../shared/components/subticket-modal/subticket-modal.component';
+import { TicketDetailModalComponent } from '../../shared/components/ticket-detail-modal/ticket-detail-modal.component';
+import { TicketCardComponent, Ticket } from '../projects/ticket-card/ticket-card.component';
+import { AssignTicketModalComponent } from '../../shared/components/assign-ticket-modal/assign-ticket-modal.component';
 
 @Component({
   selector: 'app-product-backlog',
@@ -21,19 +28,29 @@ import { SubticketModalComponent } from '../../shared/components/subticket-modal
     CommonModule,
     FormsModule,
     RouterModule,
-    CreateSprintModalComponent,
+    CdkDropListGroup,
+    CdkDropList,
+    CdkDrag,
+    SprintModalComponent,
+    CompleteSprintModalComponent,
     CreateTicketModalComponent,
     SprintCardComponent,
-    SubticketModalComponent
+    SubticketModalComponent,
+    TicketDetailModalComponent,
+    TicketCardComponent,
+    AssignTicketModalComponent
   ],
   templateUrl: './product-backlog.component.html',
   styles: ``
 })
 export class ProductBacklogComponent implements OnInit {
 
-  @ViewChild(CreateSprintModalComponent) createSprintModal!: CreateSprintModalComponent;
+  @ViewChild(SprintModalComponent) sprintModal!: SprintModalComponent;
+  @ViewChild(CompleteSprintModalComponent) completeSprintModal!: CompleteSprintModalComponent;
   @ViewChild(CreateTicketModalComponent) createTicketModal!: CreateTicketModalComponent;
   @ViewChild(SubticketModalComponent) subticketModal!: SubticketModalComponent;
+  @ViewChild(TicketDetailModalComponent) ticketDetailModal!: TicketDetailModalComponent;
+  @ViewChild(AssignTicketModalComponent) assignTicketModal!: AssignTicketModalComponent;
 
   projectId: number = 0;
   projectName: string = '';
@@ -42,34 +59,22 @@ export class ProductBacklogComponent implements OnInit {
   backlogData = signal<BacklogResponse | null>(null);
   loading = signal(false);
   error = signal('');
+  noProjectAccess = signal(false);
 
   // Search
   searchQuery = '';
   filteredUnassignedTickets = signal<BacklogTicket[]>([]);
 
+  // DnD
+  unassignedDropListId = 'backlog-drop-list';
+
+  /** Tickets non assignés à un sprint (réserve de backlog). */
+  unassignedTickets = computed<BacklogTicket[]>(() =>
+    (this.backlogData()?.backlogTickets || []).filter(t => t.sprintId == null)
+  );
+
   // Refresh
   refreshing = signal(false);
-
-  // UI State
-  epicsOpen = signal(true);
-  sprintExpanded = signal<Record<number, boolean>>({});
-
-  /** Epics computed */
-  epics = computed(() => {
-    const allTickets = [
-      ...(this.backlogData()?.backlogTickets || []),
-      ...(this.backlogData()?.sprints || []).flatMap(s => s.tickets || [])
-    ];
-    const epicMap = new Map<string, { color: string; tickets: BacklogTicket[] }>();
-    for (const t of allTickets) {
-      const key = t.color || '#6b7280';
-      if (!epicMap.has(key)) {
-        epicMap.set(key, { color: key, tickets: [] });
-      }
-      epicMap.get(key)!.tickets.push(t);
-    }
-    return Array.from(epicMap.values());
-  });
 
   /** Team members */
   teamMembers = computed(() => {
@@ -84,21 +89,18 @@ export class ProductBacklogComponent implements OnInit {
     return members;
   });
 
-userRole = signal<string | null>(null);
-
-  // Assign Senior modal state
-  showAssignSeniorModal = signal(false);
-  availableSeniors = signal<AvailableUser[]>([]);
-  loadingSeniors = signal(false);
-  assigningSenior = signal(false);
+  userRole = signal<string | null>(null);
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private projectService: ProjectService,
-    private projectMembersService: ProjectMembersService,
+    private ticketService: TicketService,
     private authService: AuthService,
-    private notification: NotificationService
+    private notification: NotificationService,
+    private projectState: ProjectStateService,
+    private projectMembersService: ProjectMembersService,
+    private destroyRef: DestroyRef
   ) {}
 
   ngOnInit(): void {
@@ -106,6 +108,8 @@ userRole = signal<string | null>(null);
     if (idParam) {
       this.projectId = parseInt(idParam, 10);
       this.projectName = `Project #${this.projectId}`;
+      // Mémorise le projet sélectionné pour le menu (Backlog / Tickets).
+      this.projectState.setProject(this.projectId);
       this.loadBacklog();
       this.loadUserRole();
     }
@@ -116,33 +120,56 @@ userRole = signal<string | null>(null);
       next: (role) => {
         this.userRole.set(role.roleInProject);
       },
-      error: () => {
+      error: (err: HttpErrorResponse) => {
+        if (err.status === 403) {
+          this.noProjectAccess.set(true);
+        }
         this.userRole.set(null);
       }
     });
   }
 
-  /** Whether the current user is a Scrum Master (can assign seniors) */
-  get isScrumMaster(): boolean {
-    return this.userRole() === 'ScrumMaster';
+  /** Créer / éditer tickets, sous-tickets et sprints : Admin + ScrumMaster. */
+  get canEditTickets(): boolean {
+    return this.authService.isAdmin() || this.userRole() === 'ScrumMaster';
   }
 
-  /** Whether the current user can manage tickets (ScrumMaster or Senior) */
-  get canManageTickets(): boolean {
+  /** Gérer les sprints (créer / éditer / démarrer / terminer, déplacer des tickets) : Admin + ScrumMaster. */
+  get canManageSprints(): boolean {
+    return this.canEditTickets;
+  }
+
+  /** Assigner un Developer à un ticket : Admin + ScrumMaster + Senior. */
+  get canAssignTickets(): boolean {
     const role = this.userRole();
-    return role === 'ScrumMaster' || role === 'Senior';
+    return this.authService.isAdmin() || role === 'ScrumMaster' || role === 'Senior';
   }
 
-  /** Whether the current user is a Developer */
-  get isDeveloper(): boolean {
-    return this.userRole() === 'Developer';
+  /** Rôle de l'appelant pour le filtrage du modal d'assignation (Admin global → bypass complet). */
+  get assignCallerRole(): string | null {
+    return this.authService.isAdmin() ? 'Admin' : this.userRole();
   }
 
-  /** Open the "Assign Senior" modal */
-  openAssignSeniorModal(): void {
+  /** Whether the current user is an Admin global */
+  get isAdmin(): boolean {
+    return this.authService.isAdmin();
+  }
+
+  /** Ajouter un Developer comme membre du projet : Senior + Admin. */
+  get canAssignDevelopers(): boolean {
+    return this.authService.isAdmin() || this.userRole() === 'Senior';
+  }
+
+  // ==================== MODAL AFFECTER SENIOR ====================
+  showSeniorModal = signal(false);
+  availableSeniors = signal<AvailableUser[]>([]);
+  loadingSeniors = signal(false);
+  assigningSenior = signal(false);
+
+  openSeniorModal(): void {
     this.loadingSeniors.set(true);
-    this.showAssignSeniorModal.set(true);
-    this.notification.loading('Chargement des seniors disponibles…');
+    this.showSeniorModal.set(true);
+    this.notification.loading('Chargement des Seniors disponibles…');
 
     this.projectMembersService.getAvailableSeniors(this.projectId)
       .pipe(finalize(() => {
@@ -150,25 +177,22 @@ userRole = signal<string | null>(null);
         this.notification.dismiss();
       }))
       .subscribe({
-        next: (seniors) => {
-          this.availableSeniors.set(seniors);
-        },
+        next: (users) => this.availableSeniors.set(users),
         error: () => {
           this.availableSeniors.set([]);
-          this.notification.error('Échec du chargement des seniors disponibles.');
+          this.notification.error('Échec du chargement des Seniors disponibles.');
         }
       });
   }
 
-  closeAssignSeniorModal(): void {
-    this.showAssignSeniorModal.set(false);
+  closeSeniorModal(): void {
+    this.showSeniorModal.set(false);
     this.availableSeniors.set([]);
   }
 
-  /** Assign a senior to the project */
   onAssignSenior(userId: number): void {
     this.assigningSenior.set(true);
-    this.notification.loading('Affectation du senior…');
+    this.notification.loading('Affectation du Senior…');
 
     this.projectMembersService.addSeniorToProject(this.projectId, userId)
       .pipe(finalize(() => {
@@ -177,11 +201,63 @@ userRole = signal<string | null>(null);
       }))
       .subscribe({
         next: () => {
-          this.notification.success('Le senior a été affecté et a reçu un mail de notification.');
-          this.closeAssignSeniorModal();
+          this.notification.success('Senior affecté avec succès.');
+          this.closeSeniorModal();
         },
+        error: (err: HttpErrorResponse) => {
+          const msg = err.error?.message || err.error?.title || 'Échec de l\'affectation du Senior.';
+          this.notification.error(msg);
+        }
+      });
+  }
+
+  // ==================== MODAL AFFECTER DEVELOPER ====================
+  showDeveloperModal = signal(false);
+  availableDevelopers = signal<AvailableUser[]>([]);
+  loadingDevelopers = signal(false);
+  assigningDeveloper = signal(false);
+
+  openDeveloperModal(): void {
+    this.loadingDevelopers.set(true);
+    this.showDeveloperModal.set(true);
+    this.notification.loading('Chargement des Developers disponibles…');
+
+    this.projectMembersService.getAvailableDevelopers(this.projectId)
+      .pipe(finalize(() => {
+        this.loadingDevelopers.set(false);
+        this.notification.dismiss();
+      }))
+      .subscribe({
+        next: (users) => this.availableDevelopers.set(users),
         error: () => {
-          this.notification.error('Échec de l\'affectation du senior.');
+          this.availableDevelopers.set([]);
+          this.notification.error('Échec du chargement des Developers disponibles.');
+        }
+      });
+  }
+
+  closeDeveloperModal(): void {
+    this.showDeveloperModal.set(false);
+    this.availableDevelopers.set([]);
+  }
+
+  onAssignDeveloper(userId: number): void {
+    this.assigningDeveloper.set(true);
+    this.notification.loading('Affectation du Developer…');
+
+    this.projectMembersService.addDeveloperToProject(this.projectId, userId)
+      .pipe(finalize(() => {
+        this.assigningDeveloper.set(false);
+        this.notification.dismiss();
+      }))
+      .subscribe({
+        next: () => {
+          this.notification.success('Developer affecté avec succès.');
+          this.closeDeveloperModal();
+        },
+        error: (err: HttpErrorResponse) => {
+          const msg = err.error?.message || err.error?.title || 'Échec de l\'affectation du Developer.';
+          this.notification.error(msg);
         }
       });
   }
@@ -205,8 +281,12 @@ userRole = signal<string | null>(null);
           this.notification.success('Backlog chargé avec succès.');
         },
         error: (err: HttpErrorResponse) => {
-          const msg = err.status === 0 ? 'Impossible de se connecter au serveur.' 
-                     : err.status === 404 ? 'Projet introuvable.' 
+          if (err.status === 403) {
+            this.noProjectAccess.set(true);
+            return;
+          }
+          const msg = err.status === 0 ? 'Impossible de se connecter au serveur.'
+                     : err.status === 404 ? 'Projet introuvable.'
                      : 'Échec du chargement du backlog.';
           this.error.set(msg);
           this.notification.error(msg);
@@ -222,7 +302,7 @@ userRole = signal<string | null>(null);
 
   private applySearch(): void {
     const q = this.searchQuery.toLowerCase().trim();
-    const backlog = this.backlogData()?.backlogTickets || [];
+    const backlog = this.unassignedTickets();
 
     if (!q) {
       this.filteredUnassignedTickets.set(backlog);
@@ -241,7 +321,7 @@ userRole = signal<string | null>(null);
   }
 
   getConnectedDropListIds(): string[] {
-    const ids: string[] = ['backlog-drop-list'];
+    const ids: string[] = [this.unassignedDropListId];
     if (this.backlogData()?.sprints) {
       for (const sprint of this.backlogData()!.sprints) {
         ids.push(`sprint-${sprint.id}`);
@@ -250,38 +330,106 @@ userRole = signal<string | null>(null);
     return ids;
   }
 
-  onBacklogDrop(event: CdkDragDrop<BacklogTicket[]>): void {
+  /**
+   * Drag & Drop d'un ticket entre la réserve de backlog et les sprints.
+   * targetSprintId === null → le ticket retourne dans la réserve (non assigné).
+   */
+  onTicketDrop(event: CdkDragDrop<BacklogTicket[]>, targetSprintId: number | null): void {
     if (event.previousContainer === event.container) return;
 
-    const ticket = event.previousContainer.data[event.previousIndex];
+    const movedTicket = event.previousContainer.data[event.previousIndex];
+    const targetId = targetSprintId ?? null;
+    const previousSprintId = movedTicket.sprintId ?? null;
+
+    // Optimistic UI : déplacement immédiat dans la liste cible.
     transferArrayItem(
       event.previousContainer.data,
       event.container.data,
       event.previousIndex,
       event.currentIndex
     );
+    movedTicket.sprintId = targetId;
+    this.commitBacklog();
+    this.applySearch();
 
-    this.callMoveTicket(ticket.id, null);
-  }
-
-  onTicketDroppedInSprint(data: { ticketId: number; sprintId: number | null }): void {
-    this.callMoveTicket(data.ticketId, data.sprintId);
-  }
-
-  private callMoveTicket(ticketId: number, sprintId: number | null): void {
     this.notification.loading('Déplacement du ticket…');
-    this.projectService.moveTicketToSprint(ticketId, { ticketId, sprintId })
-      .pipe(finalize(() => this.notification.dismiss()))
+    this.ticketService.updateTicketSprint(movedTicket.id, targetId)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.notification.dismiss())
+      )
       .subscribe({
         next: () => {
           this.notification.success('Ticket déplacé avec succès.');
           this.loadBacklog();
         },
         error: () => {
+          // Rollback si l'API échoue.
+          transferArrayItem(
+            event.container.data,
+            event.previousContainer.data,
+            event.currentIndex,
+            event.previousIndex
+          );
+          movedTicket.sprintId = previousSprintId;
+          this.commitBacklog();
+          this.applySearch();
           this.notification.error('Échec du déplacement du ticket.');
-          this.loadBacklog();
         }
       });
+  }
+
+  /** Force la réémission des tableaux imbriqués pour rafraîchir le rendu après un DnD. */
+  private commitBacklog(): void {
+    const data = this.backlogData();
+    if (!data) return;
+    this.backlogData.set({
+      ...data,
+      backlogTickets: [...data.backlogTickets],
+      sprints: data.sprints.map(s => ({ ...s, tickets: [...s.tickets] })),
+    });
+  }
+
+  /** Démarrer / Terminer un sprint (Admin). "Terminer" ouvre la modale de clôture. */
+  onSprintAction(data: { sprintId: number; action: 'start' | 'complete' }): void {
+    if (data.action === 'complete') {
+      this.openCompleteSprintModal(data.sprintId);
+      return;
+    }
+    this.startSprint(data.sprintId);
+  }
+
+  /** Démarre directement le sprint (statut → Active). */
+  private startSprint(sprintId: number): void {
+    this.notification.loading('Démarrage du sprint…');
+
+    this.projectService.updateSprint(sprintId, { status: 'Active' })
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.notification.dismiss())
+      )
+      .subscribe({
+        next: () => {
+          this.loadBacklog();
+          this.notification.success('Sprint démarré avec succès.');
+        },
+        error: () => {
+          this.notification.error('Échec de la mise à jour du sprint.');
+        }
+      });
+  }
+
+  /** Ouvre la modale de clôture avec le sprint et les autres sprints (destinations possibles). */
+  openCompleteSprintModal(sprintId: number): void {
+    const sprint = this.backlogData()?.sprints.find(s => s.id === sprintId);
+    if (!sprint) return;
+    const otherSprints = (this.backlogData()?.sprints || []).filter(s => s.id !== sprintId);
+    this.completeSprintModal.open(sprint, otherSprints);
+  }
+
+  /** Rafraîchit le backlog (sprints + kanban) après clôture d'un sprint. */
+  onSprintCompleted(): void {
+    this.loadBacklog();
   }
 
   // ==================== CRÉATION TICKET (CORRIGÉ) ====================
@@ -333,96 +481,26 @@ userRole = signal<string | null>(null);
 
   // ==================== SPRINT ====================
   goToKanban(sprintId: number): void {
+    this.projectState.setSprint(sprintId);
     this.router.navigate(['/projects', this.projectId, 'sprint', sprintId, 'kanban']);
   }
 
+  /** Ouvre la modale de création d'un sprint. */
   openCreateSprintModal(): void {
-    this.createSprintModal.open();
+    this.sprintModal.open();
   }
 
-  onCreateSprint(data: SprintRequest): void {
-    // Si des Seniors ont été sélectionnés, on les affecte au projet via l'endpoint
-    // backend réel POST /projects/{id}/members/senior (le CreateSprint ne stocke pas de Seniors).
-    const seniorIds = data.assignedUserIds || [];
-    const assignments: Promise<void>[] = seniorIds.map((userId) =>
-      firstValueFrom(this.projectMembersService.addSeniorToProject(this.projectId, userId))
-    );
-
-    Promise.all(assignments)
-      .catch((err) => {
-        console.error('Erreur affectation des Seniors au projet:', err);
-        this.notification.error('Certains Seniors n\'ont pas pu être affectés au projet.');
-      })
-      .finally(() => {
-        this.notification.loading('Création du sprint…');
-        this.projectService.createSprint(data)
-          .pipe(finalize(() => this.notification.dismiss()))
-          .subscribe({
-            next: () => {
-              this.loadBacklog();
-              this.notification.success('Sprint créé avec succès.');
-            },
-            error: () => {
-              this.notification.error('Échec de la création du sprint.');
-            }
-          });
-      });
+  /** Ouvre la modale d'édition d'un sprint (pré-remplie). */
+  openEditSprintModal(sprintId: number): void {
+    const sprint = this.backlogData()?.sprints.find(s => s.id === sprintId);
+    if (sprint) {
+      this.sprintModal.open(sprint);
+    }
   }
 
-  // Helpers
-  toggleSprint(sprintId: number): void {
-    this.sprintExpanded.update(map => ({
-      ...map,
-      [sprintId]: !map[sprintId]
-    }));
-  }
-
-  getStatusCount(sprint: BacklogSprint, ...statuses: string[]): number {
-    return sprint.tickets.filter(t =>
-      statuses.some(s => t.status?.toLowerCase() === s.toLowerCase())
-    ).length;
-  }
-
-  getEpicProgress(epic: { color: string; tickets: BacklogTicket[] }): { done: number; total: number } {
-    const done = epic.tickets.filter(t =>
-      t.status?.toLowerCase() === 'done' || t.status?.toLowerCase() === 'completed' || t.status?.toLowerCase() === 'termine'
-    ).length;
-    return { done, total: epic.tickets.length };
-  }
-
-  getTicketType(ticket: BacklogTicket): { label: string; icon: string } {
-    const color = ticket.color || '';
-    if (color === '#ef4444') return { label: 'Bug', icon: '🐛' };
-    if (color === '#8b5cf6' || color === '#f59e0b') return { label: 'Story', icon: '📖' };
-    if (color === '#10b981' || color === '#3b82f6') return { label: 'Task', icon: '✅' };
-    return { label: 'Task', icon: '✅' };
-  }
-
-  getTicketKey(ticket: BacklogTicket): string {
-    return `NUC-${ticket.id}`;
-  }
-
-  getTicketLabel(ticket: BacklogTicket): string {
-    const color = ticket.color || '';
-    const labels: Record<string, string> = {
-      '#ef4444': 'URGENT',
-      '#f59e0b': 'BILLING',
-      '#3b82f6': 'FEEDBACK',
-      '#10b981': 'ACCOUNTS',
-      '#8b5cf6': 'FEATURE',
-    };
-    return labels[color] || (ticket.priority?.toUpperCase() || '');
-  }
-
-  getLabelClass(color: string | undefined): string {
-    const map: Record<string, string> = {
-      '#ef4444': 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-      '#f59e0b': 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-      '#3b82f6': 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-      '#10b981': 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-      '#8b5cf6': 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
-    };
-    return map[color || ''] || 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400';
+  /** Rafraîchit la liste des sprints après création / mise à jour. */
+  onSprintSaved(): void {
+    this.loadBacklog();
   }
 
   getCreatorId(): string {
@@ -440,5 +518,64 @@ userRole = signal<string | null>(null);
 
   onSubticketCreated(): void {
     this.loadBacklog();
+  }
+
+  // ==================== DÉTAIL TICKET ====================
+  /** Ouvre la modale de détail / édition d'un ticket de la réserve ou d'un sprint. */
+  openTicketDetail(ticketId: number): void {
+    const all = [
+      ...(this.backlogData()?.backlogTickets || []),
+      ...(this.backlogData()?.sprints || []).flatMap(s => s.tickets || [])
+    ];
+    const ticket = all.find(t => t.id === ticketId);
+    if (ticket) {
+      this.ticketDetailModal.open(ticket);
+    }
+  }
+
+  // ==================== ASSIGNATION TICKET ====================
+  /** Ouvre le modal d'assignation depuis la zone avatar/nom d'une carte ticket. */
+  openAssignTicketModal(ticket: Ticket): void {
+    this.assignTicketModal.open(ticket.id, ticket.title);
+  }
+
+  onTicketAssigned(): void {
+    this.loadBacklog();
+  }
+
+  mapToTicket(ticket: BacklogTicket): Ticket {
+    return {
+      id: ticket.id,
+      title: ticket.title || (ticket as any).titre || '',
+      priority: (ticket.priority as Ticket['priority']) || 'Medium',
+      assignedUser: {
+        name: ticket.assignedTo || 'Unassigned',
+        avatar: ticket.assignedToAvatar || ''
+      },
+      dueDate: ticket.creationDate ? new Date(ticket.creationDate).toLocaleDateString() : '',
+      labels: [],
+      description: ticket.description || '',
+      status: (ticket.status as Ticket['status']) || 'todo',
+      color: ticket.color,
+      subTickets: (ticket.subTickets || []).map(sub => this.mapToTicket(sub)),
+      isExpanded: false
+    };
+  }
+
+  /** Suppression définitive d'un ticket — Admin uniquement. */
+  onDeleteTicket(ticketId: number): void {
+    this.notification.loading('Suppression du ticket…');
+
+    this.ticketService.deleteTicket(ticketId)
+      .pipe(finalize(() => this.notification.dismiss()))
+      .subscribe({
+        next: () => {
+          this.loadBacklog();
+          this.notification.success('Ticket supprimé définitivement.');
+        },
+        error: () => {
+          this.notification.error('Échec de la suppression du ticket.');
+        }
+      });
   }
 }

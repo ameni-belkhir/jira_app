@@ -35,6 +35,10 @@ namespace Jira_APP.Controllers
         [Authorize(Roles = "Admin", Policy = "AdminOnly")]
         public async Task<IActionResult> FixMissingPermissions()
         {
+            // CAS 1 : utilisateurs qui n'ont AUCUNE ligne UserPermission.
+            // Réinitialisation complète via ResetUserPermissionsAsync : ils reçoivent
+            // la liste par défaut de leur rôle, qui inclut déjà "profile" pour tous
+            // les rôles (Admin, ScrumMaster, Senior, Developer).
             var usersWithoutPermissions = await _db.Users
                 .Where(u => !_db.UserPermissions.Any(up => up.UserId == u.Id))
                 .Include(u => u.Role)
@@ -45,7 +49,51 @@ namespace Jira_APP.Controllers
                 await _db.ResetUserPermissionsAsync(user, user.Role.Description);
             }
 
-            return Ok(new { fixedCount = usersWithoutPermissions.Count });
+            // CAS 2 : utilisateurs qui ont DÉJÀ des permissions, mais à qui il manque
+            // spécifiquement la clé "profile" (créés avant l'ajout de cette clé, ou
+            // désactivée manuellement). On ajoute/réactive UNIQUEMENT cette clé, SANS
+            // réinitialiser le reste : on préserve les choix déjà faits par l'admin.
+            var profileFixedCount = 0;
+
+            var usersWithPermissionsMissingProfile = await _db.Users
+                .Where(u => u.UserPermissions.Any())
+                .Select(u => new
+                {
+                    User = u,
+                    ProfilePermission = u.UserPermissions
+                        .FirstOrDefault(up => up.InterfaceKey == InterfaceKeys.Profile)
+                })
+                .ToListAsync();
+
+            foreach (var item in usersWithPermissionsMissingProfile)
+            {
+                if (item.ProfilePermission is null)
+                {
+                    _db.UserPermissions.Add(new UserPermission
+                    {
+                        UserId = item.User.Id,
+                        InterfaceKey = InterfaceKeys.Profile,
+                        IsEnabled = true
+                    });
+                    profileFixedCount++;
+                }
+                else if (!item.ProfilePermission.IsEnabled)
+                {
+                    item.ProfilePermission.IsEnabled = true;
+                    profileFixedCount++;
+                }
+            }
+
+            if (profileFixedCount > 0)
+            {
+                await _db.SaveChangesAsync();
+            }
+
+            return Ok(new
+            {
+                fixedCount = usersWithoutPermissions.Count,
+                profileFixedCount
+            });
         }
 
         [HttpGet("users")]
@@ -162,6 +210,32 @@ namespace Jira_APP.Controllers
             return Ok(result);
         }
 
+        [HttpGet("users/{id:int}/role-change-impact")]
+        public async Task<ActionResult<IEnumerable<RoleChangeImpactDto>>> GetRoleChangeImpact(
+            int id,
+            [FromQuery] int roleId)
+        {
+            if (!await _db.Users.AnyAsync(user => user.Id == id)) return NotFound();
+
+            var role = await _db.Roles.FindAsync(roleId);
+            if (role == null) return BadRequest(new { roleId = "Rôle introuvable." });
+
+            // Projets où le user est membre AVEC un RoleInProject différent du
+            // nouveau rôle global proposé. Liste vide si aucun écart.
+            var impact = await _db.ProjectMembers
+                .AsNoTracking()
+                .Where(pm => pm.UserId == id && pm.RoleInProject != role.Description)
+                .Select(pm => new RoleChangeImpactDto
+                {
+                    ProjectId = pm.ProjectId,
+                    ProjectName = pm.Project.Nom,
+                    CurrentRoleInProject = pm.RoleInProject
+                })
+                .ToListAsync();
+
+            return Ok(impact);
+        }
+
         [HttpPut("users/{id:int}/role")]
         public async Task<IActionResult> UpdateUserRole(int id, [FromBody] UpdateUserRoleDto dto)
         {
@@ -174,6 +248,43 @@ namespace Jira_APP.Controllers
             if (role == null) return BadRequest(new { roleId = "Rôle introuvable." });
 
             user.RoleId = role.Id;
+
+            // Alignement optionnel des RoleInProject sur le nouveau rôle global,
+            // UNIQUEMENT sur les projets où l'admin a explicitement choisi
+            // AlignToNewRole === true. Jamais d'alignement automatique en masse.
+            if (dto.ProjectRoleDecisions != null && dto.ProjectRoleDecisions.Count > 0)
+            {
+                var requestedProjectIds = dto.ProjectRoleDecisions
+                    .Select(decision => decision.ProjectId)
+                    .Distinct()
+                    .ToList();
+
+                var memberships = await _db.ProjectMembers
+                    .Where(pm => pm.UserId == id && requestedProjectIds.Contains(pm.ProjectId))
+                    .ToListAsync();
+
+                if (memberships.Count != requestedProjectIds.Count)
+                {
+                    return BadRequest(new
+                    {
+                        projectRoleDecisions = "Un ou plusieurs projets ne correspondent pas à un rôle projet existant pour cet utilisateur."
+                    });
+                }
+
+                var alignByProject = dto.ProjectRoleDecisions
+                    .Where(decision => decision.AlignToNewRole)
+                    .Select(decision => decision.ProjectId)
+                    .ToHashSet();
+
+                foreach (var membership in memberships)
+                {
+                    if (alignByProject.Contains(membership.ProjectId))
+                    {
+                        membership.RoleInProject = role.Description;
+                    }
+                }
+            }
+
             await _db.ResetUserPermissionsAsync(user, role.Description);
 
             return NoContent();

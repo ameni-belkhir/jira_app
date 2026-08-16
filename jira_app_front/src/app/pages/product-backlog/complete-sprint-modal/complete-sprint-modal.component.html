@@ -1,0 +1,107 @@
+@if (isOpen()) {
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center modal-backdrop"
+    (click)="onBackdropClick($event)"
+  >
+    <!-- Backdrop -->
+    <div class="fixed inset-0 bg-black/40 dark:bg-black/60 transition-opacity"></div>
+
+    <!-- Modal -->
+    <div class="relative z-10 w-full max-w-md mx-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-6">
+      <!-- Header -->
+      <div class="flex items-center justify-between mb-5">
+        <h2 class="text-lg font-semibold text-gray-800 dark:text-white">
+          Clôturer le {{ sprint()?.name }}
+        </h2>
+        <button
+          (click)="closeModal()"
+          title="Fermer"
+          class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+        >
+          <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+          </svg>
+        </button>
+      </div>
+
+      @if (sprint(); as current) {
+        <!-- Progression -->
+        <div class="mb-4">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-xs text-gray-500 dark:text-gray-400">Progression du sprint</span>
+            <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ completedCount }}/{{ totalCount }}</span>
+          </div>
+          <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+            <div
+              class="h-2 rounded-full transition-all duration-500"
+              [class.bg-success-500]="progressPercent >= 80"
+              [class.bg-amber-500]="progressPercent > 0 && progressPercent < 80"
+              [class.bg-error-500]="progressPercent === 0"
+              [style.width.%]="progressPercent"
+            ></div>
+          </div>
+        </div>
+
+        <!-- Bilan visuel -->
+        <div class="grid grid-cols-2 gap-3 mb-5">
+          <div class="rounded-xl border border-success-200 bg-success-50 dark:border-success-500/20 dark:bg-success-500/10 p-3">
+            <div class="text-2xl font-bold text-success-600 dark:text-success-400">{{ completedCount }}</div>
+            <div class="text-xs text-success-700 dark:text-success-400">
+              🟢 {{ completedCount > 1 ? 'tickets' : 'ticket' }} terminés
+              <span class="block text-success-500/80">(statut Fait / Done)</span>
+            </div>
+          </div>
+          <div class="rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-500/20 dark:bg-amber-500/10 p-3">
+            <div class="text-2xl font-bold text-amber-600 dark:text-amber-400">{{ openCount }}</div>
+            <div class="text-xs text-amber-700 dark:text-amber-400">
+              ⚠️ {{ openCount > 1 ? 'tickets' : 'ticket' }} non terminés
+              <span class="block text-amber-500/80">(statut À faire / En cours)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Destination des tickets non terminés -->
+        <div class="mb-5">
+          <label for="complete-destination" class="block mb-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+            Déplacer les tickets non terminés vers :
+          </label>
+          <select
+            id="complete-destination"
+            [(ngModel)]="selectedDestinationId"
+            [disabled]="openCount === 0 || submitting()"
+            title="Destination des tickets non terminés"
+            class="block w-full rounded-lg border border-gray-200 bg-transparent px-4 py-2.5 text-sm text-gray-800 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:text-white/90 disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            <option [ngValue]="null">Backlog</option>
+            @for (s of otherSprints(); track s.id) {
+              <option [ngValue]="s.id">{{ s.name }}</option>
+            }
+          </select>
+          @if (openCount === 0) {
+            <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
+              Tous les tickets sont terminés, aucun transfert n'est nécessaire.
+            </p>
+          }
+        </div>
+
+        <!-- Footer -->
+        <div class="flex items-center justify-end gap-3">
+          <button
+            (click)="closeModal()"
+            [disabled]="submitting()"
+            class="inline-flex items-center justify-center rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-60 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors"
+          >
+            Annuler
+          </button>
+          <button
+            (click)="confirmComplete()"
+            [disabled]="submitting()"
+            class="inline-flex items-center justify-center rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+          >
+            {{ submitting() ? '…' : 'Confirmer et clôturer' }}
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+}
