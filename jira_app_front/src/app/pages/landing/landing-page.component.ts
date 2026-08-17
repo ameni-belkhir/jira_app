@@ -27,6 +27,10 @@ export class LandingPageComponent {
     return this.authService.isAuthenticated;
   }
 
+  get logoTarget(): string {
+    return this.isAuthenticated ? '/dashboard' : '/';
+  }
+
   get signupTarget(): string {
     return this.isAuthenticated ? '/dashboard' : '/register';
   }
