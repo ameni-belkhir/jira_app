@@ -89,7 +89,7 @@ namespace Infrastructure.Persistence
                     .IsRequired();
 
                 entity.Property(pm => pm.JoinedAt)
-                    .HasDefaultValueSql("GETUTCDATE()");
+                    .HasDefaultValueSql("timezone('utc', now())");
             });
 
             // SprintMember
@@ -205,7 +205,7 @@ namespace Infrastructure.Persistence
                     .HasMaxLength(500);
 
                 entity.Property(n => n.CreatedAt)
-                    .HasDefaultValueSql("GETUTCDATE()");
+                    .HasDefaultValueSql("timezone('utc', now())");
 
                 entity.HasOne(n => n.User)
                     .WithMany()
@@ -240,7 +240,7 @@ namespace Infrastructure.Persistence
                     .OnDelete(DeleteBehavior.Cascade);
 
                 entity.Property(cm => cm.JoinedAt)
-                    .HasDefaultValueSql("GETUTCDATE()");
+                    .HasDefaultValueSql("timezone('utc', now())");
             });
 
             // ChatMessage -> Conversation et -> User (Sender)
@@ -285,13 +285,13 @@ namespace Infrastructure.Persistence
                 // Une seule préférence GLOBALE par utilisateur (ConversationId IS NULL).
                 entity.HasIndex(p => p.UserId)
                     .IsUnique()
-                    .HasFilter("[ConversationId] IS NULL")
+                    .HasFilter("\"ConversationId\" IS NULL")
                     .HasDatabaseName("UX_UserChatPreferences_GlobalPerUser");
 
                 // Une seule préférence PAR conversation (ConversationId IS NOT NULL).
                 entity.HasIndex(p => new { p.UserId, p.ConversationId })
                     .IsUnique()
-                    .HasFilter("[ConversationId] IS NOT NULL")
+                    .HasFilter("\"ConversationId\" IS NOT NULL")
                     .HasDatabaseName("UX_UserChatPreferences_PerConversation");
             });
 
