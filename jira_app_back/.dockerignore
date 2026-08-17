@@ -11,6 +11,7 @@
 **/*.*proj.user
 **/*.dbmdl
 **/*.jfm
+**/*.log
 **/azds.yaml
 **/bin
 **/charts
@@ -21,6 +22,9 @@
 **/obj
 **/secrets.dev.yaml
 **/values.dev.yaml
+**/*.Local.json
+**/appsettings.Local.json
+**/logs/
 LICENSE
 README.md
 !**/.gitignore
