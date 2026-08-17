@@ -505,25 +505,17 @@ export class TicketDetailModalComponent {
     if (!message || !id || this.sendingComment()) return;
     this.sendingComment.set(true);
     this.commentService
-      .addComment({ ticketId: id, message, auteur: this.currentUserName })
+      .addComment({ ticketId: id, contenu: message, authorId: this.currentUserId })
       .pipe(
         finalize(() => this.sendingComment.set(false)),
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe({
-        next: (created) => {
+        next: () => {
           this.newComment = '';
-          this.comments.set([
-            ...this.comments(),
-            {
-              id: created?.id ?? Date.now(),
-              ticketId: id,
-              message,
-              auteur: this.currentUserName,
-              dateCreation: created?.dateCreation ?? new Date().toISOString(),
-            },
-          ]);
           this.notification.success('Commentaire ajouté.');
+          // Recharge depuis le serveur pour garantir la cohérence.
+          this.loadComments();
         },
         error: () => {
           this.notification.error('Échec de l\'envoi du commentaire.');
@@ -533,7 +525,7 @@ export class TicketDetailModalComponent {
 
   startEditComment(comment: TicketComment): void {
     this.editingCommentId.set(comment.id);
-    this.editingCommentText = comment.message;
+    this.editingCommentText = comment.contenu;
   }
 
   onSaveComment(comment: TicketComment): void {
@@ -544,13 +536,12 @@ export class TicketDetailModalComponent {
       .updateComment(comment.id, {
         id: comment.id,
         ticketId,
-        message,
-        auteur: comment.auteur,
+        contenu: message,
       })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
-          comment.message = message;
+          comment.contenu = message;
           this.comments.set([...this.comments()]);
           this.editingCommentId.set(null);
           this.notification.success('Commentaire modifié.');

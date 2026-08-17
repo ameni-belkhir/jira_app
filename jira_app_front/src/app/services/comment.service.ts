@@ -7,24 +7,23 @@ import { environment } from '../../environments/environment';
 export interface TicketComment {
   id: number | string;
   ticketId: number;
-  message: string;
-  auteur?: string;
-  auteurPhoto?: string;
+  contenu: string;
+  authorName?: string;
+  authorAvatarUrl?: string;
   role?: string;
   dateCreation?: string;
 }
 
 export interface CreateCommentRequest {
   ticketId: number;
-  message: string;
-  auteur?: string;
+  contenu: string;
+  authorId: number;
 }
 
 export interface UpdateCommentRequest {
   id: number | string;
   ticketId: number;
-  message: string;
-  auteur?: string;
+  contenu: string;
 }
 
 @Injectable({

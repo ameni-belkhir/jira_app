@@ -24,16 +24,29 @@ namespace Jira_APP.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<CommentaireDto>>> Get()
+        public async Task<ActionResult<IEnumerable<CommentaireDto>>> Get([FromQuery] int? ticketId)
         {
-            var items = await _db.Commentaires.AsNoTracking().ToListAsync();
+            IQueryable<Commentaire> query = _db.Commentaires.AsNoTracking();
+
+            if (ticketId.HasValue)
+            {
+                query = query.Where(c => c.TicketId == ticketId.Value);
+            }
+
+            var items = await query
+                .Include(c => c.Author)
+                    .ThenInclude(a => a.Role)
+                .ToListAsync();
             var dtos = items.Select(c => new CommentaireDto
             {
                 Id = c.Id,
                 Contenu = c.Contenu,
                 AuthorId = c.AuthorId,
                 TicketId = c.TicketId,
-                DateCreation = c.DateCreation
+                DateCreation = c.DateCreation,
+                AuthorName = c.Author != null ? $"{c.Author.Prenom} {c.Author.Nom}".Trim() : string.Empty,
+                AuthorAvatarUrl = c.Author?.ProfileImageUrl,
+                Role = c.Author?.Role?.Description
             });
             return Ok(dtos);
         }
@@ -41,7 +54,10 @@ namespace Jira_APP.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<CommentaireDto>> GetById(int id)
         {
-            var item = await _db.Commentaires.FindAsync(id);
+            var item = await _db.Commentaires
+                .Include(c => c.Author)
+                    .ThenInclude(a => a.Role)
+                .FirstOrDefaultAsync(c => c.Id == id);
             if (item == null) return NotFound();
             var dto = new CommentaireDto
             {
@@ -49,7 +65,10 @@ namespace Jira_APP.Controllers
                 Contenu = item.Contenu,
                 AuthorId = item.AuthorId,
                 TicketId = item.TicketId,
-                DateCreation = item.DateCreation
+                DateCreation = item.DateCreation,
+                AuthorName = item.Author != null ? $"{item.Author.Prenom} {item.Author.Nom}".Trim() : string.Empty,
+                AuthorAvatarUrl = item.Author?.ProfileImageUrl,
+                Role = item.Author?.Role?.Description
             };
             return Ok(dto);
         }
@@ -67,13 +86,21 @@ namespace Jira_APP.Controllers
             };
             _db.Commentaires.Add(commentaire);
             await _db.SaveChangesAsync();
+
+            var author = await _db.Users
+                .Include(u => u.Role)
+                .FirstOrDefaultAsync(u => u.Id == commentaire.AuthorId);
+
             var result = new CommentaireDto
             {
                 Id = commentaire.Id,
                 Contenu = commentaire.Contenu,
                 AuthorId = commentaire.AuthorId,
                 TicketId = commentaire.TicketId,
-                DateCreation = commentaire.DateCreation
+                DateCreation = commentaire.DateCreation,
+                AuthorName = author != null ? $"{author.Prenom} {author.Nom}".Trim() : string.Empty,
+                AuthorAvatarUrl = author?.ProfileImageUrl,
+                Role = author?.Role?.Description
             };
             return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
         }

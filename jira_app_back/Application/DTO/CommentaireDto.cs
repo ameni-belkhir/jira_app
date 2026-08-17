@@ -9,5 +9,8 @@ namespace Application.DTO
         public int AuthorId { get; set; }
         public int? TicketId { get; set; }
         public DateTime DateCreation { get; set; }
+        public string AuthorName { get; set; } = string.Empty;
+        public string? AuthorAvatarUrl { get; set; }
+        public string? Role { get; set; }
     }
 }

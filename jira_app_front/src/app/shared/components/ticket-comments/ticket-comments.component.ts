@@ -48,6 +48,7 @@ export class TicketCommentsComponent implements OnInit, OnDestroy, AfterViewChec
   /** Current user info */
   currentUserName = signal<string>('');
   currentUserRole = signal<string>('');
+  private currentUserId = 0;
 
   /** Sorted list: newest first. */
   sortedComments = computed(() =>
@@ -78,6 +79,7 @@ export class TicketCommentsComponent implements OnInit, OnDestroy, AfterViewChec
 
     this.currentUserName.set(this.authService.getEmail() || 'Moi');
     this.currentUserRole.set(this.authService.getRole() || '');
+    this.currentUserId = Number(this.authService.getUserId() || 0);
   }
 
   ngOnDestroy(): void {
@@ -126,7 +128,7 @@ export class TicketCommentsComponent implements OnInit, OnDestroy, AfterViewChec
       ...comment,
       ticketId: comment.ticketId ?? this.ticketId,
       dateCreation: comment.dateCreation ?? new Date().toISOString(),
-      auteur: comment.auteur || 'Membre',
+      authorName: comment.authorName || 'Membre',
     };
 
     // Only display comments for the active ticket.
@@ -138,7 +140,7 @@ export class TicketCommentsComponent implements OnInit, OnDestroy, AfterViewChec
       this.comments.set([...current, c]);
       this.scrollShouldBottom = true;
       this.notification.validation(
-        `${c.auteur} a commenté le ticket`
+        `${c.authorName} a commenté le ticket`
       );
     }
   }
@@ -153,30 +155,18 @@ export class TicketCommentsComponent implements OnInit, OnDestroy, AfterViewChec
 
     const payload: CreateCommentRequest = {
       ticketId: this.ticketId,
-      message,
-      auteur: this.currentUserName() || undefined,
+      contenu: message,
+      authorId: this.currentUserId,
     };
 
     this.commentService.addComment(payload)
       .pipe(finalize(() => this.sending.set(false)))
       .subscribe({
-        next: (created) => {
+        next: () => {
           this.newMessage = '';
           this.notification.success('Commentaire envoyé.');
-
-          // Optimistically add the comment locally.
-          const comment: TicketComment = {
-            id: created?.id ?? Date.now(),
-            ticketId: this.ticketId,
-            message,
-            auteur: this.currentUserName() || 'Moi',
-            role: this.currentUserRole() || undefined,
-            dateCreation: created?.dateCreation ?? new Date().toISOString(),
-          };
-          this.comments.set([...this.comments(), comment]);
-          this.scrollShouldBottom = true;
-
-          // The backend will also broadcast via SignalR; dedup by id prevents duplicates.
+          // Recharge depuis le serveur pour garantir la cohérence.
+          this.loadComments();
         },
         error: (err: HttpErrorResponse) => {
           const msg = err.status === 0
