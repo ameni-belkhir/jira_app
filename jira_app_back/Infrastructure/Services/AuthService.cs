@@ -47,9 +47,9 @@ namespace Infrastructure.Services
             if (!anyUsers)
             {
                 // premier utilisateur -> ScrumMaster
-                var scrumRole = await _db.Roles.FirstOrDefaultAsync(r => r.Description == "ScrumMaster");
-                if (scrumRole == null) throw new InvalidOperationException("Role 'ScrumMaster' introuvable en base de données.");
-                roleIdToAssign = scrumRole.Id;
+                var adminRole = await _db.Roles.FirstOrDefaultAsync(r => r.Description == "Admin");
+                if (adminRole == null) throw new InvalidOperationException("Role 'Admin' introuvable en base de données.");
+                roleIdToAssign = adminRole.Id;
             }
             else
             {
