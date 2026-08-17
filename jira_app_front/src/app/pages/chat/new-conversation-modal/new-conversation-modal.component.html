@@ -3,7 +3,7 @@
     <div class="w-full max-w-md rounded-2xl bg-white shadow-theme-lg dark:bg-gray-900">
       <!-- Header -->
       <div class="flex items-center justify-between border-b border-gray-100 p-5 dark:border-gray-800">
-        <h3 class="text-base font-semibold text-gray-800 dark:text-white/90">Nouvelle conversation</h3>
+        <h3 class="text-base font-semibold text-gray-800 dark:text-white/90">Nouveau groupe</h3>
         <button
           type="button"
           (click)="closeModal()"
@@ -16,40 +16,17 @@
 
       <!-- Body -->
       <div class="max-h-[60vh] space-y-4 overflow-y-auto p-5">
-        <!-- Type: 1:1 vs groupe -->
-        <div class="flex gap-2">
-          <button
-            type="button"
-            (click)="isGroup = false; onGroupChange()"
-            class="flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors"
-            [class.border-brand-500]="!isGroup"
-            [class.border-gray-200]="isGroup"
-            [class.text-brand-600]="!isGroup"
-            [class.text-gray-600]="isGroup"
-          >Direct</button>
-          <button
-            type="button"
-            (click)="isGroup = true"
-            class="flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors"
-            [class.border-brand-500]="isGroup"
-            [class.border-gray-200]="!isGroup"
-            [class.text-brand-600]="isGroup"
-            [class.text-gray-600]="!isGroup"
-          >Groupe</button>
+        <!-- Nom du groupe -->
+        <div>
+          <label class="sr-only" for="conv-name">Nom du groupe</label>
+          <input
+            id="conv-name"
+            type="text"
+            [(ngModel)]="name"
+            placeholder="Nom du groupe"
+            class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-800 dark:bg-gray-800 dark:text-gray-200"
+          />
         </div>
-
-        @if (isGroup) {
-          <div>
-            <label class="sr-only" for="conv-name">Nom du groupe</label>
-            <input
-              id="conv-name"
-              type="text"
-              [(ngModel)]="name"
-              placeholder="Nom du groupe"
-              class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-800 dark:bg-gray-800 dark:text-gray-200"
-            />
-          </div>
-        }
 
         <!-- Recherche -->
         <div>
@@ -117,10 +94,9 @@
           [disabled]="submitting()"
           class="w-full rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {{ submitting() ? 'Création…' : 'Créer la conversation' }}
+          {{ submitting() ? 'Création…' : 'Créer le groupe' }}
         </button>
       </div>
     </div>
   </div>
 }
-

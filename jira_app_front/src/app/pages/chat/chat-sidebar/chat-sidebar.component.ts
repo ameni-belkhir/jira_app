@@ -1,7 +1,12 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 import { Conversation } from '../../../services/chat.service';
+import { ChatContact } from '../new-conversation-modal/new-conversation-modal.component';
+import { AuthService } from '../../../services/auth.service';
+import { environment } from '../../../../environments/environment';
 import { SafeImagePipe } from '../../../shared/pipe/safe-image.pipe';
 
 @Component({
@@ -11,20 +16,49 @@ import { SafeImagePipe } from '../../../shared/pipe/safe-image.pipe';
   templateUrl: './chat-sidebar.component.html',
   styles: ``,
 })
-export class ChatSidebarComponent {
+export class ChatSidebarComponent implements OnInit {
   @Input() conversations: Conversation[] = [];
   @Input() activeConversationId: string | number | null = null;
   @Input() onlineUsers: Record<string, boolean> = {};
 
   @Output() selectConversation = new EventEmitter<Conversation>();
   @Output() newConversation = new EventEmitter<void>();
+  @Output() startDirectConversation = new EventEmitter<{ userId: number; name: string }>();
+
+  private http = inject(HttpClient);
+  private authService = inject(AuthService);
+  private readonly apiUrl = `${environment.baseUrl.replace(/\/$/, '')}/api`;
 
   searchTerm = '';
+  contacts: ChatContact[] = [];
+  contactsLoading = false;
+  contactCreating: number | null = null;
+
+  ngOnInit(): void {
+    this.loadContacts();
+  }
 
   get filteredConversations(): Conversation[] {
     if (!this.searchTerm.trim()) return this.conversations;
     const term = this.searchTerm.toLowerCase();
     return this.conversations.filter((c) => c.name.toLowerCase().includes(term));
+  }
+
+  get filteredContacts(): ChatContact[] {
+    const term = this.searchTerm.trim().toLowerCase();
+    const currentUserId = Number(this.authService.getUserId());
+    const directIds = new Set(
+      this.conversations
+        .filter((c) => !c.isGroup && c.otherUserId != null)
+        .map((c) => Number(c.otherUserId))
+    );
+    return this.contacts.filter((c) => {
+      if (c.id === currentUserId) return false;
+      if (directIds.has(c.id)) return false;
+      if (!term) return true;
+      const hay = `${c.name} ${c.email}`.toLowerCase();
+      return hay.includes(term);
+    });
   }
 
   isOnline(conv: Conversation): boolean {
@@ -43,5 +77,39 @@ export class ChatSidebarComponent {
 
   select(conv: Conversation): void {
     this.selectConversation.emit(conv);
+  }
+
+  async startDirect(userId: number): Promise<void> {
+    if (this.contactCreating !== null) return;
+    this.contactCreating = userId;
+    try {
+      const contact = this.contacts.find((c) => c.id === userId);
+      this.startDirectConversation.emit({ userId, name: contact?.name ?? 'Conversation' });
+    } finally {
+      this.contactCreating = null;
+    }
+  }
+
+  isCreatingContact(userId: number): boolean {
+    return this.contactCreating === userId;
+  }
+
+  private async loadContacts(): Promise<void> {
+    this.contactsLoading = true;
+    try {
+      const users: any[] = await firstValueFrom(
+        this.http.get<any[]>(`${this.apiUrl}/Users`)
+      );
+      this.contacts = (users ?? []).map((u: any) => ({
+        id: u.id,
+        name: `${u.prenom ?? ''} ${u.nom ?? ''}`.trim() || u.email,
+        email: u.email,
+        avatar: u.profileImageUrl,
+      }));
+    } catch {
+      this.contacts = [];
+    } finally {
+      this.contactsLoading = false;
+    }
   }
 }

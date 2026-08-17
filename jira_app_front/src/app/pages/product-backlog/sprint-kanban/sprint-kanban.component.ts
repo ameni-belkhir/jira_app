@@ -85,19 +85,19 @@ export class SprintKanbanComponent implements OnInit {
   readonly themes: BoardTheme[] = [
     // Gradients
     { name: 'Trello Classic', category: 'gradient', bg: 'linear-gradient(to bottom, #0079bf, #50b0d8)' },
-    { name: 'Océan', category: 'gradient', bg: 'linear-gradient(to right, #0f2027, #203a43, #2c5364)' },
-    { name: 'Midnight Indigo', category: 'gradient', bg: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)' },
-    { name: 'Emerald Dark', category: 'gradient', bg: 'linear-gradient(135deg, #064e3b 0%, #065f46 60%, #0f172a 100%)' },
-    { name: 'Sunset', category: 'gradient', bg: 'linear-gradient(135deg, #7c2d12 0%, #c2410c 50%, #f59e0b 100%)' },
+    { name: 'Aqua Pastel', category: 'gradient', bg: 'linear-gradient(135deg, #67e8f9 0%, #22d3ee 50%, #06b6d4 100%)' },
+    { name: 'Lavande Pastel', category: 'gradient', bg: 'linear-gradient(135deg, #c4b5fd 0%, #a78bfa 50%, #8b5cf6 100%)' },
+    { name: 'Menthe Pastel', category: 'gradient', bg: 'linear-gradient(135deg, #6ee7b7 0%, #34d399 50%, #10b981 100%)' },
+    { name: 'Sunset', category: 'gradient', bg: 'linear-gradient(135deg, #fca5a5 0%, #fb923c 50%, #fbbf24 100%)' },
     // Images Unsplash
     { name: 'Nature', category: 'image', bg: 'url("https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1920&q=80")' },
     { name: 'Workspace', category: 'image', bg: 'url("https://images.unsplash.com/photo-1497032628192-86f99bcd76bc?auto=format&fit=crop&w=1920&q=80")' },
     { name: 'Abstract', category: 'image', bg: 'url("https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1920&q=80")' },
     { name: 'Minimal', category: 'image', bg: 'url("https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=1920&q=80")' },
     // Couleurs unies
-    { name: 'Slate', category: 'color', bg: '#475569' },
-    { name: 'Blue', category: 'color', bg: '#1d4ed8' },
-    { name: 'Dark', category: 'color', bg: '#0f172a' },
+    { name: 'Corail', category: 'color', bg: '#fca5a5' },
+    { name: 'Lavande', category: 'color', bg: '#a78bfa' },
+    { name: 'Pêche', category: 'color', bg: '#fed7aa' },
   ];
 
   selectedTheme = signal<string>(this.themes[0].bg);

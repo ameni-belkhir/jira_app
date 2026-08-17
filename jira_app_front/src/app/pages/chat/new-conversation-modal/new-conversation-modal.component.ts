@@ -38,7 +38,7 @@ export class NewConversationModalComponent implements OnChanges {
   private http = inject(HttpClient);
   private readonly apiUrl = `${environment.baseUrl.replace(/\/$/, '')}/api`;
 
-  isGroup = false;
+  isGroup = true;
   name = '';
   projectId: number | null = null;
   searchTerm = '';
@@ -97,15 +97,6 @@ export class NewConversationModalComponent implements OnChanges {
     }
   }
 
-  onGroupChange(): void {
-    // En mode 1:1, on ne garde qu'un seul membre sélectionné.
-    if (!this.isGroup && this.selectedIds.size > 1) {
-      const first = this.selectedIds.values().next().value;
-      this.selectedIds.clear();
-      if (first != null) this.selectedIds.add(first);
-    }
-  }
-
   async submit(): Promise<void> {
     this.error = '';
     if (this.selectedIds.size === 0) {
@@ -141,7 +132,7 @@ export class NewConversationModalComponent implements OnChanges {
   }
 
   private reset(): void {
-    this.isGroup = false;
+    this.isGroup = true;
     this.name = '';
     this.projectId = null;
     this.searchTerm = '';

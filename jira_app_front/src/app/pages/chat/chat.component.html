@@ -4,8 +4,9 @@
     [conversations]="conversations()"
     [activeConversationId]="activeConversation()?.id ?? null"
     [onlineUsers]="onlineUsers()"
-  (selectConversation)="selectConversation($event)"
+    (selectConversation)="selectConversation($event)"
     (newConversation)="openNewConversation()"
+    (startDirectConversation)="onStartDirectConversation($event)"
     />
 
   <!-- Chat window -->

@@ -1,7 +1,9 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { AuthService } from '../../services/auth.service';
 
-export type ChatThemeId = 'trello' | 'gradient-dark' | 'starry-night' | 'slate' | 'gradient-light';
+export type ChatThemeId =
+  | 'trello' | 'gradient-dark' | 'starry-night' | 'slate' | 'gradient-light'
+  | 'coral-sunset' | 'ocean-breeze' | 'lavender-dreams' | 'mint-fresh' | 'aurora';
 
 export interface ChatThemeOption {
   id: ChatThemeId;
@@ -35,6 +37,31 @@ export const CHAT_THEMES: ChatThemeOption[] = [
     id: 'gradient-light',
     label: 'Dégradé Clair',
     swatch: 'background:linear-gradient(135deg,#fef3c7 0%,#fde68a 50%,#fca5a5 100%)',
+  },
+  {
+    id: 'coral-sunset',
+    label: 'Coucher de Soleil',
+    swatch: 'background:linear-gradient(135deg,#fca5a5 0%,#fb923c 50%,#fbbf24 100%)',
+  },
+  {
+    id: 'ocean-breeze',
+    label: 'Brise Marine',
+    swatch: 'background:linear-gradient(135deg,#67e8f9 0%,#22d3ee 50%,#06b6d4 100%)',
+  },
+  {
+    id: 'lavender-dreams',
+    label: 'Rêves de Lavande',
+    swatch: 'background:linear-gradient(135deg,#c4b5fd 0%,#a78bfa 50%,#f0abfc 100%)',
+  },
+  {
+    id: 'mint-fresh',
+    label: 'Menthe Fraîche',
+    swatch: 'background:linear-gradient(135deg,#6ee7b7 0%,#34d399 50%,#a7f3d0 100%)',
+  },
+  {
+    id: 'aurora',
+    label: 'Aurore Boréale',
+    swatch: 'background:linear-gradient(135deg,#60a5fa 0%,#34d399 50%,#a78bfa 100%)',
   },
 ];
 

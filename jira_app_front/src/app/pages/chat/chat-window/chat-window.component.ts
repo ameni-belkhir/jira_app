@@ -184,6 +184,11 @@ export class ChatWindowComponent implements AfterViewChecked, OnChanges {
       case 'starry-night': return 'chat-bg-starry';
       case 'slate': return 'chat-bg-slate';
       case 'gradient-light': return 'chat-bg-gradient-light';
+      case 'coral-sunset': return 'chat-bg-coral-sunset';
+      case 'ocean-breeze': return 'chat-bg-ocean-breeze';
+      case 'lavender-dreams': return 'chat-bg-lavender-dreams';
+      case 'mint-fresh': return 'chat-bg-mint-fresh';
+      case 'aurora': return 'chat-bg-aurora';
       case 'trello':
       default: return 'chat-bg-trello';
     }

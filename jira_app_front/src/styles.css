@@ -830,35 +830,47 @@ span.flatpickr-weekday,
 }
 
 /* ===== Angular Material Snackbar Notification Styles ===== */
+
+/* Force z-index above navbar (z-99999) and add spacing below the header */
+.mat-mdc-snack-bar-container {
+  z-index: 999999 !important;
+  margin-top: 16px;
+  border-radius: 10px !important;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.12),
+    0 2px 4px rgba(0, 0, 0, 0.08) !important;
+  overflow: hidden;
+}
+
 .notification-success {
   --mdc-snackbar-container-color: #12b76a;
   --mat-snack-bar-button-color: #ffffff;
   --mdc-snackbar-supporting-text-color: #ffffff;
-  --mat-snack-bar-button-color: #ffffff;
+  background-color: #12b76a !important;
 }
 
 .notification-error {
   --mdc-snackbar-container-color: #f04438;
   --mat-snack-bar-button-color: #ffffff;
   --mdc-snackbar-supporting-text-color: #ffffff;
-  --mat-snack-bar-button-color: #ffffff;
+  background-color: #f04438 !important;
 }
 
 .notification-loading {
   --mdc-snackbar-container-color: #465fff;
   --mat-snack-bar-button-color: #ffffff;
   --mdc-snackbar-supporting-text-color: #ffffff;
-  --mat-snack-bar-button-color: #ffffff;
+  background-color: #465fff !important;
 }
 
 .notification-validation {
   --mdc-snackbar-container-color: #f79009;
   --mat-snack-bar-button-color: #ffffff;
   --mdc-snackbar-supporting-text-color: #ffffff;
-  --mat-snack-bar-button-color: #ffffff;
+  background-color: #f79009 !important;
 }
 
-/* Override snackbar button styles */
+/* Override snackbar action button (dismiss) */
 .mat-mdc-snack-bar-container .mdc-snackbar__action {
   color: #ffffff !important;
   font-weight: 600;
@@ -1055,5 +1067,30 @@ pre[class*="language-"].line-numbers {
 /* Dégradé clair (ambre -> rosé) pour les fonds lumineux. */
 .chat-bg-gradient-light {
   background: linear-gradient(135deg, #fef3c7 0%, #fde68a 50%, #fca5a5 100%);
+}
+
+/* Coucher de Soleil : corail -> orange -> ambre. */
+.chat-bg-coral-sunset {
+  background: linear-gradient(135deg, #fca5a5 0%, #fb923c 50%, #fbbf24 100%);
+}
+
+/* Brise Marine : turquoise -> cyan -> bleu ciel. */
+.chat-bg-ocean-breeze {
+  background: linear-gradient(135deg, #67e8f9 0%, #22d3ee 50%, #06b6d4 100%);
+}
+
+/* Rêves de Lavande : violet -> lavande -> rose pâle. */
+.chat-bg-lavender-dreams {
+  background: linear-gradient(135deg, #c4b5fd 0%, #a78bfa 50%, #f0abfc 100%);
+}
+
+/* Menthe Fraîche : vert menthe -> émeraude -> vert pâle. */
+.chat-bg-mint-fresh {
+  background: linear-gradient(135deg, #6ee7b7 0%, #34d399 50%, #a7f3d0 100%);
+}
+
+/* Aurore Boréale : bleu -> vert -> violet (style aurore). */
+.chat-bg-aurora {
+  background: linear-gradient(135deg, #60a5fa 0%, #34d399 50%, #a78bfa 100%);
 }
 

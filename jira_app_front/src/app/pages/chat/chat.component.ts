@@ -146,13 +146,23 @@ onTyping(typing: boolean): void {
     this.showNewConversation.set(false);
   }
 
+  async onStartDirectConversation(payload: { userId: number; name: string }): Promise<void> {
+    const created = await this.chatService.createConversation({
+      name: payload.name,
+      isGroup: false,
+      memberUserIds: [payload.userId],
+    });
+    if (created) {
+      await this.loadRealConversations();
+      await this.selectConversation(created);
+    }
+  }
+
   async onCreateConversation(data: NewConversationData): Promise<void> {
     const created = await this.chatService.createConversation(data);
     if (created) {
       this.showNewConversation.set(false);
-      // Charge à nouveau la liste pour garder l'ordre / les données à jour.
-      this.loadRealConversations();
-      // Sélectionne la nouvelle conversation et rejoint son groupe.
+      await this.loadRealConversations();
       await this.selectConversation(created);
     }
   }
