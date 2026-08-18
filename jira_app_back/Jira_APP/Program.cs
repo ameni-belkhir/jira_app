@@ -166,4 +166,6 @@ app.MapHub<NotificationHub>("/hubs/notifications");
 // Hub SignalR pour la messagerie temps réel (type Messenger/Slack)
 app.MapHub<ChatHub>("/hubs/chat");
 
+app.MapGet("/health", () => Results.Ok("healthy"));
+
 app.Run();

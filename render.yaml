@@ -1,0 +1,43 @@
+services:
+  - type: web
+    name: jira-app-backend
+    runtime: docker
+    rootDir: jira_app_back
+    dockerfilePath: Jira_APP/Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ConnectionStrings__DefaultConnection
+        sync: false
+      - key: Jwt__SecretKey
+        sync: false
+      - key: Jwt__Issuer
+        sync: false
+      - key: Jwt__Audience
+        sync: false
+      - key: EmailSettings__Provider
+        sync: false
+      - key: BrevoSettings__ApiKey
+        sync: false
+      - key: BrevoSettings__SenderEmail
+        sync: false
+      - key: BrevoSettings__SenderName
+        sync: false
+      - key: Gemini__ApiKey
+        sync: false
+
+  - type: static_site
+    name: jira-app-frontend
+    rootDir: jira_app_front
+    buildCommand: npm install && npm run build -- --configuration production
+    staticPublishPath: dist/ng-tailadmin/browser
+    plan: free
+
+databases:
+  - name: jira-app-db
+    plan: free
+    databaseName: jira_app
+    user: jira_user
