@@ -1,4 +1,4 @@
-import { Component, DestroyRef, ElementRef, EventEmitter, Input, Output, ViewChild, inject, signal } from '@angular/core';
+import { Component, DestroyRef, ElementRef, EventEmitter, EnvironmentInjector, Input, Output, ViewChild, afterNextRender, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -38,6 +38,7 @@ export class SprintModalComponent {
   private readonly projectService = inject(ProjectService);
   private readonly notification = inject(NotificationService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly injector = inject(EnvironmentInjector);
 
   constructor(private fb: FormBuilder) {
     this.form = this.fb.group({
@@ -63,8 +64,9 @@ export class SprintModalComponent {
     });
     this.isOpen.set(true);
 
-    // Init flatpickr after DOM renders
-    setTimeout(() => this.initFlatpickr(sprint), 0);
+    // Init flatpickr after DOM renders — afterNextRender guarantees
+    // that @ViewChild references are resolved (unlike setTimeout).
+    afterNextRender(() => this.initFlatpickr(sprint), { injector: this.injector });
   }
 
   closeModal(): void {
