@@ -1,4 +1,5 @@
-﻿using Infrastructure.Persistence;
+﻿using System.Net.Http.Headers;
+using Infrastructure.Persistence;
 using Domain.Interfaces;
 using Infrastructure.Repositories;
 using Application.Interfaces;
@@ -35,6 +36,15 @@ namespace Infrastructure
                 options.Password = section["Password"] ?? string.Empty;
             });
 
+            // Bind Resend settings
+            services.Configure<Services.ResendSettings>(options =>
+            {
+                var section = configuration.GetSection("ResendSettings");
+                options.ApiKey = section["ApiKey"] ?? string.Empty;
+                options.FromEmail = section["FromEmail"] ?? string.Empty;
+                options.FromName = section["FromName"] ?? string.Empty;
+            });
+
             // Register repositories
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IRoleRepository, RoleRepository>();
@@ -46,8 +56,21 @@ namespace Infrastructure
             services.AddScoped<IMessageRepository, MessageRepository>();
             services.AddScoped<IChatRepository, ChatRepository>();
 
-            // Email service
-            services.AddScoped<IEmailService, Services.EmailService>();
+            // Email service — conditional registration based on EmailSettings:Provider
+            var emailProvider = configuration["EmailSettings:Provider"] ?? "Smtp";
+            if (string.Equals(emailProvider, "Resend", StringComparison.OrdinalIgnoreCase))
+            {
+                services.AddHttpClient("Resend", client =>
+                {
+                    client.DefaultRequestHeaders.Authorization =
+                        new AuthenticationHeaderValue("Bearer", configuration["ResendSettings:ApiKey"] ?? string.Empty);
+                });
+                services.AddScoped<IEmailService, Services.ResendEmailService>();
+            }
+            else
+            {
+                services.AddScoped<IEmailService, Services.SmtpEmailService>();
+            }
             // File storage (local)
             services.AddScoped<IFileStorageService, Services.LocalFileStorageService>();
             services.AddScoped<IAuthService, Services.AuthService>();

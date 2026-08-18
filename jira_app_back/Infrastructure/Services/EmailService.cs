@@ -7,11 +7,11 @@ using System.Threading.Tasks;
 
 namespace Infrastructure.Services
 {
-    public class EmailService : IEmailService
+    public class SmtpEmailService : IEmailService
     {
         private readonly SmtpSettings _settings;
 
-        public EmailService(IOptions<SmtpSettings> options)
+        public SmtpEmailService(IOptions<SmtpSettings> options)
         {
             _settings = options?.Value ?? new SmtpSettings();
         }
