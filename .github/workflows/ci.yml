@@ -1,0 +1,54 @@
+name: CI Build
+
+on:
+  push:
+    branches: [jira]
+  pull_request:
+    branches: [jira]
+
+jobs:
+  backend:
+    name: Backend Build (.NET 8)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: jira_app_back
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore jira_app_back.slnx
+
+      - name: Build
+        run: dotnet build jira_app_back.slnx --no-restore --configuration Release
+
+  frontend:
+    name: Frontend Build (Angular)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: jira_app_front
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: jira_app_front/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
