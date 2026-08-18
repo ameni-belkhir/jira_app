@@ -45,6 +45,15 @@ namespace Infrastructure
                 options.FromName = section["FromName"] ?? string.Empty;
             });
 
+            // Bind Brevo settings
+            services.Configure<Services.BrevoSettings>(options =>
+            {
+                var section = configuration.GetSection("BrevoSettings");
+                options.ApiKey = section["ApiKey"] ?? string.Empty;
+                options.SenderEmail = section["SenderEmail"] ?? string.Empty;
+                options.SenderName = section["SenderName"] ?? string.Empty;
+            });
+
             // Register repositories
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IRoleRepository, RoleRepository>();
@@ -66,6 +75,14 @@ namespace Infrastructure
                         new AuthenticationHeaderValue("Bearer", configuration["ResendSettings:ApiKey"] ?? string.Empty);
                 });
                 services.AddScoped<IEmailService, Services.ResendEmailService>();
+            }
+            else if (string.Equals(emailProvider, "Brevo", StringComparison.OrdinalIgnoreCase))
+            {
+                services.AddHttpClient("Brevo", client =>
+                {
+                    client.DefaultRequestHeaders.Add("api-key", configuration["BrevoSettings:ApiKey"] ?? string.Empty);
+                });
+                services.AddScoped<IEmailService, Services.BrevoEmailService>();
             }
             else
             {
