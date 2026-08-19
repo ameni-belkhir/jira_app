@@ -13,6 +13,7 @@ export interface SprintTicket {
   assignedTo?: string;
   assignedToAvatar?: string;
   color?: string;
+  dueDate?: string | null;
   hasSubTickets?: boolean;
   parentTicketId?: number | null;
   subTickets?: SprintTicket[];
@@ -50,6 +51,7 @@ export interface UpdateTicketRequest {
   status?: string;
   priority?: string;
   color?: string;
+  dateEcheance?: string | null;
 }
 
 /** Détail complet d'un ticket (GET /api/Tickets/{id}) avec les champs d'édition. */
@@ -60,6 +62,7 @@ export interface TicketDetail extends SprintTicket {
   sprintId?: number | null;
   dateCreation?: string;
   dateResolution?: string | null;
+  dateEcheance?: string | null;
 }
 
 @Injectable({
@@ -106,6 +109,7 @@ export class TicketService {
         sprintId: raw.sprintId ?? null,
         dateCreation: raw.dateCreation,
         dateResolution: raw.dateResolution,
+        dateEcheance: raw.dateEcheance ?? null,
       }))
     );
   }

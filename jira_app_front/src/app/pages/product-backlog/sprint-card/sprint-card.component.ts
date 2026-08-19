@@ -132,7 +132,7 @@ export class SprintCardComponent {
         name: ticket.assignedTo || 'Unassigned',
         avatar: ticket.assignedToAvatar || ''
       },
-      dueDate: ticket.creationDate ? new Date(ticket.creationDate).toLocaleDateString() : '',
+      dueDate: ticket.dueDate ? new Date(ticket.dueDate).toLocaleDateString() : '',
       labels: [],
       description: ticket.description || '',
       status: (ticket.status as Ticket['status']) || 'todo',
@@ -140,6 +140,21 @@ export class SprintCardComponent {
       subTickets: (ticket.subTickets || []).map(sub => this.mapToTicket(sub)),
       isExpanded: false
     };
+  }
+
+  /** Vérifie si un ticket est verrouillé (échéance dans ≤ 30 minutes ou dépassée). */
+  isTicketLocked(ticket: BacklogTicket): boolean {
+    if (!ticket.dueDate) return false;
+    const due = new Date(ticket.dueDate);
+    if (isNaN(due.getTime())) return false;
+    const now = new Date();
+    const threshold = new Date(due.getTime() - 30 * 60 * 1000);
+    return now >= threshold;
+  }
+
+  /** Vérifie si le drag est désactivé pour un ticket donné. */
+  isDragDisabled(ticket: BacklogTicket): boolean {
+    return !this.canManageSprints || this.isTicketLocked(ticket);
   }
 }
 

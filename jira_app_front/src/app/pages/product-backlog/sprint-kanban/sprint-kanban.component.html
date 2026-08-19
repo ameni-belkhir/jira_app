@@ -147,7 +147,7 @@
             class="kanban-list-body custom-scrollbar"
           >
             @for (ticket of column.tickets; track trackByTicketId($index, ticket)) {
-              <div cdkDrag cdkDragHandle [cdkDragDisabled]="!canChangeStatus" class="kanban-card">
+              <div cdkDrag cdkDragHandle [cdkDragDisabled]="isDragDisabled(ticket)" class="kanban-card">
                 <app-ticket-card
                   [ticket]="mapToTicket(ticket)"
                   [showSubticketButton]="true"

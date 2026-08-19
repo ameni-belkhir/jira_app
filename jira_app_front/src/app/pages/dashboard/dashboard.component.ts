@@ -21,14 +21,12 @@ import * as am5 from '@amcharts/amcharts5';
 import * as am5percent from '@amcharts/amcharts5/percent';
 import * as am5xy from '@amcharts/amcharts5/xy';
 import am5themes_Animated from '@amcharts/amcharts5/themes/Animated';
-import { ProjectCardComponent } from '../projects/project-card/project-card.component';
 import { ProjectService, BackendProject, BacklogSprint, BacklogTicket } from '../../services/project.service';
 import { SprintService } from '../../services/sprint.service';
 import { TicketService } from '../../services/ticket.service';
 import { AdminService, AdminStats } from '../../services/admin.service';
 import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../shared/services/notification.service';
-import { ProjectStateService } from '../../services/project-state.service';
 
 // ==================== Helpers ====================
 const DAY_MS = 86400000;
@@ -123,7 +121,7 @@ function buildBurnDown(sprint: BacklogSprint, tickets: BacklogTicket[]): BurnDow
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [RouterModule, CommonModule, FormsModule, ProjectCardComponent],
+  imports: [RouterModule, CommonModule, FormsModule],
   templateUrl: './dashboard.component.html',
   styles: ``,
 })
@@ -317,8 +315,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     private projectService: ProjectService,
     private authService: AuthService,
     private router: Router,
-    private adminService: AdminService,
-    private projectState: ProjectStateService
+    private adminService: AdminService
   ) {}
 
   ngOnInit(): void {
@@ -687,9 +684,4 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  // Open create project modal
-  goToProjectBacklog(project: BackendProject): void {
-    this.projectState.setProject(project.id);
-    this.router.navigate(['/projects', project.id, 'backlog']);
-  }
 }

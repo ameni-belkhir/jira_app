@@ -363,7 +363,7 @@ export class ProductBacklogComponent implements OnInit {
           this.notification.success('Ticket déplacé avec succès.');
           this.loadBacklog();
         },
-        error: () => {
+        error: (err: HttpErrorResponse) => {
           // Rollback si l'API échoue.
           transferArrayItem(
             event.container.data,
@@ -374,7 +374,11 @@ export class ProductBacklogComponent implements OnInit {
           movedTicket.sprintId = previousSprintId;
           this.commitBacklog();
           this.applySearch();
-          this.notification.error('Échec du déplacement du ticket.');
+          if (err.status === 409) {
+            this.notification.error(err.error?.message || 'Ce ticket ne peut plus être déplacé : échéance dans ≤ 30 minutes.');
+          } else {
+            this.notification.error('Échec du déplacement du ticket.');
+          }
         }
       });
   }
@@ -552,7 +556,7 @@ export class ProductBacklogComponent implements OnInit {
         name: ticket.assignedTo || 'Unassigned',
         avatar: ticket.assignedToAvatar || ''
       },
-      dueDate: ticket.creationDate ? new Date(ticket.creationDate).toLocaleDateString() : '',
+      dueDate: ticket.dueDate ? new Date(ticket.dueDate).toLocaleDateString() : '',
       labels: [],
       description: ticket.description || '',
       status: (ticket.status as Ticket['status']) || 'todo',
@@ -560,6 +564,21 @@ export class ProductBacklogComponent implements OnInit {
       subTickets: (ticket.subTickets || []).map(sub => this.mapToTicket(sub)),
       isExpanded: false
     };
+  }
+
+  /** Vérifie si un ticket est verrouillé (échéance dans ≤ 30 minutes ou dépassée). */
+  isTicketLocked(ticket: BacklogTicket): boolean {
+    if (!ticket.dueDate) return false;
+    const due = new Date(ticket.dueDate);
+    if (isNaN(due.getTime())) return false;
+    const now = new Date();
+    const threshold = new Date(due.getTime() - 30 * 60 * 1000);
+    return now >= threshold;
+  }
+
+  /** Vérifie si le drag est désactivé pour un ticket donné. */
+  isDragDisabled(ticket: BacklogTicket): boolean {
+    return !this.canEditTickets || this.isTicketLocked(ticket);
   }
 
   /** Suppression définitive d'un ticket — Admin uniquement. */

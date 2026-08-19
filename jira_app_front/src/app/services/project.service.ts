@@ -12,6 +12,7 @@ export interface BacklogTicket {
   assignedTo?: string;
   assignedToAvatar?: string;
   creationDate?: string;
+  dueDate?: string | null;
   sprintId?: number | null;
   color?: string;
   hasSubTickets?: boolean;
@@ -46,6 +47,7 @@ export interface SprintRequest {
 }
 
 export interface SprintUpdateRequest {
+  id?: number;
   name?: string;
   goal?: string;
   status?: string;

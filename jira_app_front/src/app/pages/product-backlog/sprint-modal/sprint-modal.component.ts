@@ -28,6 +28,7 @@ export class SprintModalComponent {
   readonly isOpen = signal(false);
   readonly isEditMode = signal(false);
   readonly submitting = signal(false);
+  readonly dateError = signal('');
 
   form: FormGroup;
 
@@ -63,6 +64,7 @@ export class SprintModalComponent {
       endDate: sprint?.endDate || ''
     });
     this.isOpen.set(true);
+    this.dateError.set('');
 
     // Init flatpickr after DOM renders — afterNextRender guarantees
     // that @ViewChild references are resolved (unlike setTimeout).
@@ -82,8 +84,15 @@ export class SprintModalComponent {
       return;
     }
 
+    this.validateDates();
+    if (this.dateError()) {
+      this.notification.error(this.dateError());
+      return;
+    }
+
     const value = this.form.value;
     const payload = {
+      id: this.editingSprintId ?? undefined,
       name: (value.name ?? '').trim(),
       goal: (value.goal ?? '').trim() || undefined,
       startDate: value.startDate || undefined,
@@ -128,12 +137,22 @@ export class SprintModalComponent {
     }
   }
 
+  private validateDates(): void {
+    const start = this.form.get('startDate')?.value;
+    const end = this.form.get('endDate')?.value;
+    if (start && end && new Date(end) < new Date(start)) {
+      this.dateError.set('La date de fin doit être postérieure à la date de début.');
+    } else {
+      this.dateError.set('');
+    }
+  }
+
   private initFlatpickr(sprint?: BacklogSprint): void {
     this.destroyFlatpickr();
 
     const baseConfig: flatpickr.Options.Options = {
       enableTime: true,
-      dateFormat: 'Y-m-d H:i',
+      dateFormat: 'Y-m-dTH:i',
       time_24hr: true,
       locale: French,
       altInput: true,
@@ -147,6 +166,7 @@ export class SprintModalComponent {
         defaultDate: sprint?.startDate || undefined,
         onChange: (_selectedDates, dateStr) => {
           this.form.get('startDate')?.setValue(dateStr, { emitEvent: false });
+          this.validateDates();
         }
       });
     }
@@ -157,6 +177,7 @@ export class SprintModalComponent {
         defaultDate: sprint?.endDate || undefined,
         onChange: (_selectedDates, dateStr) => {
           this.form.get('endDate')?.setValue(dateStr, { emitEvent: false });
+          this.validateDates();
         }
       });
     }

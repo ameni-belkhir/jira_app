@@ -91,6 +91,11 @@
           </div>
         </div>
 
+        <!-- Date validation error -->
+        @if (dateError()) {
+          <p class="text-xs text-error-500">{{ dateError() }}</p>
+        }
+
         <!-- Footer -->
         <div class="flex items-center justify-end gap-3 pt-2">
           <button

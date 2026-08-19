@@ -159,7 +159,7 @@
             class="p-3 min-h-[240px] max-h-[70vh] overflow-y-auto space-y-2"
           >
             @for (ticket of filteredUnassignedTickets(); track trackByTicketId($index, ticket)) {
-              <div cdkDrag [cdkDragDisabled]="!canManageSprints">
+              <div cdkDrag [cdkDragDisabled]="isDragDisabled(ticket)">
                 <app-ticket-card
                   [ticket]="mapToTicket(ticket)"
                   [showSubticketButton]="true"

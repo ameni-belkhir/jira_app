@@ -7,11 +7,17 @@ import {
   DestroyRef,
   signal,
   computed,
+  ElementRef,
+  ViewChild,
+  afterNextRender,
+  EnvironmentInjector,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, debounceTime, finalize } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import flatpickr from 'flatpickr';
+import { French } from 'flatpickr/dist/l10n/fr.js';
 
 import {
   SprintTicket,
@@ -79,6 +85,7 @@ export class TicketDetailModalComponent {
   private authService = inject(AuthService);
   private notification = inject(NotificationService);
   private destroyRef = inject(DestroyRef);
+  private injector = inject(EnvironmentInjector);
 
   readonly statusOptions = STATUS_OPTIONS;
   readonly priorityOptions = PRIORITY_OPTIONS;
@@ -120,6 +127,9 @@ export class TicketDetailModalComponent {
   members = signal<ProjectMemberWithEmail[]>([]);
   currentUserName = this.authService.getEmail() || 'Moi';
   private currentUserId = Number(this.authService.getUserId() || 0);
+
+  @ViewChild('duePicker') duePickerRef!: ElementRef<HTMLInputElement>;
+  private flatpickrDue: flatpickr.Instance | null = null;
 
   /** Changer le statut : Admin, ScrumMaster, Senior, ou Developer sur son propre ticket. */
   canChangeStatus = computed(() =>
@@ -178,11 +188,13 @@ export class TicketDetailModalComponent {
     this.loadComments();
     this.loadMembers();
     this.loadContext();
+    afterNextRender(() => this.initFlatpickrDue(), { injector: this.injector });
   }
 
   closeModal(): void {
     if (this.closing()) return;
     this.closing.set(true);
+    this.destroyFlatpickrDue();
     setTimeout(() => {
       this.isOpen.set(false);
       this.closing.set(false);
@@ -212,8 +224,15 @@ export class TicketDetailModalComponent {
           this.status.set(this.normalizeStatus(d.status));
           this.priority.set(this.normalizePriority(d.priority));
           this.assigneeId.set(d.assigneeId ?? null);
+          this.dueDate.set(d.dateEcheance ? d.dateEcheance.substring(0, 16) : '');
           if (d.projectId) this.projectId = d.projectId;
           if (d.sprintId != null) this.sprintId = d.sprintId;
+
+          afterNextRender(() => {
+            if (this.flatpickrDue && d.dateEcheance) {
+              this.flatpickrDue.setDate(d.dateEcheance, true);
+            }
+          }, { injector: this.injector });
         },
         error: () => {
           this.error.set('Impossible de charger le détail du ticket.');
@@ -381,8 +400,41 @@ export class TicketDetailModalComponent {
 
   onDueDateChange(value: string): void {
     this.dueDate.set(value);
-    // Le backend ne gère pas encore la date d'échéance : mise à jour locale du formulaire.
-    this.changed.emit();
+    const isoValue = value ? this.toIsoDate(value) : null;
+    this.persist({ dateEcheance: isoValue });
+  }
+
+  private toIsoDate(dateStr: string): string | null {
+    if (!dateStr) return null;
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return null;
+    return d.toISOString();
+  }
+
+  // ==================== FLATPICKR DATE/TIME PICKER ====================
+
+  private initFlatpickrDue(): void {
+    this.destroyFlatpickrDue();
+    if (!this.duePickerRef?.nativeElement) return;
+
+    this.flatpickrDue = flatpickr(this.duePickerRef.nativeElement, {
+      enableTime: true,
+      dateFormat: 'Y-m-dTH:i',
+      time_24hr: true,
+      locale: French,
+      altInput: true,
+      altFormat: 'd/m/Y \\à H:i',
+      disableMobile: true,
+      defaultDate: this.dueDate() || undefined,
+      onChange: (_selectedDates, dateStr) => {
+        this.dueDate.set(dateStr);
+      }
+    });
+  }
+
+  private destroyFlatpickrDue(): void {
+    this.flatpickrDue?.destroy();
+    this.flatpickrDue = null;
   }
 
   toggleLabel(label: string): void {
@@ -430,6 +482,7 @@ export class TicketDetailModalComponent {
       status: this.status(),
       priority: this.priority(),
       color: d?.color || ticket?.color || '#3b82f6',
+      dateEcheance: d?.dateEcheance ?? (this.dueDate() ? this.toIsoDate(this.dueDate()) : null),
     };
   }
 

@@ -385,7 +385,7 @@ export class SprintKanbanComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => this.notification.success('Statut du ticket mis à jour.'),
-        error: () => {
+        error: (err: HttpErrorResponse) => {
           // Rollback : réinsère la carte dans sa colonne d'origine.
           transferArrayItem(
             event.container.data,
@@ -395,7 +395,11 @@ export class SprintKanbanComponent implements OnInit {
           );
           movedTicket.status = previousStatus;
           this.commitColumnSignals();
-          this.notification.error('Impossible de modifier le statut du ticket');
+          if (err.status === 409) {
+            this.notification.error(err.error?.message || 'Ce ticket ne peut plus être déplacé : échéance dans ≤ 30 minutes.');
+          } else {
+            this.notification.error('Impossible de modifier le statut du ticket');
+          }
         }
       });
   }
@@ -490,5 +494,20 @@ export class SprintKanbanComponent implements OnInit {
   private static isValidTransition(from: string, to: string): boolean {
     return (from === 'A_FAIRE' && to === 'EN_COURS')
         || (from === 'EN_COURS' && to === 'TERMINE');
+  }
+
+  /** Vérifie si un ticket est verrouillé (échéance dans ≤ 30 minutes ou dépassée). */
+  isTicketLocked(ticket: SprintTicket): boolean {
+    if (!ticket.dueDate) return false;
+    const due = new Date(ticket.dueDate);
+    if (isNaN(due.getTime())) return false;
+    const now = new Date();
+    const threshold = new Date(due.getTime() - 30 * 60 * 1000);
+    return now >= threshold;
+  }
+
+  /** Vérifie si le drag est désactivé pour un ticket donné. */
+  isDragDisabled(ticket: SprintTicket): boolean {
+    return !this.canChangeStatus || this.isTicketLocked(ticket);
   }
 }
