@@ -18,6 +18,7 @@ namespace Application.DTO
         public string Priority { get; set; } = string.Empty;
         public DateTime DateCreation { get; set; }
         public DateTime? DateResolution { get; set; }
+        public DateTime? DateEcheance { get; set; }
         public string Color { get; set; } = "#ffffff";
         public bool HasSubTickets { get; set; }
 

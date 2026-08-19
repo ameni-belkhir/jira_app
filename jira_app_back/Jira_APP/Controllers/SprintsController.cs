@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -152,6 +153,17 @@ namespace Jira_APP.Controllers
             var role = await _projectAuthService.GetUserRoleInProjectAsync(userId.Value, ticket.ProjectId.Value);
             if (!User.IsInRole("Admin") && role != "ScrumMaster")
                 return Forbid();
+
+            // Règle métier : blocage du déplacement si échéance dans ≤ 30 minutes
+            if (ticket.DateEcheance.HasValue)
+            {
+                var utcNow = DateTime.UtcNow;
+                var threshold = ticket.DateEcheance.Value.AddMinutes(-30);
+                if (utcNow >= threshold)
+                {
+                    return Conflict(new { message = "Ce ticket ne peut plus être déplacé car sa date d'échéance est dans moins de 30 minutes ou est déjà dépassée." });
+                }
+            }
 
             var ok = await _sprintService.MoveTicketToSprintAsync(dto.TicketId, dto.SprintId);
             if (!ok) return NotFound();

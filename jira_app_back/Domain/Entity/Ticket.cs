@@ -14,6 +14,7 @@ namespace Domain.Entity
 
         public DateTime DateCreation { get; set; } = DateTime.UtcNow;
         public DateTime? DateResolution { get; set; }
+        public DateTime? DateEcheance { get; set; }
 
         // Affectation
         public int? AssigneeId { get; set; }

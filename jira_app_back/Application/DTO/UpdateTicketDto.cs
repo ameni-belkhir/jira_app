@@ -27,5 +27,8 @@ namespace Application.DTO
 
         // Couleur optionnelle (hex), ex: "#ff0000"
         public string? Color { get; set; } = "#ffffff";
+
+        // Date d'échéance optionnelle
+        public DateTime? DateEcheance { get; set; }
     }
 }

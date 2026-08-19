@@ -95,6 +95,7 @@ namespace Application.Services
             AssignedTo = t.Assignee != null ? $"{t.Assignee.Prenom} {t.Assignee.Nom}" : null,
             AssignedToAvatar = t.Assignee?.ProfileImageUrl,
             Color = t.Color ?? "#ffffff",
+            DateEcheance = t.DateEcheance,
             HasSubTickets = t.SubTickets != null && t.SubTickets.Any(),
             ParentTicketId = t.ParentTicketId,
             SubTickets = (t.SubTickets ?? new List<Ticket>())
@@ -165,6 +166,7 @@ namespace Application.Services
             Priority = t.Priority.ToString(),
             DateCreation = t.DateCreation,
             DateResolution = t.DateResolution,
+            DateEcheance = t.DateEcheance,
             Color = t.Color ?? "#ffffff",
             HasSubTickets = t.SubTickets != null && t.SubTickets.Any(),
             ParentTicketId = t.ParentTicketId,

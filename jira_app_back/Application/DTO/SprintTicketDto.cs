@@ -10,6 +10,7 @@ namespace Application.DTO
         public string? AssignedTo { get; set; }
         public string? AssignedToAvatar { get; set; }
         public string Color { get; set; } = "#ffffff";
+        public DateTime? DateEcheance { get; set; }
         public bool HasSubTickets { get; set; }
         public int? ParentTicketId { get; set; }
 
