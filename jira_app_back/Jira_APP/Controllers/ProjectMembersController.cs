@@ -155,10 +155,17 @@ namespace Jira_APP.Controllers
             try
             {
                 var subject = "Vous avez été affecté à un nouveau projet";
-                var body = $"Bonjour {user.Prenom} {user.Nom},\n\n"
-                         + $"Vous avez été ajouté au projet « {project.Nom} » en tant que Senior.\n"
-                         + "Connectez-vous à l'application Jira pour commencer à collaborer.\n\n"
-                         + "Cordialement,\nL'équipe Jira";
+                var body = $@"<div style=""font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#1e293b"">
+  <div style=""padding:28px;background:#f8fafc;border-radius:8px"">
+    <h2 style=""margin:0 0 16px;color:#1e293b;font-size:20px"">Affectation à un projet</h2>
+    <p style=""margin:0 0 12px;line-height:1.6;color:#475569"">Bonjour {user.Prenom} {user.Nom},</p>
+    <p style=""margin:0 0 12px;line-height:1.6;color:#475569"">Vous avez été ajouté au projet <strong>« {project.Nom} »</strong> en tant que <strong>Senior</strong>.</p>
+    <p style=""margin:0;line-height:1.6;color:#475569"">Connectez-vous à l'application Jira pour commencer à collaborer.</p>
+  </div>
+  <div style=""padding:16px;text-align:center"">
+    <p style=""margin:0;color:#94a3b8;font-size:12px;line-height:1.5"">Jira App — Gestion de projet simplifiée</p>
+  </div>
+</div>";
                 await _emailService.SendEmailAsync(user.Email, subject, body);
                 emailSent = true;
             }
@@ -260,10 +267,17 @@ namespace Jira_APP.Controllers
             try
             {
                 var subject = "Vous avez été affecté à un nouveau projet";
-                var body = $"Bonjour {user.Prenom} {user.Nom},\n\n"
-                         + $"Vous avez été ajouté au projet « {project.Nom} » en tant que Développeur.\n"
-                         + "Connectez-vous à l'application Jira pour consulter vos sprints et vos tickets.\n\n"
-                         + "Cordialement,\nL'équipe Jira";
+                var body = $@"<div style=""font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#1e293b"">
+  <div style=""padding:28px;background:#f8fafc;border-radius:8px"">
+    <h2 style=""margin:0 0 16px;color:#1e293b;font-size:20px"">Affectation à un projet</h2>
+    <p style=""margin:0 0 12px;line-height:1.6;color:#475569"">Bonjour {user.Prenom} {user.Nom},</p>
+    <p style=""margin:0 0 12px;line-height:1.6;color:#475569"">Vous avez été ajouté au projet <strong>« {project.Nom} »</strong> en tant que <strong>Développeur</strong>.</p>
+    <p style=""margin:0;line-height:1.6;color:#475569"">Connectez-vous à l'application Jira pour consulter vos sprints et vos tickets.</p>
+  </div>
+  <div style=""padding:16px;text-align:center"">
+    <p style=""margin:0;color:#94a3b8;font-size:12px;line-height:1.5"">Jira App — Gestion de projet simplifiée</p>
+  </div>
+</div>";
                 await _emailService.SendEmailAsync(user.Email, subject, body);
                 emailSent = true;
             }
@@ -376,10 +390,17 @@ namespace Jira_APP.Controllers
             try
             {
                 var subject = "Vous avez été affecté à un nouveau projet";
-                var body = $"Bonjour {user.Prenom} {user.Nom},\n\n"
-                         + $"Vous avez été ajouté au projet « {project.Nom} » en tant que ScrumMaster.\n"
-                         + "Connectez-vous à l'application Jira pour commencer à gérer ce projet.\n\n"
-                         + "Cordialement,\nL'équipe Jira";
+                var body = $@"<div style=""font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#1e293b"">
+  <div style=""padding:28px;background:#f8fafc;border-radius:8px"">
+    <h2 style=""margin:0 0 16px;color:#1e293b;font-size:20px"">Affectation à un projet</h2>
+    <p style=""margin:0 0 12px;line-height:1.6;color:#475569"">Bonjour {user.Prenom} {user.Nom},</p>
+    <p style=""margin:0 0 12px;line-height:1.6;color:#475569"">Vous avez été ajouté au projet <strong>« {project.Nom} »</strong> en tant que <strong>ScrumMaster</strong>.</p>
+    <p style=""margin:0;line-height:1.6;color:#475569"">Connectez-vous à l'application Jira pour commencer à gérer ce projet.</p>
+  </div>
+  <div style=""padding:16px;text-align:center"">
+    <p style=""margin:0;color:#94a3b8;font-size:12px;line-height:1.5"">Jira App — Gestion de projet simplifiée</p>
+  </div>
+</div>";
                 _ = _emailService.SendEmailAsync(user.Email, subject, body);
                 emailSent = true;
             }

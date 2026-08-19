@@ -36,20 +36,12 @@ namespace Infrastructure
                 options.Password = section["Password"] ?? string.Empty;
             });
 
-            // Bind Resend settings
-            services.Configure<Services.ResendSettings>(options =>
+            // Bind Mailjet settings
+            services.Configure<Services.MailjetSettings>(options =>
             {
-                var section = configuration.GetSection("ResendSettings");
+                var section = configuration.GetSection("MailjetSettings");
                 options.ApiKey = section["ApiKey"] ?? string.Empty;
-                options.FromEmail = section["FromEmail"] ?? string.Empty;
-                options.FromName = section["FromName"] ?? string.Empty;
-            });
-
-            // Bind Brevo settings
-            services.Configure<Services.BrevoSettings>(options =>
-            {
-                var section = configuration.GetSection("BrevoSettings");
-                options.ApiKey = section["ApiKey"] ?? string.Empty;
+                options.SecretKey = section["SecretKey"] ?? string.Empty;
                 options.SenderEmail = section["SenderEmail"] ?? string.Empty;
                 options.SenderName = section["SenderName"] ?? string.Empty;
             });
@@ -67,22 +59,17 @@ namespace Infrastructure
 
             // Email service — conditional registration based on EmailSettings:Provider
             var emailProvider = configuration["EmailSettings:Provider"] ?? "Smtp";
-            if (string.Equals(emailProvider, "Resend", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(emailProvider, "Mailjet", StringComparison.OrdinalIgnoreCase))
             {
-                services.AddHttpClient("Resend", client =>
+                services.AddHttpClient("Mailjet", client =>
                 {
+                    var apiKey = configuration["MailjetSettings:ApiKey"] ?? string.Empty;
+                    var secretKey = configuration["MailjetSettings:SecretKey"] ?? string.Empty;
+                    var credentials = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{apiKey}:{secretKey}"));
                     client.DefaultRequestHeaders.Authorization =
-                        new AuthenticationHeaderValue("Bearer", configuration["ResendSettings:ApiKey"] ?? string.Empty);
+                        new AuthenticationHeaderValue("Basic", credentials);
                 });
-                services.AddScoped<IEmailService, Services.ResendEmailService>();
-            }
-            else if (string.Equals(emailProvider, "Brevo", StringComparison.OrdinalIgnoreCase))
-            {
-                services.AddHttpClient("Brevo", client =>
-                {
-                    client.DefaultRequestHeaders.Add("api-key", configuration["BrevoSettings:ApiKey"] ?? string.Empty);
-                });
-                services.AddScoped<IEmailService, Services.BrevoEmailService>();
+                services.AddScoped<IEmailService, Services.MailjetEmailService>();
             }
             else
             {
@@ -93,6 +80,10 @@ namespace Infrastructure
             services.AddScoped<IAuthService, Services.AuthService>();
             // Notification service (SignalR + BDD)
             services.AddScoped<INotificationService, Services.NotificationService>();
+            // Deadline notification service
+            services.AddScoped<IDeadlineNotificationService, Services.DeadlineNotificationService>();
+            // Background service for deadline checks
+            services.AddHostedService<Services.DeadlineCheckBackgroundService>();
             // Project authorization service (rôle d'un utilisateur dans un projet)
             services.AddScoped<IProjectAuthorizationService, Services.ProjectAuthorizationService>();
             // Gemini service (génération de plans de projet via IA). Clé lue via IConfiguration (Gemini:ApiKey).

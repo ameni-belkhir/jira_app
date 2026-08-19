@@ -90,9 +90,7 @@ namespace Infrastructure.Services
             // send verification email and surface errors
             try
             {
-                var subject = "Code de vérification";
-                var body = $"Bonjour {user.Nom},\n\nVotre code de vérification est : {code}\nIl expire dans 15 minutes.";
-                await _emailService.SendEmailAsync(user.Email, subject, body);
+                await _emailService.SendVerificationCodeAsync(user.Email, $"{user.Prenom} {user.Nom}", code);
             }
             catch (System.Exception ex)
             {

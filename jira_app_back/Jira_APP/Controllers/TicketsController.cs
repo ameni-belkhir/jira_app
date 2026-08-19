@@ -62,6 +62,7 @@ namespace Jira_APP.Controllers
             Priority = t.Priority.ToString(),
             DateCreation = t.DateCreation,
             DateResolution = t.DateResolution,
+            DateEcheance = t.DateEcheance,
             Color = t.Color ?? "#ffffff",
             HasSubTickets = hasSubTickets
         };
@@ -215,6 +216,7 @@ namespace Jira_APP.Controllers
                 Status = Enum.TryParse<Domain.Entity.Status>(dto.Status ?? string.Empty, out var s) ? s : Domain.Entity.Status.A_FAIRE,
                 Priority = Enum.TryParse<Domain.Entity.Priority>(dto.Priority ?? string.Empty, out var p) ? p : Domain.Entity.Priority.MOYENNE,
                 DateCreation = DateTime.UtcNow,
+                DateEcheance = dto.DateEcheance,
                 Color = string.IsNullOrEmpty(dto.Color) ? "#ffffff" : dto.Color
             };
             _db.Tickets.Add(ticket);
@@ -233,7 +235,17 @@ namespace Jira_APP.Controllers
                         await _emailService.SendEmailAsync(
                             assignee.Email,
                             "Ticket assigné",
-                            $"Bonjour {assignee.Prenom} {assignee.Nom},\n\nLe ticket « {ticket.Titre} » vous a été assigné.\n\nCordialement,\nL'équipe Jira");
+                            $@"<div style=""font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#1e293b"">
+  <div style=""padding:28px;background:#f8fafc;border-radius:8px"">
+    <h2 style=""margin:0 0 16px;color:#1e293b;font-size:20px"">Ticket assigné</h2>
+    <p style=""margin:0 0 12px;line-height:1.6;color:#475569"">Bonjour {assignee.Prenom} {assignee.Nom},</p>
+    <p style=""margin:0 0 12px;line-height:1.6;color:#475569"">Le ticket <strong>« {ticket.Titre} »</strong> vous a été assigné.</p>
+    <p style=""margin:0;line-height:1.6;color:#475569"">Connectez-vous à l'application Jira pour le consulter.</p>
+  </div>
+  <div style=""padding:16px;text-align:center"">
+    <p style=""margin:0;color:#94a3b8;font-size:12px;line-height:1.5"">Jira App — Gestion de projet simplifiée</p>
+  </div>
+</div>");
                     }
                     catch (Exception ex)
                     {
@@ -371,7 +383,17 @@ namespace Jira_APP.Controllers
                         await _emailService.SendEmailAsync(
                             assignee.Email,
                             "Sous-ticket assigné",
-                            $"Bonjour {assignee.Prenom} {assignee.Nom},\n\nLe sous-ticket « {ticket.Titre} » vous a été assigné.\n\nCordialement,\nL'équipe Jira");
+                            $@"<div style=""font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#1e293b"">
+  <div style=""padding:28px;background:#f8fafc;border-radius:8px"">
+    <h2 style=""margin:0 0 16px;color:#1e293b;font-size:20px"">Sous-ticket assigné</h2>
+    <p style=""margin:0 0 12px;line-height:1.6;color:#475569"">Bonjour {assignee.Prenom} {assignee.Nom},</p>
+    <p style=""margin:0 0 12px;line-height:1.6;color:#475569"">Le sous-ticket <strong>« {ticket.Titre} »</strong> vous a été assigné.</p>
+    <p style=""margin:0;line-height:1.6;color:#475569"">Connectez-vous à l'application Jira pour le consulter.</p>
+  </div>
+  <div style=""padding:16px;text-align:center"">
+    <p style=""margin:0;color:#94a3b8;font-size:12px;line-height:1.5"">Jira App — Gestion de projet simplifiée</p>
+  </div>
+</div>");
                     }
                     catch (Exception ex)
                     {
@@ -468,6 +490,7 @@ namespace Jira_APP.Controllers
             }
             if (!string.IsNullOrEmpty(dto.Priority) && Enum.TryParse<Domain.Entity.Priority>(dto.Priority, out var p)) ticket.Priority = p;
             ticket.Color = string.IsNullOrEmpty(dto.Color) ? ticket.Color : dto.Color;
+            ticket.DateEcheance = dto.DateEcheance;
             _db.Tickets.Update(ticket);
             await _db.SaveChangesAsync();
 
@@ -482,7 +505,17 @@ namespace Jira_APP.Controllers
                         await _emailService.SendEmailAsync(
                             assignee.Email,
                             "Ticket assigné",
-                            $"Bonjour {assignee.Prenom} {assignee.Nom},\n\nLe ticket « {ticket.Titre} » vous a été assigné.\n\nCordialement,\nL'équipe Jira");
+                            $@"<div style=""font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#1e293b"">
+  <div style=""padding:28px;background:#f8fafc;border-radius:8px"">
+    <h2 style=""margin:0 0 16px;color:#1e293b;font-size:20px"">Ticket assigné</h2>
+    <p style=""margin:0 0 12px;line-height:1.6;color:#475569"">Bonjour {assignee.Prenom} {assignee.Nom},</p>
+    <p style=""margin:0 0 12px;line-height:1.6;color:#475569"">Le ticket <strong>« {ticket.Titre} »</strong> vous a été assigné.</p>
+    <p style=""margin:0;line-height:1.6;color:#475569"">Connectez-vous à l'application Jira pour le consulter.</p>
+  </div>
+  <div style=""padding:16px;text-align:center"">
+    <p style=""margin:0;color:#94a3b8;font-size:12px;line-height:1.5"">Jira App — Gestion de projet simplifiée</p>
+  </div>
+</div>");
                     }
                     catch (Exception ex)
                     {
@@ -602,6 +635,17 @@ namespace Jira_APP.Controllers
                 return BadRequest(new { error = "Transition de statut non autorisée." });
             }
 
+            // Règle métier : blocage du déplacement si échéance dans ≤ 30 minutes
+            if (ticket.DateEcheance.HasValue)
+            {
+                var utcNow = DateTime.UtcNow;
+                var threshold = ticket.DateEcheance.Value.AddMinutes(-30);
+                if (utcNow >= threshold)
+                {
+                    return Conflict(new { message = "Ce ticket ne peut plus être déplacé car sa date d'échéance est dans moins de 30 minutes ou est déjà dépassée." });
+                }
+            }
+
             ticket.Status = newStatus;
             _db.Tickets.Update(ticket);
             await _db.SaveChangesAsync();
@@ -683,10 +727,20 @@ namespace Jira_APP.Controllers
 
             try
             {
-                await _emailService.SendEmailAsync(
-                    assignee.Email,
-                    "Ticket assigné",
-                    $"Bonjour {assignee.Prenom} {assignee.Nom},\n\nLe ticket « {ticket.Titre} » vous a été assigné.\n\nCordialement,\nL'équipe Jira");
+                        await _emailService.SendEmailAsync(
+                            assignee.Email,
+                            "Ticket assigné",
+                            $@"<div style=""font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#1e293b"">
+  <div style=""padding:28px;background:#f8fafc;border-radius:8px"">
+    <h2 style=""margin:0 0 16px;color:#1e293b;font-size:20px"">Ticket assigné</h2>
+    <p style=""margin:0 0 12px;line-height:1.6;color:#475569"">Bonjour {assignee.Prenom} {assignee.Nom},</p>
+    <p style=""margin:0 0 12px;line-height:1.6;color:#475569"">Le ticket <strong>« {ticket.Titre} »</strong> vous a été assigné.</p>
+    <p style=""margin:0;line-height:1.6;color:#475569"">Connectez-vous à l'application Jira pour le consulter.</p>
+  </div>
+  <div style=""padding:16px;text-align:center"">
+    <p style=""margin:0;color:#94a3b8;font-size:12px;line-height:1.5"">Jira App — Gestion de projet simplifiée</p>
+  </div>
+</div>");
             }
             catch (Exception ex)
             {

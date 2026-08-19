@@ -155,12 +155,21 @@ namespace Jira_APP.Controllers
             var emailSent = false;
             try
             {
-                var body = $"Bonjour {user.Prenom} {user.Nom},\n\n" +
-                    "Votre compte a été créé par un administrateur.\n\n" +
-                    $"E-mail de connexion : {dto.Email}\n" +
-                    $"Mot de passe attribué : {generatedPassword}\n\n" +
-                    "Nous vous invitons à vous connecter sur l'application Jira.\n\n" +
-                    "Cordialement,\nJira App";
+                var body = $@"<div style=""font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#1e293b"">
+  <div style=""padding:28px;background:#f8fafc;border-radius:8px"">
+    <h2 style=""margin:0 0 16px;color:#1e293b;font-size:20px"">Votre compte a été créé</h2>
+    <p style=""margin:0 0 12px;line-height:1.6;color:#475569"">Bonjour {user.Prenom} {user.Nom},</p>
+    <p style=""margin:0 0 12px;line-height:1.6;color:#475569"">Un administrateur a créé votre compte sur Jira App. Voici vos identifiants de connexion :</p>
+    <div style=""margin:20px 0;padding:18px;background:#fff;border-radius:8px;border:1px solid #e2e8f0"">
+      <p style=""margin:0 0 8px;color:#475569;font-size:14px""><strong>E-mail :</strong> {dto.Email}</p>
+      <p style=""margin:0;color:#475569;font-size:14px""><strong>Mot de passe :</strong> <span style=""font-family:monospace;font-size:16px;color:#3b82f6;background:#f1f5f9;padding:2px 8px;border-radius:4px"">{generatedPassword}</span></p>
+    </div>
+    <p style=""margin:16px 0 0;line-height:1.6;color:#475569"">Nous vous invitons à vous connecter et à changer votre mot de passe dès votre première connexion.</p>
+  </div>
+  <div style=""padding:16px;text-align:center"">
+    <p style=""margin:0;color:#94a3b8;font-size:12px;line-height:1.5"">Jira App — Gestion de projet simplifiée</p>
+  </div>
+</div>";
 
                 await _emailService.SendEmailAsync(
                     user.Email,
@@ -396,8 +405,10 @@ namespace Jira_APP.Controllers
                 .Include(u => u.UserPermissions)
                 .Include(u => u.Commentaires)
                 .Include(u => u.Messages)
+                .Include(u => u.ChatMessages)
                 .Include(u => u.CreatedTickets)
                 .Include(u => u.AssignedTickets)
+                .Include(u => u.CreatedProjects)
                 .FirstOrDefaultAsync(u => u.Id == id);
 
             if (user == null)
@@ -436,6 +447,18 @@ namespace Jira_APP.Controllers
                 {
                     message.SenderId = adminId;
                 }
+
+                // 5. Reassign chat messages to the admin
+                foreach (var chatMessage in user.ChatMessages)
+                {
+                    chatMessage.SenderId = adminId;
+                }
+
+                // 6. Reassign created projects to the admin
+                foreach (var project in user.CreatedProjects)
+                {
+                    project.CreatedById = adminId;
+                }
             }
 
             // 2. Unassign tickets assigned to this user (AssigneeId is nullable)
@@ -444,7 +467,8 @@ namespace Jira_APP.Controllers
                 ticket.AssigneeId = null;
             }
 
-            // Cascade will handle ProjectMembers, SprintMembers, UserPermissions
+            // Cascade will handle ProjectMembers, SprintMembers, UserPermissions,
+            // ConversationMembers, UserChatPreferences, Notifications
             _db.Users.Remove(user);
             await _db.SaveChangesAsync();
 
