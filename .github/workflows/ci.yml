@@ -52,3 +52,67 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  security-scan:
+    name: Security Scan (Trivy)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── 1. Build de l'image Docker backend (sans push) ──────────────
+      - name: Build backend Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: jira_app_back
+          file: jira_app_back/Jira_APP/Dockerfile
+          push: false
+          load: true
+          tags: jira-app-backend:scan
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # ── 2. Scan de l'image Docker — CRITICAL uniquement (échec) ────
+      - name: Trivy scan image (CRITICAL)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: jira-app-backend:scan
+          format: table
+          exit-code: 1
+          severity: CRITICAL
+          ignore-unfixed: true
+
+      # ── 3. Scan de l'image Docker — HIGH (avertissement seul) ──────
+      - name: Trivy scan image (HIGH)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: jira-app-backend:scan
+          format: table
+          exit-code: 0
+          severity: HIGH
+          ignore-unfixed: true
+
+      # ── 4. Scan filesystem — dépendances + secrets (CRITICAL) ──────
+      - name: Trivy filesystem scan (CRITICAL)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: table
+          exit-code: 1
+          severity: CRITICAL
+          scanners: vuln,secret,misconfig
+          ignore-unfixed: true
+
+      # ── 5. Scan filesystem — HIGH (avertissement seul) ─────────────
+      - name: Trivy filesystem scan (HIGH)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: table
+          exit-code: 0
+          severity: HIGH
+          scanners: vuln,secret,misconfig
+          ignore-unfixed: true
