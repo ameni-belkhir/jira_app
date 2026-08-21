@@ -75,7 +75,7 @@ jobs:
 
       # ── 2. Scan de l'image Docker — CRITICAL uniquement (échec) ────
       - name: Trivy scan image (CRITICAL)
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.28.0
         with:
           image-ref: jira-app-backend:scan
           format: table
@@ -85,7 +85,7 @@ jobs:
 
       # ── 3. Scan de l'image Docker — HIGH (avertissement seul) ──────
       - name: Trivy scan image (HIGH)
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.28.0
         with:
           image-ref: jira-app-backend:scan
           format: table
@@ -95,7 +95,7 @@ jobs:
 
       # ── 4. Scan filesystem — dépendances + secrets (CRITICAL) ──────
       - name: Trivy filesystem scan (CRITICAL)
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.28.0
         with:
           scan-type: fs
           scan-ref: .
@@ -107,7 +107,7 @@ jobs:
 
       # ── 5. Scan filesystem — HIGH (avertissement seul) ─────────────
       - name: Trivy filesystem scan (HIGH)
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.28.0
         with:
           scan-type: fs
           scan-ref: .
