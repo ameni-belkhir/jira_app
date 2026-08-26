@@ -48,6 +48,11 @@ namespace Jira_APP.Controllers
             return id;
         }
 
+        private static DateTime? EnsureUtc(DateTime? value)
+            => value.HasValue && value.Value.Kind != DateTimeKind.Utc
+                ? DateTime.SpecifyKind(value.Value, DateTimeKind.Utc)
+                : value;
+
         private static TicketDto MapToDto(Ticket t, bool hasSubTickets = false) => new TicketDto
         {
             Id = t.Id,
@@ -204,6 +209,8 @@ namespace Jira_APP.Controllers
                     return BadRequest(new { ParentTicketId = "Le ticket parent n'appartient pas au même projet." });
             }
 
+            // TODO: le mapping DTO -> entité est réalisé dans ce contrôleur au lieu de TicketService
+            // (Create ci-dessous et Update). Refactoring à traiter séparément.
             var ticket = new Ticket
             {
                 Titre = dto.Titre,
@@ -216,7 +223,7 @@ namespace Jira_APP.Controllers
                 Status = Enum.TryParse<Domain.Entity.Status>(dto.Status ?? string.Empty, out var s) ? s : Domain.Entity.Status.A_FAIRE,
                 Priority = Enum.TryParse<Domain.Entity.Priority>(dto.Priority ?? string.Empty, out var p) ? p : Domain.Entity.Priority.MOYENNE,
                 DateCreation = DateTime.UtcNow,
-                DateEcheance = dto.DateEcheance,
+                DateEcheance = EnsureUtc(dto.DateEcheance),
                 Color = string.IsNullOrEmpty(dto.Color) ? "#ffffff" : dto.Color
             };
             _db.Tickets.Add(ticket);
@@ -490,7 +497,7 @@ namespace Jira_APP.Controllers
             }
             if (!string.IsNullOrEmpty(dto.Priority) && Enum.TryParse<Domain.Entity.Priority>(dto.Priority, out var p)) ticket.Priority = p;
             ticket.Color = string.IsNullOrEmpty(dto.Color) ? ticket.Color : dto.Color;
-            ticket.DateEcheance = dto.DateEcheance;
+            ticket.DateEcheance = EnsureUtc(dto.DateEcheance);
             _db.Tickets.Update(ticket);
             await _db.SaveChangesAsync();
 
@@ -841,6 +848,9 @@ namespace Jira_APP.Controllers
         {
             return (from, to) switch
             {
+                // Une "transition" vers le même statut n'est jamais illégale :
+                // les sauvegardes via PUT complet (persist) renvoient toujours le statut actuel.
+                _ when from == to => true,
                 ("A_FAIRE", "EN_COURS") => true,
                 ("EN_COURS", "TERMINE") => true,
                 _ => false

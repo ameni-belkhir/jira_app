@@ -9,5 +9,7 @@ namespace Application.Interfaces
         Task SendNotificationAsync(int userId, string title, string message, string? targetUrl = null, string? type = null);
         Task<IEnumerable<NotificationDto>> GetUserNotificationsAsync(int userId);
         Task<bool> MarkAsReadAsync(int notificationId, int userId);
+        Task MarkAllAsReadAsync(int userId);
+        Task DeleteReadNotificationsAsync(int userId);
     }
 }

@@ -88,5 +88,34 @@ namespace Infrastructure.Services
             await _context.SaveChangesAsync();
             return true;
         }
+
+        public async Task MarkAllAsReadAsync(int userId)
+        {
+            var unread = await _context.Notifications
+                .Where(n => n.UserId == userId && !n.IsRead)
+                .ToListAsync();
+
+            if (unread.Count == 0) return;
+
+            foreach (var notification in unread)
+            {
+                notification.IsRead = true;
+            }
+
+            _context.Notifications.UpdateRange(unread);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task DeleteReadNotificationsAsync(int userId)
+        {
+            var readNotifications = await _context.Notifications
+                .Where(n => n.UserId == userId && n.IsRead)
+                .ToListAsync();
+
+            if (readNotifications.Count == 0) return;
+
+            _context.Notifications.RemoveRange(readNotifications);
+            await _context.SaveChangesAsync();
+        }
     }
 }

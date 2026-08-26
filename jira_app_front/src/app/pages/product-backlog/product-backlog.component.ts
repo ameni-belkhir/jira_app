@@ -12,6 +12,7 @@ import { TicketService } from '../../services/ticket.service';
 import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../shared/services/notification.service';
 import { ProjectMembersService, AvailableUser } from '../../services/project-members.service';
+import { TicketNavigationService } from '../../services/ticket-navigation.service';
 import { SprintModalComponent } from './sprint-modal/sprint-modal.component';
 import { CompleteSprintModalComponent } from './complete-sprint-modal/complete-sprint-modal.component';
 import { CreateTicketModalComponent } from './create-ticket-modal/create-ticket-modal.component';
@@ -54,6 +55,9 @@ export class ProductBacklogComponent implements OnInit {
 
   projectId: number = 0;
   projectName: string = '';
+
+  /** Ticket à ouvrir dès que le backlog sera chargé (arrivée avec ?ticket= avant la fin du chargement). */
+  private pendingOpenTicketId: number | null = null;
 
   // Data
   backlogData = signal<BacklogResponse | null>(null);
@@ -100,10 +104,26 @@ export class ProductBacklogComponent implements OnInit {
     private notification: NotificationService,
     private projectState: ProjectStateService,
     private projectMembersService: ProjectMembersService,
+    private ticketNavigation: TicketNavigationService,
     private destroyRef: DestroyRef
   ) {}
 
   ngOnInit(): void {
+    // Notification cliquée alors que cette page est déjà affichée : ouvrir le ticket sans recharger.
+    this.ticketNavigation.openTicket$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((ticketId) => this.openTicketFromNotification(ticketId));
+
+    // Arrivée sur la page (ou re-navigation pendant qu'elle est active) avec ?ticket={id}.
+    this.route.queryParams
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((params) => {
+        const raw = params['ticket'];
+        const ticketId = raw != null && /^\d+$/.test(String(raw)) ? Number(raw) : null;
+        if (ticketId == null) return;
+        this.openTicketFromNotification(ticketId);
+      });
+
     const idParam = this.route.snapshot.paramMap.get('id');
     if (idParam) {
       this.projectId = parseInt(idParam, 10);
@@ -279,6 +299,11 @@ export class ProductBacklogComponent implements OnInit {
           this.backlogData.set(data);
           this.applySearch();
           this.notification.success('Backlog chargé avec succès.');
+          if (this.pendingOpenTicketId != null) {
+            const ticketId = this.pendingOpenTicketId;
+            this.pendingOpenTicketId = null;
+            this.openTicketFromNotification(ticketId);
+          }
         },
         error: (err: HttpErrorResponse) => {
           if (err.status === 403) {
@@ -535,6 +560,32 @@ export class ProductBacklogComponent implements OnInit {
     if (ticket) {
       this.ticketDetailModal.open(ticket);
     }
+  }
+
+  /**
+   * Ouvre le ticket demandé par une notification (queryParam ?ticket= ou clic
+   * sur la page courante). Si le ticket n'est pas dans les données déjà en
+   * mémoire, fallback GET /api/Tickets/{id} : TicketDetail étend SprintTicket,
+   * et le modal refait de toute façon un GET complet via loadDetail().
+   */
+  private openTicketFromNotification(ticketId: number): void {
+    if (!this.backlogData()) {
+      // Backlog pas encore chargé : on retente dès la fin du chargement initial.
+      this.pendingOpenTicketId = ticketId;
+      return;
+    }
+    const found = [
+      ...(this.backlogData()?.backlogTickets || []),
+      ...(this.backlogData()?.sprints || []).flatMap(s => s.tickets || [])
+    ].some(t => t.id === ticketId);
+    if (found) {
+      this.openTicketDetail(ticketId);
+      return;
+    }
+    this.ticketService.getTicket(ticketId).subscribe({
+      next: (detail) => this.ticketDetailModal.open(detail),
+      error: () => this.notification.error('Impossible de charger le ticket demandé.')
+    });
   }
 
   // ==================== ASSIGNATION TICKET ====================

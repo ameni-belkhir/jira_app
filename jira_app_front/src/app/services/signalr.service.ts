@@ -1,6 +1,8 @@
 import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { HubConnection, HubConnectionBuilder, HubConnectionState, HttpTransportType, LogLevel } from '@microsoft/signalr';
-import { BehaviorSubject, Subject } from 'rxjs';
+import { BehaviorSubject, Subject, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { AuthService } from './auth.service';
 import { TicketComment } from './comment.service';
@@ -25,6 +27,10 @@ export interface TicketCommentEvent {
 @Injectable({ providedIn: 'root' })
 export class SignalRService {
   private authService = inject(AuthService);
+  private http = inject(HttpClient);
+
+  /** Base URL de l'API REST (identique aux autres services). */
+  private readonly apiUrl = environment.apiUrl;
 
   /** Base SignalR hub URL. */
   private get hubUrl(): string {
@@ -120,10 +126,54 @@ this.hubConnection = new HubConnectionBuilder()
       .start()
       .then(() => {
         console.log('[SignalR] Connected to notifications hub.');
+        // Peuple la liste initiale depuis le serveur (notifications reçues
+        // hors session) avant que le push temps réel ne prenne le relais.
+        this.loadInitialNotifications();
       })
       .catch((err) => {
         console.error('[SignalR] Connection failed: ', err);
       });
+  }
+
+  /**
+   * GET /api/Notifications — charge les notifications persistées au démarrage
+   * de la session (celles reçues hors session seraient sinon perdues au
+   * refresh). Fusionne sans doublon avec d'éventuelles notifs déjà arrivées
+   * via le push SignalR, triées de la plus récente à la plus ancienne.
+   */
+  private loadInitialNotifications(): void {
+    if (!this.authService.getToken()) return;
+    this.http.get<AppNotification[]>(`${this.apiUrl}/Notifications`).subscribe({
+      next: (items) => {
+        if (!Array.isArray(items)) return;
+        const merged = new Map<string | number, AppNotification>();
+        for (const n of this.notificationsSubject.getValue()) {
+          merged.set(n.id ?? Date.now(), n);
+        }
+        for (const n of items) {
+          merged.set(n.id ?? Date.now(), {
+            id: n.id,
+            title: n.title,
+            message: n.message,
+            type: n.type,
+            targetUrl: n.targetUrl,
+            isRead: n.isRead ?? false,
+            createdAt: n.createdAt,
+          });
+        }
+        const sorted = Array.from(merged.values())
+          .sort(
+            (a, b) =>
+              new Date(b.createdAt ?? 0).getTime() -
+              new Date(a.createdAt ?? 0).getTime()
+          )
+          .slice(0, 50);
+        this.notificationsSubject.next(sorted);
+      },
+      error: () => {
+        // Silencieux : le push temps réel prendra le relais.
+      },
+    });
   }
 
   /** Gracefully stops the hub connection. */
@@ -136,21 +186,51 @@ this.hubConnection = new HubConnectionBuilder()
     this.hubConnection = null;
   }
 
-  /** Marks a notification as read (local state + optional backend call). */
+  /** Marks a notification as read (local state immediately + persisted server-side). */
   markAsRead(id: string | number): void {
     const current = this.notificationsSubject.getValue();
     const updated = current.map((n) =>
       n.id === id ? { ...n, isRead: true } : n
     );
     this.notificationsSubject.next(updated);
+    // Persistance côté serveur (best effort : échec silencieux,
+    // l'état local reste à jour).
+    this.http
+      .put(`${this.apiUrl}/Notifications/${id}/read`, {})
+      .pipe(catchError(() => of(null)))
+      .subscribe();
   }
 
-  /** Marks all notifications as read. */
+  /** Marks all notifications as read (local state immediately + persisted server-side). */
   markAllAsRead(): void {
     const current = this.notificationsSubject.getValue();
     this.notificationsSubject.next(
       current.map((n) => ({ ...n, isRead: true }))
     );
+    // Persistance côté serveur (best effort : échec silencieux,
+    // l'état local reste à jour).
+    this.http
+      .put(`${this.apiUrl}/Notifications/read-all`, {})
+      .pipe(catchError(() => of(null)))
+      .subscribe();
+  }
+
+  /**
+   * Supprime côté serveur toutes les notifications déjà lues (best effort :
+   * échec silencieux), puis les retire de la liste locale uniquement
+   * en cas de succès.
+   */
+  clearReadNotifications(): void {
+    this.http.delete(`${this.apiUrl}/Notifications/read`).subscribe({
+      next: () => {
+        this.notificationsSubject.next(
+          this.notificationsSubject.getValue().filter((n) => !n.isRead)
+        );
+      },
+      error: () => {
+        // Silencieux : la liste locale reste inchangée.
+      },
+    });
   }
 
   /** Add a notification to the list (e.g. seeded/fallback). */

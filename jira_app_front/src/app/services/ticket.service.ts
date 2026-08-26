@@ -152,4 +152,13 @@ export class TicketService {
   createSubTicket(parentId: number, dto: CreateSubTicketRequest): Observable<SubTicket> {
     return this.http.post<SubTicket>(`${this.apiUrl}/tickets/${parentId}/subtickets`, dto);
   }
+
+  /**
+   * POST /api/notifications/run-deadline-check — déclenche côté serveur le scan
+   * des échéances proches/dépassées et l'envoi des notifications SM/Admin/Senior.
+   * Utilisé en fire-and-forget au chargement du dashboard.
+   */
+  runDeadlineCheck(): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/notifications/run-deadline-check`, {});
+  }
 }

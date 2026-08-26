@@ -28,8 +28,8 @@ namespace Application.Services
                 Name = dto.Name,
                 Goal = dto.Goal,
                 ProjectId = dto.ProjectId,
-                StartDate = dto.StartDate,
-                EndDate = dto.EndDate
+                StartDate = EnsureUtc(dto.StartDate),
+                EndDate = EnsureUtc(dto.EndDate)
             };
             await _sprintRepository.AddAsync(sprint);
             await _sprintRepository.SaveChangesAsync();
@@ -129,8 +129,8 @@ namespace Application.Services
             if (!string.IsNullOrEmpty(dto.Name)) sprint.Name = dto.Name;
             sprint.Goal = dto.Goal ?? sprint.Goal;
             if (!string.IsNullOrEmpty(dto.Status) && System.Enum.TryParse<SprintStatus>(dto.Status, out var st)) sprint.Status = st;
-            sprint.StartDate = dto.StartDate ?? sprint.StartDate;
-            sprint.EndDate = dto.EndDate ?? sprint.EndDate;
+            sprint.StartDate = EnsureUtc(dto.StartDate) ?? sprint.StartDate;
+            sprint.EndDate = EnsureUtc(dto.EndDate) ?? sprint.EndDate;
             ValidateDateRange(sprint.StartDate, sprint.EndDate);
             _sprintRepository.Update(sprint);
             return await _sprintRepository.SaveChangesAsync();
@@ -181,5 +181,10 @@ namespace Application.Services
             if (startDate.HasValue && endDate.HasValue && endDate.Value <= startDate.Value)
                 throw new ArgumentException("La date de fin doit être postérieure à la date de début.");
         }
+
+        private static DateTime? EnsureUtc(DateTime? value)
+            => value.HasValue && value.Value.Kind != DateTimeKind.Utc
+                ? DateTime.SpecifyKind(value.Value, DateTimeKind.Utc)
+                : value;
     }
 }

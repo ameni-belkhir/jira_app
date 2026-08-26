@@ -224,13 +224,13 @@ export class TicketDetailModalComponent {
           this.status.set(this.normalizeStatus(d.status));
           this.priority.set(this.normalizePriority(d.priority));
           this.assigneeId.set(d.assigneeId ?? null);
-          this.dueDate.set(d.dateEcheance ? d.dateEcheance.substring(0, 16) : '');
+          this.dueDate.set(d.dateEcheance ? this.toLocalInputValue(d.dateEcheance) : '');
           if (d.projectId) this.projectId = d.projectId;
           if (d.sprintId != null) this.sprintId = d.sprintId;
 
           afterNextRender(() => {
             if (this.flatpickrDue && d.dateEcheance) {
-              this.flatpickrDue.setDate(d.dateEcheance, true);
+              this.flatpickrDue.setDate(d.dateEcheance, false);
             }
           }, { injector: this.injector });
         },
@@ -411,6 +411,22 @@ export class TicketDetailModalComponent {
     return d.toISOString();
   }
 
+  /**
+   * Convertit une date ISO UTC du backend (ex: "2026-08-21T14:30:00Z") en
+   * valeur locale "Y-m-dTH:i" affichable par flatpickr. On convertit
+   * explicitement vers l'heure locale au lieu de tronquer la string UTC
+   * (comme si elle était locale), ce qui causait un drift de fuseau horaire
+   * à la ré-sauvegarde : toIsoDate() repasse ensuite de local vers UTC.
+   */
+  private toLocalInputValue(isoUtc: string): string {
+    if (!isoUtc) return '';
+    const d = new Date(isoUtc);
+    if (isNaN(d.getTime())) return '';
+    const pad = (n: number): string => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` +
+      `T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
   // ==================== FLATPICKR DATE/TIME PICKER ====================
 
   private initFlatpickrDue(): void {
@@ -428,6 +444,8 @@ export class TicketDetailModalComponent {
       defaultDate: this.dueDate() || undefined,
       onChange: (_selectedDates, dateStr) => {
         this.dueDate.set(dateStr);
+        const isoValue = dateStr ? this.toIsoDate(dateStr) : null;
+        this.persist({ dateEcheance: isoValue });
       }
     });
   }
@@ -454,6 +472,7 @@ export class TicketDetailModalComponent {
     const id = this.currentTicket()?.id;
     if (!id) return;
     const payload: UpdateTicketRequest = { ...this.buildPayload(), ...patch };
+    console.log('[TicketDetailModal] persist → PUT /api/Tickets/' + id, JSON.stringify(payload));
     this.ticketService
       .updateTicket(id, payload)
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -482,7 +501,7 @@ export class TicketDetailModalComponent {
       status: this.status(),
       priority: this.priority(),
       color: d?.color || ticket?.color || '#3b82f6',
-      dateEcheance: d?.dateEcheance ?? (this.dueDate() ? this.toIsoDate(this.dueDate()) : null),
+      dateEcheance: this.toIsoDate(this.dueDate()) ?? null,
     };
   }
 

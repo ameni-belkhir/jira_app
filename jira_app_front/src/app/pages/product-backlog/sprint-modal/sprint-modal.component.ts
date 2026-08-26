@@ -95,9 +95,11 @@ export class SprintModalComponent {
       id: this.editingSprintId ?? undefined,
       name: (value.name ?? '').trim(),
       goal: (value.goal ?? '').trim() || undefined,
-      startDate: value.startDate || undefined,
-      endDate: value.endDate || undefined
+      startDate: value.startDate ? new Date(value.startDate).toISOString() : undefined,
+      endDate: value.endDate ? new Date(value.endDate).toISOString() : undefined
     };
+
+    console.log('[SprintModal] onSubmit → ' + (this.isEditMode() ? 'PUT' : 'POST') + ' /api/sprints', JSON.stringify(payload));
 
     this.submitting.set(true);
     this.notification.loading(this.isEditMode() ? 'Mise à jour du sprint…' : 'Création du sprint…');

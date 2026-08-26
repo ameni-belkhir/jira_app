@@ -328,9 +328,20 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     }
     this.canViewStats = this.authService.hasPermission('statistics');
     this.loadProjects();
+    this.triggerDeadlineCheck();
     if (this.canViewStats) {
       this.loadStats();
     }
+  }
+
+  /** Fire-and-forget : demande au backend de scanner les échéances dépassées
+   *  et d'envoyer les notifications associées, sans bloquer le rendu. */
+  private triggerDeadlineCheck(): void {
+    this.ticketService.runDeadlineCheck().subscribe({
+      error: () => {
+        // Silencieux : le BackgroundService côté serveur rattrapera de toute façon.
+      },
+    });
   }
 
   ngAfterViewInit(): void {

@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { Router, RouterModule } from '@angular/router';
+import { RouterModule } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SignalRService, AppNotification } from '../../../../services/signalr.service';
 import { NotificationService } from '../../../services/notification.service';
@@ -18,7 +18,9 @@ export class NotificationDropdownComponent implements OnInit, OnDestroy {
 
   private signalRService = inject(SignalRService);
   private notificationService = inject(NotificationService);
-  private router = inject(Router);
+
+  /** IDs des notifications dont le message est déplié (état purement frontend). */
+  expandedIds = new Set<number>();
 
   private subscription: Subscription = new Subscription();
 
@@ -58,18 +60,25 @@ export class NotificationDropdownComponent implements OnInit, OnDestroy {
   onNotificationClick(notification: AppNotification): void {
     // Mark as read
     this.signalRService.markAsRead(notification.id);
-    this.closeDropdown();
 
-    // Navigate to the target URL if provided
-    if (notification.targetUrl) {
-      this.router.navigateByUrl(notification.targetUrl);
+    // Déplier/replier le message complet pour CETTE notification
+    // (le dropdown reste ouvert).
+    const id = notification.id as number;
+    if (this.expandedIds.has(id)) {
+      this.expandedIds.delete(id);
+    } else {
+      this.expandedIds.add(id);
     }
   }
 
-  onViewAll(): void {
-    this.closeDropdown();
-    // TODO: adjust to the real notifications page if it exists
-    this.router.navigateByUrl('/statistics');
+  isExpanded(id: string | number): boolean {
+    return this.expandedIds.has(id as number);
+  }
+
+  onClearAll(): void {
+    // Best effort : le service supprime côté serveur puis retire localement
+    // les notifications lues en cas de succès ; le dropdown reste ouvert.
+    this.signalRService.clearReadNotifications();
   }
 
   trackById(_index: number, notification: AppNotification): string | number {

@@ -42,24 +42,44 @@ namespace Infrastructure.Services
                 var due = ticket.DateEcheance!.Value;
                 var windowStart = due.AddMinutes(-30);
 
+                // NB : les durées ci-dessous sont calculées UNE seule fois, au moment de la
+                // création de la notification ; le texte affiché reste figé à cette valeur
+                // (aucun recalcul dynamique côté frontend).
+
                 // A. Échéance proche : utcNow >= (due - 30min) && utcNow < due
                 if (utcNow >= windowStart && utcNow < due)
                 {
+                    // La fenêtre étant [due-30min ; due[, le reste est toujours entre 1 et 30 min.
+                    var minutesLeft = Math.Max(1, (int)Math.Ceiling((due - utcNow).TotalMinutes));
                     await SendDeadlineNotificationAsync(
                         ticket,
                         "deadline_approaching",
                         "Échéance proche",
-                        $"Le ticket « {ticket.Titre} » arrive à échéance dans moins de 30 minutes.");
+                        $"Le ticket « {ticket.Titre} » arrive à échéance dans {minutesLeft} minute{(minutesLeft > 1 ? "s" : "")}.");
                 }
 
                 // B. Échéance dépassée : utcNow >= due
                 if (utcNow >= due)
                 {
+                    var late = utcNow - due;
+                    string overdueMessage;
+                    if (late.TotalHours < 24)
+                    {
+                        // Ceiling pour ne jamais afficher "0h" (retard < 1h arrondi à 1h).
+                        var hoursLate = Math.Max(1, (int)Math.Ceiling(late.TotalHours));
+                        overdueMessage = $"Le ticket « {ticket.Titre} » a dépassé sa date d'échéance (en retard de {hoursLate}h).";
+                    }
+                    else
+                    {
+                        var daysLate = Math.Max(1, (int)Math.Floor(late.TotalDays));
+                        overdueMessage = $"Le ticket « {ticket.Titre} » a dépassé sa date d'échéance (en retard de {daysLate} jour{(daysLate > 1 ? "s" : "")}).";
+                    }
+
                     await SendDeadlineNotificationAsync(
                         ticket,
                         "deadline_passed",
                         "Échéance dépassée",
-                        $"Le ticket « {ticket.Titre} » a dépassé sa date d'échéance.");
+                        overdueMessage);
                 }
             }
         }
@@ -92,7 +112,11 @@ namespace Infrastructure.Services
 
             recipientUserIds.AddRange(globalAdminIds);
 
-            var targetUrl = $"/projects/{ticket.ProjectId.Value}/backlog";
+            // L'ID du ticket est encodé dans l'URL (query param) : la comparaison exacte de
+            // TargetUrl dans le test anti-doublon ci-dessous rend la dédup PAR TICKET
+            // (1 notif / destinataire / ticket / jour), tout en restant compatible avec la
+            // route Angular existante /projects/:id/backlog (aucune route /tickets/{id}).
+            var targetUrl = $"/projects/{ticket.ProjectId.Value}/backlog?ticket={ticket.Id}";
 
             foreach (var userId in recipientUserIds)
             {

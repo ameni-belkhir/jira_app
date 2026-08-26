@@ -14,10 +14,14 @@ namespace Jira_APP.Controllers
     public class NotificationsController : ControllerBase
     {
         private readonly INotificationService _notificationService;
+        private readonly IDeadlineNotificationService _deadlineNotificationService;
 
-        public NotificationsController(INotificationService notificationService)
+        public NotificationsController(
+            INotificationService notificationService,
+            IDeadlineNotificationService deadlineNotificationService)
         {
             _notificationService = notificationService;
+            _deadlineNotificationService = deadlineNotificationService;
         }
 
         private int? GetUserId()
@@ -45,6 +49,44 @@ namespace Jira_APP.Controllers
 
             var ok = await _notificationService.MarkAsReadAsync(id, userId.Value);
             if (!ok) return NotFound();
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Marque toutes les notifications non lues de l'utilisateur courant comme lues.
+        /// </summary>
+        [HttpPut("read-all")]
+        public async Task<IActionResult> MarkAllAsRead()
+        {
+            var userId = GetUserId();
+            if (userId == null) return Unauthorized();
+
+            await _notificationService.MarkAllAsReadAsync(userId.Value);
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Supprime définitivement toutes les notifications déjà lues de l'utilisateur courant.
+        /// </summary>
+        [HttpDelete("read")]
+        public async Task<IActionResult> DeleteRead()
+        {
+            var userId = GetUserId();
+            if (userId == null) return Unauthorized();
+
+            await _notificationService.DeleteReadNotificationsAsync(userId.Value);
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Déclenche manuellement le scan des échéances proches/dépassées et l'envoi
+        /// des notifications associées (même logique que le BackgroundService).
+        /// Appelé à la demande par le frontend au chargement du dashboard.
+        /// </summary>
+        [HttpPost("run-deadline-check")]
+        public async Task<IActionResult> RunDeadlineCheck()
+        {
+            await _deadlineNotificationService.CheckAndSendDeadlineNotificationsAsync();
             return NoContent();
         }
     }
