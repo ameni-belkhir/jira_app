@@ -2,16 +2,57 @@
   <!-- Header -->
   <div class="flex items-center justify-between border-b border-gray-100 p-4 dark:border-gray-800">
     <h2 class="text-base font-semibold text-gray-800 dark:text-white/90">Messages</h2>
-    <button
-      type="button"
-      (click)="newConversation.emit()"
-      title="Nouveau groupe"
-      aria-label="Nouveau groupe"
-      class="flex items-center gap-1 text-xs font-medium text-brand-500 transition-colors hover:text-brand-600"
-    >
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"/></svg>
-      Nouveau
-    </button>
+    <div class="relative">
+      <button
+        type="button"
+        (click)="toggleContactMenu()"
+        title="Nouvelle conversation"
+        aria-label="Nouvelle conversation"
+        class="flex items-center gap-1 text-xs font-medium text-brand-500 transition-colors hover:text-brand-600"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+        Nouveau
+      </button>
+
+      @if (showContactMenu) {
+        <div class="absolute right-0 top-full z-30 mt-2 w-64 rounded-2xl border border-gray-200 bg-white p-2 shadow-theme-lg dark:border-gray-700 dark:bg-gray-800">
+          @if (contactsLoading) {
+            <p class="px-2 py-3 text-center text-xs text-gray-500">Chargement…</p>
+          } @else if (filteredContacts.length === 0) {
+            <p class="px-2 py-3 text-center text-xs text-gray-500">Aucun contact disponible.</p>
+          } @else {
+            <div class="space-y-0.5">
+              @for (contact of filteredContacts; track contact.id) {
+                <button
+                  type="button"
+                  (click)="startDirect(contact.id)"
+                  class="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  <img [src]="contact.avatar | safeImage" [alt]="contact.name" class="h-6 w-6 shrink-0 rounded-full object-cover" />
+                  <span class="min-w-0 flex-1">
+                    <span class="block truncate text-sm text-gray-800 dark:text-white/90">{{ contact.name }}</span>
+                    <span class="block truncate text-xs text-gray-400">{{ contact.email }}</span>
+                  </span>
+                  @if (isCreatingContact(contact.id)) {
+                    <svg class="h-4 w-4 animate-spin text-brand-500" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
+                  }
+                </button>
+              }
+            </div>
+          }
+          <div class="mt-1 border-t border-gray-100 pt-1 dark:border-gray-700">
+            <button
+              type="button"
+              (click)="closeContactMenu(); newConversation.emit()"
+              class="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs font-medium text-brand-500 transition-colors hover:bg-brand-50 dark:hover:bg-gray-700"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M10 3.5a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5v-5a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+              Nouveau groupe
+            </button>
+          </div>
+        </div>
+      }
+    </div>
   </div>
 
   <!-- Search -->

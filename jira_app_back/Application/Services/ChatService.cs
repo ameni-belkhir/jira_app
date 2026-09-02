@@ -66,6 +66,11 @@ namespace Application.Services
                 .Distinct()
                 .ToList();
 
+            // Garde : interdit la création d'une conversation sans autre membre (soi-même seul).
+            // Le backend ne doit jamais créer de conversation à 1 seul membre.
+            if (memberIds.Count == 0)
+                throw new InvalidOperationException("Une conversation doit inclure au moins un autre participant.");
+
             foreach (var memberId in memberIds)
             {
                 if (await _userRepository.GetByIdAsync(memberId) == null)

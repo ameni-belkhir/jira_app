@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, inject, OnInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject, OnInit, HostListener, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -27,21 +27,26 @@ export class ChatSidebarComponent implements OnInit {
 
   private http = inject(HttpClient);
   private authService = inject(AuthService);
+  private elementRef = inject(ElementRef);
   private readonly apiUrl = `${environment.baseUrl.replace(/\/$/, '')}/api`;
 
   searchTerm = '';
   contacts: ChatContact[] = [];
   contactsLoading = false;
   contactCreating: number | null = null;
+  showContactMenu = false;
 
   ngOnInit(): void {
     this.loadContacts();
   }
 
   get filteredConversations(): Conversation[] {
-    if (!this.searchTerm.trim()) return this.conversations;
+    const currentUserId = Number(this.authService.getUserId());
+    const visible = this.conversations
+      .filter((c) => !(c.otherUserId != null && Number(c.otherUserId) === currentUserId));
+    if (!this.searchTerm.trim()) return visible;
     const term = this.searchTerm.toLowerCase();
-    return this.conversations.filter((c) => c.name.toLowerCase().includes(term));
+    return visible.filter((c) => c.name.toLowerCase().includes(term));
   }
 
   get filteredContacts(): ChatContact[] {
@@ -85,8 +90,25 @@ export class ChatSidebarComponent implements OnInit {
     try {
       const contact = this.contacts.find((c) => c.id === userId);
       this.startDirectConversation.emit({ userId, name: contact?.name ?? 'Conversation' });
+      this.showContactMenu = false;
     } finally {
       this.contactCreating = null;
+    }
+  }
+
+  toggleContactMenu(): void {
+    this.showContactMenu = !this.showContactMenu;
+  }
+
+  closeContactMenu(): void {
+    this.showContactMenu = false;
+  }
+
+  /** Ferme le dropdown au clic en dehors de la sidebar. */
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: Event): void {
+    if (this.showContactMenu && !this.elementRef.nativeElement.contains(event.target)) {
+      this.showContactMenu = false;
     }
   }
 
