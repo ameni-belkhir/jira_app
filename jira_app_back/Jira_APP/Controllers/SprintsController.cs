@@ -83,7 +83,6 @@ namespace Jira_APP.Controllers
         public async Task<IActionResult> Update(int id, [FromBody] UpdateSprintDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
-            if (id != dto.Id) return BadRequest();
 
             var sprint = await _db.Sprints.AsNoTracking().FirstOrDefaultAsync(s => s.Id == id);
             if (sprint == null) return NotFound();
@@ -95,6 +94,7 @@ namespace Jira_APP.Controllers
             if (!User.IsInRole("Admin") && role != "ScrumMaster")
                 return Forbid();
 
+            dto.Id = id;
             var ok = await _sprintService.UpdateAsync(dto);
             if (!ok) return NotFound();
             return NoContent();

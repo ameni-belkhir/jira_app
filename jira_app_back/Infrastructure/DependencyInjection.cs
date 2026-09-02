@@ -84,6 +84,9 @@ namespace Infrastructure
             services.AddScoped<IDeadlineNotificationService, Services.DeadlineNotificationService>();
             // Background service for deadline checks
             services.AddHostedService<Services.DeadlineCheckBackgroundService>();
+            // Sprint lifecycle service (auto-start + ending-soon notifications)
+            services.AddScoped<ISprintLifecycleService, Services.SprintLifecycleService>();
+            services.AddHostedService<Services.SprintLifecycleBackgroundService>();
             // Project authorization service (rôle d'un utilisateur dans un projet)
             services.AddScoped<IProjectAuthorizationService, Services.ProjectAuthorizationService>();
             // Gemini service (génération de plans de projet via IA). Clé lue via IConfiguration (Gemini:ApiKey).
