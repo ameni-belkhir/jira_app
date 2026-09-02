@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { SignalRService } from './signalr.service';
+import { ChatService } from './chat.service';
 import { normalizeRole } from '../shared/config/navigation.config';
 
 export interface LoginRequest {
@@ -130,6 +131,29 @@ export class AuthService {
     try {
       const signalR = this.injector.get(SignalRService);
       signalR.stopConnection();
+    } catch {
+      // silently ignore
+    }
+  }
+
+  /**
+   * Ferme la connexion SignalR du CHAT (/hubs/chat) au logout.
+   *
+   * CRITIQUE : sans cet appel, la WebSocket du chat établie avec le JWT de
+   * l'utilisateur précédent resterait `Connected` après un déconnexion/reconnexion
+   * dans la même session SPA. Le backend (ChatHub.GetUserId) continuerait alors
+   * d'attribuer les messages et d'évaluer les autorisations avec les claims de
+   * l'ANCIEN utilisateur (fuite cross-utilisateur sur SendMessage, EditMessage,
+   * DeleteMessage, JoinConversation, MarkAsRead, typing).
+   *
+   * Injection différée via Injector pour briser la dépendance circulaire
+   * AuthService -> ChatService -> AuthService (ChatService dépend d'AuthService),
+   * sur le même modèle que stopSignalR() avec SignalRService.
+   */
+  private stopChatSignalR(): void {
+    try {
+      const chat = this.injector.get(ChatService);
+      chat.stopConnection();
     } catch {
       // silently ignore
     }
@@ -295,6 +319,9 @@ export class AuthService {
     this.permissionsSubject.next([]);
     // Stop the SignalR connection on logout.
     this.stopSignalR();
+    // Stop the CHAT SignalR connection on logout (sinon la WebSocket du chat
+    // reste identifiée par l'ancien JWT — bug de sécurité cross-utilisateur).
+    this.stopChatSignalR();
   }
 
   private clearStorage(): void {

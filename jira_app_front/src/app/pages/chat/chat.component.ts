@@ -79,8 +79,14 @@ currentUserId: string | number | null = null;
 
   ngOnDestroy(): void {
     this.subs.forEach((s) => s.unsubscribe());
-    // Keep the connection alive across navigation; only stop on logout.
-    // If you want it bound to the page lifecycle, uncomment the next line:
+    // DÉCISION : NE PAS stopper la connexion ici. La fermeture au ngOnDestroy
+    // casserait la réception des messages/typing en arrière-plan quand on
+    // navigue vers une autre page, et forcerait un reconnect+join à chaque
+    // retour sur le chat. La vraie fix du bug de sécurité cross-utilisateur
+    // est au niveau du LOGOUT : AuthService.logout() appelle désormais
+    // ChatService.stopConnection() (voir services/auth.service.ts:stopChatSignalR),
+    // et ChatService.startConnection() recrée la connexion si l'utilisateur
+    // a changé (voir services/chat.service.ts:startConnection).
     // this.chatService.stopConnection();
   }
 

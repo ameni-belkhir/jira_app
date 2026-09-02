@@ -79,6 +79,9 @@ export class ChatService {
 
   private hubConnection: HubConnection | null = null;
 
+  /** userId (AuthService.getUserId) au moment de l'établissement de la connexion. */
+  private connectedUserId: string | number | null = null;
+
   /** Current thread of messages (the active conversation). */
   private readonly messagesSubject = new BehaviorSubject<ChatMessage[]>([]);
 
@@ -299,9 +302,17 @@ export class ChatService {
    * Establishes the WebSocket connection to the chat hub with the JWT token.
    */
   startConnection(): void {
-    if (this.hubConnection?.state === HubConnectionState.Connected) {
+    const currentUserId = this.authService.getUserId();
+    // La connexion existante est toujours celle du même utilisateur : on la garde.
+    if (
+      this.hubConnection?.state === HubConnectionState.Connected &&
+      String(this.connectedUserId) === String(currentUserId)
+    ) {
       return;
     }
+    // Sécurité : une connexion Connected mais établie avec un AUTRE utilisateur
+    // (changement de compte sans reload SPA) doit être fermée puis reconstruite,
+    // sinon tous les appels au ChatHub utiliseraient les claims JWT de l'ancien user.
     if (this.hubConnection) {
       this.stopConnection();
     }
@@ -369,6 +380,7 @@ export class ChatService {
       .start()
       .then(() => {
         console.log('[ChatService] Connected to chat hub.');
+        this.connectedUserId = currentUserId;
       })
       .catch((err) => {
         console.error('[ChatService] Connection failed: ', err);
