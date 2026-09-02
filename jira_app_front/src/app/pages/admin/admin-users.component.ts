@@ -50,7 +50,6 @@ export class AdminUsersComponent implements OnInit {
     nom: '',
     prenom: '',
     email: '',
-    password: '',
     roleId: 4, // default: Developer
   };
   creating = signal(false);
@@ -167,7 +166,7 @@ export class AdminUsersComponent implements OnInit {
   }
 
   openCreateModal(): void {
-    this.createForm = { nom: '', prenom: '', email: '', password: '', roleId: 4 };
+    this.createForm = { nom: '', prenom: '', email: '', roleId: 4 };
     this.createError = '';
     this.showCreateModal.set(true);
   }
@@ -179,7 +178,7 @@ export class AdminUsersComponent implements OnInit {
 
   onCreateUser(): void {
     // Basic validation
-    if (!this.createForm.nom.trim() || !this.createForm.prenom.trim() || !this.createForm.email.trim() || !this.createForm.password.trim()) {
+    if (!this.createForm.nom.trim() || !this.createForm.prenom.trim() || !this.createForm.email.trim()) {
       this.createError = 'Tous les champs sont requis.';
       this.notification.error(this.createError);
       return;
@@ -193,13 +192,6 @@ export class AdminUsersComponent implements OnInit {
       return;
     }
 
-    // Password minimum length
-    if (this.createForm.password.trim().length < 6) {
-      this.createError = 'Le mot de passe doit contenir au moins 6 caractères.';
-      this.notification.error(this.createError);
-      return;
-    }
-
     this.creating.set(true);
     this.createError = '';
     this.notification.loading('Création de l\'utilisateur…');
@@ -208,7 +200,6 @@ export class AdminUsersComponent implements OnInit {
       nom: this.createForm.nom.trim(),
       prenom: this.createForm.prenom.trim(),
       email: this.createForm.email.trim(),
-      password: this.createForm.password.trim(),
       roleId: this.createForm.roleId,
     })
       .pipe(
@@ -221,9 +212,9 @@ export class AdminUsersComponent implements OnInit {
       .subscribe({
         next: (response: CreateUserResponse) => {
           if (response.emailSent === true) {
-            this.notification.success('Utilisateur créé avec succès. Un email lui a été envoyé.');
+            this.notification.success(`Utilisateur créé avec succès. Un email avec les identifiants de connexion a été envoyé à ${response.email}.`);
           } else if (response.emailSent === false) {
-            this.notification.success('Utilisateur créé avec succès, mais l\'email n\'a pas pu être envoyé.');
+            this.notification.error(`Utilisateur créé, mais l'email avec les identifiants n'a pas pu être envoyé à ${response.email}. Transmettez-lui ses identifiants manuellement.`);
           } else {
             this.notification.success('Utilisateur créé avec succès.');
           }

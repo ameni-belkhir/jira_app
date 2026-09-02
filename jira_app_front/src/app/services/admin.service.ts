@@ -91,7 +91,7 @@ export class AdminService {
     return this.http.put<any>(`${this.apiUrl}/admin/users/${userId}/permissions`, { permissions });
   }
 
-  createUser(data: { nom: string; prenom: string; email: string; password: string; roleId: number }): Observable<CreateUserResponse> {
+  createUser(data: { nom: string; prenom: string; email: string; roleId: number }): Observable<CreateUserResponse> {
     return this.http.post<CreateUserResponse>(`${this.apiUrl}/admin/users`, data);
   }
 
