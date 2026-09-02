@@ -19,26 +19,6 @@
       <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Backlog</h1>
       <div class="flex flex-wrap items-center gap-3">
 
-        <!-- Team avatars -->
-        @if (teamMembers().length > 0) {
-          <div class="flex -space-x-2">
-            @for (member of teamMembers().slice(0, 3); track member.name) {
-              <div class="w-8 h-8 rounded-full border-2 border-white dark:border-gray-900 overflow-hidden bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                @if (member.avatar) {
-                  <img [src]="member.avatar" alt="" class="w-full h-full object-cover" />
-                } @else {
-                  <span class="text-xs font-medium text-gray-500">{{ member.name.charAt(0).toUpperCase() }}</span>
-                }
-              </div>
-            }
-            @if (teamMembers().length > 3) {
-              <div class="w-8 h-8 rounded-full border-2 border-white dark:border-gray-900 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                <span class="text-xs font-medium text-gray-500">+{{ teamMembers().length - 3 }}</span>
-              </div>
-            }
-          </div>
-        }
-
         <!-- Quick filter buttons -->
         <button class="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-gray-200 bg-white text-sm text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors">
           Epic
@@ -112,74 +92,7 @@
 
   <!-- ===== BACKLOG CONTENT (Drag & Drop : Réserve ↔ Sprints) ===== -->
   @if (backlogData(); as data) {
-    <div cdkDropListGroup class="flex flex-col xl:flex-row gap-6 items-start">
-
-      <!-- ===== ZONE GAUCHE : RÉSERVE DE BACKLOG ===== -->
-      <div class="w-full xl:w-[340px] shrink-0">
-        <div class="rounded-2xl border border-gray-200 bg-white shadow-theme-sm dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
-          <!-- Header -->
-          <div class="flex items-center justify-between gap-2 px-4 py-3 border-b border-gray-100 dark:border-gray-800">
-            <div>
-              <h2 class="text-sm font-semibold text-gray-800 dark:text-white">Backlog</h2>
-              <p class="text-xs text-gray-400 dark:text-gray-500">{{ filteredUnassignedTickets().length }} tickets non assignés</p>
-            </div>
-            @if (canEditTickets) {
-              <button (click)="openCreateTicketModal()" class="inline-flex items-center gap-1 rounded-lg bg-brand-500 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-brand-600 transition-colors">
-                <svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
-                </svg>
-                + Créer un ticket
-              </button>
-            }
-          </div>
-
-          <!-- Search -->
-          <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
-            <div class="relative">
-              <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
-              </svg>
-              <input
-                type="text"
-                [ngModel]="searchQuery"
-                (ngModelChange)="onSearchChange($event)"
-                placeholder="Filtrer les tickets..."
-                class="w-full h-9 rounded-lg border border-gray-200 bg-transparent pl-9 pr-3 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:text-white/90 dark:placeholder:text-white/30" />
-            </div>
-          </div>
-
-          <!-- Liste cdkDropList des tickets non assignés -->
-          <div
-            cdkDropList
-            [id]="unassignedDropListId"
-            [cdkDropListData]="filteredUnassignedTickets()"
-            (cdkDropListDropped)="onTicketDrop($event, null)"
-            [cdkDropListConnectedTo]="getConnectedDropListIds()"
-            cdkDropListOrientation="vertical"
-            class="p-3 min-h-[240px] max-h-[70vh] overflow-y-auto space-y-2"
-          >
-            @for (ticket of filteredUnassignedTickets(); track trackByTicketId($index, ticket)) {
-              <div cdkDrag [cdkDragDisabled]="isDragDisabled(ticket)">
-                <app-ticket-card
-                  [ticket]="mapToTicket(ticket)"
-                  [showSubticketButton]="true"
-                  [showDeleteButton]="isAdmin"
-                  [canAssignTicket]="canAssignTickets"
-                  (viewSubtickets)="openSubticketModal($event)"
-                  (createSubticketRequested)="openSubticketModal($event)"
-                  (deleteRequested)="onDeleteTicket($event)"
-                  (viewDetails)="openTicketDetail($event)"
-                  (assignRequested)="openAssignTicketModal($event)"
-                />
-              </div>
-            } @empty {
-              <div class="flex items-center justify-center h-24 text-xs text-gray-400 dark:text-gray-500 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl">
-                Aucun ticket dans le backlog. Glissez un ticket ici pour le désassigner.
-              </div>
-            }
-          </div>
-        </div>
-      </div>
+    <div cdkDropListGroup class="flex flex-col gap-6">
 
       <!-- ===== ZONE DROITE : SPRINTS ===== -->
       <div class="flex-1 min-w-0 space-y-6">

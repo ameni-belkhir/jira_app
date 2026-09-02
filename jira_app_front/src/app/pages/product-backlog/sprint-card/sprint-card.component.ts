@@ -26,7 +26,7 @@ export class SprintCardComponent {
   @Output() deleteRequested = new EventEmitter<number>();
   @Output() viewTicketDetails = new EventEmitter<number>();
   @Output() assignRequested = new EventEmitter<Ticket>();
-  @Output() sprintAction = new EventEmitter<{ sprintId: number; action: 'start' | 'complete' }>();
+  @Output() sprintAction = new EventEmitter<{ sprintId: number; action: 'complete' }>();
   @Output() editRequested = new EventEmitter<number>();
 
   isEditingGoal = false;
@@ -48,7 +48,8 @@ export class SprintCardComponent {
   get statusColor(): string {
     switch (this.sprint.status?.toLowerCase()) {
       case 'active': return 'bg-success-100 text-success-700 dark:bg-success-500/10 dark:text-success-400';
-      case 'planning': return 'bg-blue-light-100 text-blue-light-700 dark:bg-blue-light-500/10 dark:text-blue-light-400';
+      case 'planning':
+      case 'planned': return 'bg-blue-light-100 text-blue-light-700 dark:bg-blue-light-500/10 dark:text-blue-light-400';
       case 'completed': return 'bg-purple-100 text-purple-700 dark:bg-purple-500/10 dark:text-purple-400';
       case 'closed': return 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400';
       default: return 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400';
@@ -83,10 +84,6 @@ export class SprintCardComponent {
 
   onAssignRequested(ticket: Ticket): void {
     this.assignRequested.emit(ticket);
-  }
-
-  onStartSprint(): void {
-    this.sprintAction.emit({ sprintId: this.sprint.id, action: 'start' });
   }
 
   onCompleteSprint(): void {

@@ -2,9 +2,9 @@ import { Component, OnInit, signal, ViewChild, computed, DestroyRef } from '@ang
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
-import { CdkDropListGroup, CdkDropList, CdkDrag, CdkDragDrop, transferArrayItem } from '@angular/cdk/drag-drop';
+import { CdkDropListGroup, CdkDropList, CdkDragDrop, transferArrayItem } from '@angular/cdk/drag-drop';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { finalize } from 'rxjs';
+import { finalize, interval, switchMap } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ProjectService, BacklogResponse, BacklogTicket, CreateTicketRequest } from '../../services/project.service';
 import { ProjectStateService } from '../../services/project-state.service';
@@ -19,7 +19,7 @@ import { CreateTicketModalComponent } from './create-ticket-modal/create-ticket-
 import { SprintCardComponent } from './sprint-card/sprint-card.component';
 import { SubticketModalComponent } from '../../shared/components/subticket-modal/subticket-modal.component';
 import { TicketDetailModalComponent } from '../../shared/components/ticket-detail-modal/ticket-detail-modal.component';
-import { TicketCardComponent, Ticket } from '../projects/ticket-card/ticket-card.component';
+import { Ticket } from '../projects/ticket-card/ticket-card.component';
 import { AssignTicketModalComponent } from '../../shared/components/assign-ticket-modal/assign-ticket-modal.component';
 
 @Component({
@@ -31,14 +31,12 @@ import { AssignTicketModalComponent } from '../../shared/components/assign-ticke
     RouterModule,
     CdkDropListGroup,
     CdkDropList,
-    CdkDrag,
     SprintModalComponent,
     CompleteSprintModalComponent,
     CreateTicketModalComponent,
     SprintCardComponent,
     SubticketModalComponent,
     TicketDetailModalComponent,
-    TicketCardComponent,
     AssignTicketModalComponent
   ],
   templateUrl: './product-backlog.component.html',
@@ -65,33 +63,8 @@ export class ProductBacklogComponent implements OnInit {
   error = signal('');
   noProjectAccess = signal(false);
 
-  // Search
-  searchQuery = '';
-  filteredUnassignedTickets = signal<BacklogTicket[]>([]);
-
-  // DnD
-  unassignedDropListId = 'backlog-drop-list';
-
-  /** Tickets non assignés à un sprint (réserve de backlog). */
-  unassignedTickets = computed<BacklogTicket[]>(() =>
-    (this.backlogData()?.backlogTickets || []).filter(t => t.sprintId == null)
-  );
-
   // Refresh
   refreshing = signal(false);
-
-  /** Team members */
-  teamMembers = computed(() => {
-    const seen = new Set<string>();
-    const members: { name: string; avatar: string }[] = [];
-    for (const t of this.filteredUnassignedTickets()) {
-      if (t.assignedTo && !seen.has(t.assignedTo)) {
-        seen.add(t.assignedTo);
-        members.push({ name: t.assignedTo, avatar: t.assignedToAvatar || '' });
-      }
-    }
-    return members;
-  });
 
   userRole = signal<string | null>(null);
 
@@ -132,6 +105,18 @@ export class ProductBacklogComponent implements OnInit {
       this.projectState.setProject(this.projectId);
       this.loadBacklog();
       this.loadUserRole();
+
+      // Polling toutes les 60s : rafraîchit le statut des sprints (démarrage
+      // automatique côté backend) sans toast de succès ni rechargement visuel.
+      interval(60000)
+        .pipe(
+          takeUntilDestroyed(this.destroyRef),
+          switchMap(() => {
+            this.loadBacklogInternal(true);
+            return [];
+          })
+        )
+        .subscribe();
     }
   }
 
@@ -283,6 +268,11 @@ export class ProductBacklogComponent implements OnInit {
   }
 
   loadBacklog(): void {
+    this.loadBacklogInternal(false);
+  }
+
+  /** Recharge le backlog. Si silent=true (polling), n'affiche pas de toast de succès. */
+  private loadBacklogInternal(silent: boolean): void {
     if (this.loading()) return;
 
     this.loading.set(true);
@@ -297,8 +287,9 @@ export class ProductBacklogComponent implements OnInit {
       .subscribe({
         next: (data) => {
           this.backlogData.set(data);
-          this.applySearch();
-          this.notification.success('Backlog chargé avec succès.');
+          if (!silent) {
+            this.notification.success('Backlog chargé avec succès.');
+          }
           if (this.pendingOpenTicketId != null) {
             const ticketId = this.pendingOpenTicketId;
             this.pendingOpenTicketId = null;
@@ -319,34 +310,8 @@ export class ProductBacklogComponent implements OnInit {
       });
   }
 
-  // Search
-  onSearchChange(query: string): void {
-    this.searchQuery = query;
-    this.applySearch();
-  }
-
-  private applySearch(): void {
-    const q = this.searchQuery.toLowerCase().trim();
-    const backlog = this.unassignedTickets();
-
-    if (!q) {
-      this.filteredUnassignedTickets.set(backlog);
-      return;
-    }
-
-    this.filteredUnassignedTickets.set(
-      backlog.filter(t =>
-        t.title?.toLowerCase().includes(q) ||
-        t.description?.toLowerCase().includes(q) ||
-        t.priority?.toLowerCase().includes(q) ||
-        t.status?.toLowerCase().includes(q) ||
-        t.assignedTo?.toLowerCase().includes(q)
-      )
-    );
-  }
-
   getConnectedDropListIds(): string[] {
-    const ids: string[] = [this.unassignedDropListId];
+    const ids: string[] = [];
     if (this.backlogData()?.sprints) {
       for (const sprint of this.backlogData()!.sprints) {
         ids.push(`sprint-${sprint.id}`);
@@ -355,15 +320,11 @@ export class ProductBacklogComponent implements OnInit {
     return ids;
   }
 
-  /**
-   * Drag & Drop d'un ticket entre la réserve de backlog et les sprints.
-   * targetSprintId === null → le ticket retourne dans la réserve (non assigné).
-   */
-  onTicketDrop(event: CdkDragDrop<BacklogTicket[]>, targetSprintId: number | null): void {
+  /** Drag & Drop inter-sprint : déplacer un ticket d'un sprint vers un autre. */
+  onTicketDrop(event: CdkDragDrop<BacklogTicket[]>, targetSprintId: number): void {
     if (event.previousContainer === event.container) return;
 
     const movedTicket = event.previousContainer.data[event.previousIndex];
-    const targetId = targetSprintId ?? null;
     const previousSprintId = movedTicket.sprintId ?? null;
 
     // Optimistic UI : déplacement immédiat dans la liste cible.
@@ -373,12 +334,10 @@ export class ProductBacklogComponent implements OnInit {
       event.previousIndex,
       event.currentIndex
     );
-    movedTicket.sprintId = targetId;
-    this.commitBacklog();
-    this.applySearch();
+    movedTicket.sprintId = targetSprintId;
 
     this.notification.loading('Déplacement du ticket…');
-    this.ticketService.updateTicketSprint(movedTicket.id, targetId)
+    this.ticketService.updateTicketSprint(movedTicket.id, targetSprintId)
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         finalize(() => this.notification.dismiss())
@@ -389,16 +348,8 @@ export class ProductBacklogComponent implements OnInit {
           this.loadBacklog();
         },
         error: (err: HttpErrorResponse) => {
-          // Rollback si l'API échoue.
-          transferArrayItem(
-            event.container.data,
-            event.previousContainer.data,
-            event.currentIndex,
-            event.previousIndex
-          );
-          movedTicket.sprintId = previousSprintId;
-          this.commitBacklog();
-          this.applySearch();
+          // Recharger pour restaurer l'état serveur.
+          this.loadBacklog();
           if (err.status === 409) {
             this.notification.error(err.error?.message || 'Ce ticket ne peut plus être déplacé : échéance dans ≤ 30 minutes.');
           } else {
@@ -408,44 +359,11 @@ export class ProductBacklogComponent implements OnInit {
       });
   }
 
-  /** Force la réémission des tableaux imbriqués pour rafraîchir le rendu après un DnD. */
-  private commitBacklog(): void {
-    const data = this.backlogData();
-    if (!data) return;
-    this.backlogData.set({
-      ...data,
-      backlogTickets: [...data.backlogTickets],
-      sprints: data.sprints.map(s => ({ ...s, tickets: [...s.tickets] })),
-    });
-  }
-
-  /** Démarrer / Terminer un sprint (Admin). "Terminer" ouvre la modale de clôture. */
-  onSprintAction(data: { sprintId: number; action: 'start' | 'complete' }): void {
+  /** Terminer un sprint (Admin) : ouvre la modale de clôture. */
+  onSprintAction(data: { sprintId: number; action: 'complete' }): void {
     if (data.action === 'complete') {
       this.openCompleteSprintModal(data.sprintId);
-      return;
     }
-    this.startSprint(data.sprintId);
-  }
-
-  /** Démarre directement le sprint (statut → Active). */
-  private startSprint(sprintId: number): void {
-    this.notification.loading('Démarrage du sprint…');
-
-    this.projectService.updateSprint(sprintId, { status: 'Active' })
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.notification.dismiss())
-      )
-      .subscribe({
-        next: () => {
-          this.loadBacklog();
-          this.notification.success('Sprint démarré avec succès.');
-        },
-        error: () => {
-          this.notification.error('Échec de la mise à jour du sprint.');
-        }
-      });
   }
 
   /** Ouvre la modale de clôture avec le sprint et les autres sprints (destinations possibles). */
@@ -536,10 +454,6 @@ export class ProductBacklogComponent implements OnInit {
     return this.authService.getUserId() || '';
   }
 
-  trackByTicketId(index: number, ticket: BacklogTicket): number {
-    return ticket.id;
-  }
-
   // ==================== SOUS-TICKETS ====================
   openSubticketModal(ticketId: number): void {
     this.subticketModal.open(ticketId);
@@ -596,40 +510,6 @@ export class ProductBacklogComponent implements OnInit {
 
   onTicketAssigned(): void {
     this.loadBacklog();
-  }
-
-  mapToTicket(ticket: BacklogTicket): Ticket {
-    return {
-      id: ticket.id,
-      title: ticket.title || (ticket as any).titre || '',
-      priority: (ticket.priority as Ticket['priority']) || 'Medium',
-      assignedUser: {
-        name: ticket.assignedTo || 'Unassigned',
-        avatar: ticket.assignedToAvatar || ''
-      },
-      dueDate: ticket.dueDate ? new Date(ticket.dueDate).toLocaleDateString() : '',
-      labels: [],
-      description: ticket.description || '',
-      status: (ticket.status as Ticket['status']) || 'todo',
-      color: ticket.color,
-      subTickets: (ticket.subTickets || []).map(sub => this.mapToTicket(sub)),
-      isExpanded: false
-    };
-  }
-
-  /** Vérifie si un ticket est verrouillé (échéance dans ≤ 30 minutes ou dépassée). */
-  isTicketLocked(ticket: BacklogTicket): boolean {
-    if (!ticket.dueDate) return false;
-    const due = new Date(ticket.dueDate);
-    if (isNaN(due.getTime())) return false;
-    const now = new Date();
-    const threshold = new Date(due.getTime() - 30 * 60 * 1000);
-    return now >= threshold;
-  }
-
-  /** Vérifie si le drag est désactivé pour un ticket donné. */
-  isDragDisabled(ticket: BacklogTicket): boolean {
-    return !this.canEditTickets || this.isTicketLocked(ticket);
   }
 
   /** Suppression définitive d'un ticket — Admin uniquement. */
